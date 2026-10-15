@@ -14,110 +14,90 @@
   color-scheme: light;
   --bg:#f6f7fa; --card:#fff; --line:#e6e9f0; --ink:#111521; --dim:#6b7280;
   --ok:#157f4b; --warn:#a9700d; --bad:#c0392b; --accent:#2563eb;
-  --okbg:rgba(21,127,75,.11); --warnbg:rgba(169,112,13,.12); --badbg:rgba(192,57,43,.11);
+  --okbg:rgba(21,127,75,.10); --warnbg:rgba(169,112,13,.11); --badbg:rgba(192,57,43,.10);
   --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 16px -8px rgba(16,24,40,.14);
 }
 html[data-theme=dark]{
   color-scheme: dark;
   --bg:#0f1115; --card:#171a21; --line:#252a35; --ink:#e9ebf1; --dim:#8b93a7;
   --ok:#34c17e; --warn:#e0a93a; --bad:#e8645f; --accent:#5b95f9;
-  --okbg:rgba(52,193,126,.14); --warnbg:rgba(224,169,58,.14); --badbg:rgba(232,100,95,.14);
+  --okbg:rgba(52,193,126,.13); --warnbg:rgba(224,169,58,.13); --badbg:rgba(232,100,95,.13);
   --shadow:none;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);
   font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
-  padding:0 0 calc(44px + env(safe-area-inset-bottom));
-  transition:background .2s,color .2s}
+  padding:0 0 calc(40px + env(safe-area-inset-bottom))}
 html[dir=rtl] body{font-family:-apple-system,"SF Arabic","Segoe UI",system-ui,sans-serif}
 header{position:sticky;top:0;z-index:30;background:var(--bg);
-  padding:calc(12px + env(safe-area-inset-top)) 16px 9px;border-bottom:1px solid var(--line)}
-.hrow{display:flex;align-items:center;gap:10px}
+  padding:calc(12px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:9px}
 h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.2px;flex:1}
 .iconbtn{background:var(--card);border:1px solid var(--line);color:var(--dim);
   border-radius:10px;width:34px;height:34px;font-size:14px;font-weight:700;cursor:pointer;
   display:grid;place-items:center;padding:0}
 .iconbtn:active{transform:scale(.94)}
-.stamp{color:var(--dim);font-size:12px;margin-top:4px}
+.stamp{color:var(--dim);font-size:12px;margin-top:5px}
 .stamp.old{color:var(--warn);font-weight:600}
-nav{display:flex;gap:6px;overflow-x:auto;padding:9px 16px 0;scrollbar-width:none}
-nav::-webkit-scrollbar{display:none}
-nav button{flex:0 0 auto;background:var(--card);color:var(--dim);border:1px solid var(--line);
-  border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600;cursor:pointer;
-  transition:background .15s,color .15s}
-nav button[aria-selected=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
 main{padding:14px 16px;max-width:760px;margin:0 auto}
-section{display:none;animation:in .18s ease-out} section.on{display:block}
-@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* The banner is the page in one line: green and you can put the phone away, red and you
+   cannot. Everything below it is the detail behind that one judgement. */
+.banner{border-radius:15px;padding:15px 16px;margin-bottom:12px;color:#fff;
+  box-shadow:var(--shadow)}
+.banner.ok{background:linear-gradient(135deg,#19955a,#0f6c3f)}
+.banner.warn{background:linear-gradient(135deg,#c98a12,#9a6a0c)}
+.banner.bad{background:linear-gradient(135deg,#d0493c,#a3352a)}
+.banner .big{font-size:26px;font-weight:750;letter-spacing:-.6px;margin-top:2px}
+.banner .lbl{color:rgba(255,255,255,.78)}
+.banner .sub{color:rgba(255,255,255,.9);font-size:13px;margin-top:7px}
+
 .card{background:var(--card);border:1px solid var(--line);border-radius:15px;
   padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
-.chk{display:flex;gap:11px;align-items:flex-start;padding:8px 0}
-.chk+.chk{border-top:1px solid var(--line)}
-.dot{flex:0 0 8px;height:8px;border-radius:50%;margin-top:8px;background:var(--dim)}
-.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
-.chk .n{color:var(--dim);font-variant-numeric:tabular-nums;font-weight:700;flex:0 0 auto}
-.big{font-size:28px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.8px}
-.unit{font-size:13px;color:var(--dim);font-weight:500;letter-spacing:0}
+.big{font-size:26px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.7px}
+.mid{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.unit{font-size:12.5px;color:var(--dim);font-weight:500;letter-spacing:0}
 .lbl{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.7px;font-weight:650}
 .row{display:flex;gap:12px} .row>*{flex:1;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:8px}
 .bar>i{display:block;height:100%;background:var(--accent);border-radius:5px;
   transition:width .5s cubic-bezier(.2,.8,.2,1)}
-.chartbox{position:relative;height:170px;margin-top:6px}
-.chartbox.tall{height:210px}
-table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
-th{position:sticky;top:0;background:var(--card);color:var(--dim);font-size:11px;
-  text-transform:uppercase;letter-spacing:.4px;text-align:end;padding:8px 5px;
-  border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
-th:first-child,td:first-child{text-align:start}
-th[data-dir="1"]:after{content:" \25B2";font-size:8px;opacity:.7}
-th[data-dir="-1"]:after{content:" \25BC";font-size:8px;opacity:.7}
-td{padding:8px 5px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:end}
-tbody tr:last-child td{border-bottom:0}
-tr.zero td{opacity:.45}
+.chartbox{position:relative;height:175px;margin-top:4px}
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}
 .p-ok{background:var(--okbg);color:var(--ok)}
 .p-warn{background:var(--warnbg);color:var(--warn)}
 .p-bad{background:var(--badbg);color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;
+  text-align:end;padding:7px 5px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:start}
+td{padding:7px 5px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:end}
+tbody tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .muted{color:var(--dim);font-size:12px}
-h3{margin:17px 0 8px;font-size:11px;color:var(--dim);text-transform:uppercase;
+h3{margin:18px 0 8px;font-size:11px;color:var(--dim);text-transform:uppercase;
   letter-spacing:.8px;font-weight:700}
 h3:first-child{margin-top:2px}
-.tiny{font-size:11px;color:var(--dim);margin-top:7px}
+.names{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.name{background:var(--bg);border:1px solid var(--line);border-radius:999px;
+  padding:4px 11px;font-size:12.5px}
+.fo{display:flex;gap:10px;align-items:baseline;padding:7px 0}
+.fo+.fo{border-top:1px solid var(--line)}
+.fo b{font-variant-numeric:tabular-nums}
+.src{font-size:10.5px;color:var(--dim);margin-top:9px;letter-spacing:.2px}
 
-/* ---------- the laptop ----------
-   The phone shows one tab at a time because a thumb scrolls and a small screen cannot
-   hold four subjects at once. A laptop can, and paging through tabs on it is pure
-   friction - you came to the desk to see the whole picture. So above 900px the tabs go
-   away, every section is on the page at once, and the cards flow into two columns.
-   Same data, same markup; only the layout changes. */
 @media (min-width:900px){
-  body{padding-bottom:40px}
-  header{padding:16px 28px 11px}
-  h1{font-size:21px}
-  nav{display:none}
-  main{max-width:1280px;padding:18px 28px;
+  header{padding:16px 28px 11px} h1{font-size:21px}
+  main{max-width:1240px;padding:18px 28px;
        display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
-  section{display:block !important;animation:none}
-  #s-now{grid-column:1;grid-row:1/span 2}
-  #s-month{grid-column:2;grid-row:1}
-  #s-sales{grid-column:2;grid-row:2}
-  #s-store{grid-column:2;grid-row:3}
-  section::before{content:attr(data-title);display:block;font-size:12px;font-weight:700;
-    letter-spacing:1px;text-transform:uppercase;color:var(--accent);
-    margin:4px 0 10px;padding-bottom:7px;border-bottom:2px solid var(--line)}
-  #s-now::before{margin-top:0}
-  .card{padding:15px 17px}
-  .chartbox{height:200px} .chartbox.tall{height:260px}
-  table{font-size:13.5px}
+  .banner{grid-column:1/-1}
+  .colA{grid-column:1} .colB{grid-column:2}
+  .card{padding:15px 17px} .chartbox{height:200px}
 }
 @media (min-width:1400px){
-  main{max-width:1500px;grid-template-columns:1fr 1fr 1fr}
-  #s-now{grid-column:1;grid-row:1/span 3}
-  #s-month{grid-column:2;grid-row:1/span 2}
-  #s-sales{grid-column:3;grid-row:1}
-  #s-store{grid-column:3;grid-row:2}
+  main{max-width:1560px;grid-template-columns:1fr 1fr 1fr}
+  .colA{grid-column:1} .colB{grid-column:2} .colC{grid-column:3}
 }
 </style>
 <link rel="manifest" href="manifest.webmanifest">
@@ -128,365 +108,247 @@ h3:first-child{margin-top:2px}
 <header>
   <div class="hrow">
     <h1 id="title">Ermine</h1>
-    <button class="iconbtn" id="lang" title="عربي / English">ع</button>
-    <button class="iconbtn" id="theme" title="theme">&#9680;</button>
+    <button class="iconbtn" id="lang">ع</button>
+    <button class="iconbtn" id="theme">&#9680;</button>
   </div>
   <div class="stamp" id="stamp"></div>
 </header>
-<nav id="tabs"></nav>
-<main>
-  <section id="s-now" class="on"></section>
-  <section id="s-month"></section>
-  <section id="s-sales"></section>
-  <section id="s-store"></section>
-</main>
+<main id="main"></main>
 
 <script>
-const D = {"checks": ["1. Chef recorded up to 14-Oct (up to date).", "2. Chef planned 8,940 pcs and 640 boxes today.", "3. Today: fits - 2 hours spare   (A 198h / B 164h / IDEAL 76h)", "4. 25 people today, 20 on the roster - 5 not listed on Staff & Skills.", "5. Month needs 172 hours a day for 14 days - 107% of a 9h day at 20 people.", "6. Most of what is left is in products the log has measured.", "7. 54 boxes packed and waiting. Measure the box sizes on Stores to see how full the freezer is.", "8. 2 day(s) missed the plan with no reason written - see Delays & Reasons."], "plans": [{"name": "A", "what": "A - cover tomorrow, and keep the month's pace", "pcs": 9026.21428571429, "boxes": 397, "hours": 197.905134641648, "people": 24.738141830206, "fits": "fits - 2 hours spare"}, {"name": "B", "what": "B - two days at once, a day of cover in hand", "pcs": 6675, "boxes": 397, "hours": 163.851369292929, "people": 20.4814211616162, "fits": "fits - 36 hours spare"}, {"name": "IDEAL", "what": "IDEAL - the fewest hours that still ships everything", "pcs": 2048.07142857143, "boxes": 397, "hours": 75.7312232467533, "people": 9.46640290584416, "fits": "fits - 124 hours spare"}], "plan_date": "2026-10-15", "people": {"roster": 25, "roster_note": "20 floor + 5 management", "recorded": 25, "recorded_on": "14-Oct", "average": 25}, "month": {"month": "2026-10-01", "days_left": 14, "hours_day": 171.805734252038, "hours_total": 2405.28027952853, "verdict": "ON TRACK - the days left can carry what is left, inside a standard day.", "measured": "Most of what is left is in products the log has measured.", "sens": [{"n": 18, "load": 1.19309537675026}, {"n": 20, "load": 1.07378583907524}, {"n": 22, "load": 0.97616894461385}, {"n": 25, "load": 0.859028671260188}]}, "boxes": [{"box": "Big 30", "pcs": 30, "target": 190, "packed": 579, "left": 0, "perday": 0, "done": 3.04736842105263, "store": 185, "asked": 650, "owed": 650, "gap": -185}, {"box": "Big 24", "pcs": 24, "target": 0, "packed": 24, "left": 0, "perday": 0, "done": null, "store": 120, "asked": 37, "owed": 37, "gap": -120}, {"box": "Big 12", "pcs": 12, "target": 137, "packed": 727, "left": 0, "perday": 0, "done": 5.30656934306569, "store": 120, "asked": 507, "owed": 507, "gap": 65}, {"box": "Big 6", "pcs": 6, "target": 32, "packed": 5, "left": 27, "perday": 1.92857142857143, "done": 0.15625, "store": 37, "asked": 20, "owed": 20, "gap": -37}, {"box": "Large Bites", "pcs": 45, "target": null, "packed": 0, "left": null, "perday": null, "done": null, "store": -26, "asked": 33, "owed": 7, "gap": null}, {"box": "Mini", "pcs": 30, "target": 575, "packed": 220, "left": 355, "perday": 25.3571428571429, "done": 0.382608695652174, "store": -28, "asked": 434, "owed": 406, "gap": 120}, {"box": "Coins", "pcs": 30, "target": 3389, "packed": 1389, "left": 2000, "perday": 142.857142857143, "done": 0.409855414576571, "store": 0, "asked": 1467, "owed": 1467, "gap": 124}, {"box": "Half", "pcs": 30, "target": 627, "packed": 0, "left": 627, "perday": 44.7857142857143, "done": 0, "store": 0, "asked": 485, "owed": 485, "gap": null}, {"box": "Origin", "pcs": 2, "target": 10000, "packed": 4421, "left": 5579, "perday": 398.5, "done": 0.4421, "store": 0, "asked": 0, "owed": 0, "gap": 0}, {"box": "Fingers", "pcs": 44, "target": 217, "packed": 0, "left": 217, "perday": 15.5, "done": 0, "store": 0, "asked": 192, "owed": 192, "gap": null}, {"box": "Ice Cream", "pcs": 16, "target": 466, "packed": 711, "left": 0, "perday": 0, "done": 1.52575107296137, "store": 0, "asked": 434, "owed": 434, "gap": 0}, {"box": "Cake", "pcs": 14, "target": 394, "packed": 97.5, "left": 296.5, "perday": 21.1785714285714, "done": 0.24746192893401, "store": 0, "asked": 508, "owed": 508, "gap": 60}, {"box": "Classic pcs loose", "pcs": 1, "target": null, "packed": 350, "left": null, "perday": null, "done": null, "store": 0, "asked": 2748, "owed": 2748, "gap": 0}, {"box": "Kingdom pcs loose", "pcs": 1, "target": null, "packed": 0, "left": null, "perday": null, "done": null, "store": 0, "asked": 342, "owed": 342, "gap": null}, {"box": "Mini Raspberry loose", "pcs": 30, "target": null, "packed": 0, "left": null, "perday": null, "done": null, "store": 0, "asked": 13, "owed": 13, "gap": null}], "days": ["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16", "2026-10-17", "2026-10-18", "2026-10-19", "2026-10-20", "2026-10-21"], "grid": [{"box": "Big 30", "days": [65, 65, 65, 65, 65, 65, 65, 65, 65, 0], "total": 585, "packed": 120, "left": 465}, {"box": "Big 24", "days": [4, 4, 4, 4, 4, 4, 3, 3, 3, 0], "total": 33, "packed": 0, "left": 33}, {"box": "Big 12", "days": [51, 51, 51, 51, 51, 51, 50, 50, 50, 0], "total": 456, "packed": 185, "left": 271}, {"box": "Big 6", "days": [2, 2, 2, 2, 2, 2, 2, 2, 2, 0], "total": 18, "packed": 0, "left": 18}, {"box": "Large Bites", "days": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "total": 0, "packed": 0, "left": null}, {"box": "Mini", "days": [44, 44, 44, 43, 43, 43, 43, 43, 43, 0], "total": 390, "packed": 219, "left": 171}, {"box": "Coins", "days": [147, 147, 147, 147, 147, 147, 146, 146, 146, 0], "total": 1320, "packed": 600, "left": 720}, {"box": "Half", "days": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "total": 0, "packed": 0, "left": null}, {"box": "Origin", "days": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "total": 0, "packed": 752, "left": null}, {"box": "Fingers", "days": [0, 9, 7, 7, 7, 7, 7, 7, 7, 7], "total": 65, "packed": 0, "left": 65}, {"box": "Ice Cream", "days": [44, 44, 44, 43, 43, 43, 43, 43, 43, 0], "total": 390, "packed": 0, "left": 390}, {"box": "Cake", "days": [0, 35, 35, 35, 35, 35, 35, 35, 35, 35], "total": 315, "packed": 60, "left": 255}, {"box": "Classic pcs loose", "days": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "total": 0, "packed": 0, "left": null}, {"box": "Kingdom pcs loose", "days": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "total": 0, "packed": 0, "left": null}, {"box": "Mini Raspberry loose", "days": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "total": 0, "packed": 0, "left": null}], "store": {"boxes": 408, "stocktake": "2026-10-13"}, "flavours": [{"box": "Big 12", "now": 120}, {"box": "Big 24", "now": 120}, {"box": "Big 30", "now": 185}, {"box": "Big 6", "now": 37}, {"box": "Large Bites", "now": -26}, {"box": "Mini", "now": -28}, {"box": "Filled from Ali Nawaz's file. The assorted boxes - Big 30, Big 24, Mini, Coins and the rest - are not split, because one box holds every flavour in its set and there is no such thing as a Big 30 of coffee.", "now": 0}, {"box": "Opening is the stocktake at the start of the month, which Aziz enters once.   [hover for the rest]", "now": 0}], "log": [{"date": "2026-09-29", "staff": 25, "hours": 8, "ratio": 1.06245101536797, "reading": "within 15%"}, {"date": "2026-09-30", "staff": 25, "hours": 8, "ratio": 0.610460991666667, "reading": "model too low"}, {"date": "2026-10-01", "staff": 24, "hours": 10, "ratio": 1.10695973151154, "reading": "within 15%"}, {"date": "2026-10-03", "staff": 25, "hours": 10, "ratio": 1.14604819383283, "reading": "within 15%"}, {"date": "2026-10-04", "staff": 23, "hours": 11, "ratio": 1.11089430137057, "reading": "within 15%"}, {"date": "2026-10-05", "staff": 25, "hours": 10.8333333333333, "ratio": 1.04598042001998, "reading": "within 15%"}, {"date": "2026-10-06", "staff": 25, "hours": 8, "ratio": 0.895427374025974, "reading": "within 15%"}, {"date": "2026-10-07", "staff": 25, "hours": 8.33333333333333, "ratio": 0.977456024623377, "reading": "within 15%"}, {"date": "2026-10-08", "staff": 25, "hours": 8, "ratio": 1.29550565254329, "reading": "model too high"}, {"date": "2026-10-10", "staff": 25, "hours": 8, "ratio": 0.942988412409813, "reading": "within 15%"}, {"date": "2026-10-11", "staff": 24, "hours": 8, "ratio": 1.09280732869995, "reading": "within 15%"}, {"date": "2026-10-12", "staff": 24, "hours": 8, "ratio": 0.997165850431397, "reading": "within 15%"}, {"date": "2026-10-13", "staff": 25, "hours": 10, "ratio": 0.816977995310245, "reading": "model too low"}, {"date": "2026-10-14", "staff": 25, "hours": 9.5, "ratio": 0.981823607199818, "reading": "within 15%"}]}, BUILT = new Date("2026-10-15T14:24:19.310340");
+const D = {"today": {"date": "2026-10-15", "committed": "CHEF COMMITTED 8,940 pcs and 640 boxes.", "finish": "18:19", "finish_note": "(9.3 h of work + break, 25 staff)", "verdict": "NEEDS OVERTIME - 1.3 extra hours"}, "plans": [{"name": "A", "what": "A - cover tomorrow, and keep the month's pace", "pcs": 9026.21428571429, "boxes": 397, "hours": 197.905134641648, "people": 24.738141830206, "cost": 2098, "fits": "fits - 2 hours spare"}, {"name": "B", "what": "B - two days at once, a day of cover in hand", "pcs": 6675, "boxes": 397, "hours": 163.851369292929, "people": 20.4814211616162, "cost": 1737, "fits": "fits - 36 hours spare"}, {"name": "IDEAL", "what": "IDEAL - the fewest hours that still ships everything", "pcs": 2048.07142857143, "boxes": 397, "hours": 75.7312232467533, "people": 9.46640290584416, "cost": 803, "fits": "fits - 124 hours spare"}], "rate": 10.6, "log": [{"date": "2026-09-29", "staff": 25, "hours": 8, "ratio": 1.06245101536797, "reading": "within 15%", "made": 8735, "packed": 420, "note": ""}, {"date": "2026-09-30", "staff": 25, "hours": 8, "ratio": 0.610460991666667, "reading": "model too low", "made": 5033, "packed": 1497, "note": ""}, {"date": "2026-10-01", "staff": 24, "hours": 10, "ratio": 1.10695973151154, "reading": "within 15%", "made": 12247, "packed": 883, "note": ""}, {"date": "2026-10-03", "staff": 25, "hours": 10, "ratio": 1.14604819383283, "reading": "within 15%", "made": 12947, "packed": 269, "note": ""}, {"date": "2026-10-04", "staff": 23, "hours": 11, "ratio": 1.11089430137057, "reading": "within 15%", "made": 12314, "packed": 658.5, "note": ""}, {"date": "2026-10-05", "staff": 25, "hours": 10.8333333333333, "ratio": 1.04598042001998, "reading": "within 15%", "made": 8464, "packed": 1871, "note": ""}, {"date": "2026-10-06", "staff": 25, "hours": 8, "ratio": 0.895427374025974, "reading": "within 15%", "made": 10177, "packed": 137, "note": ""}, {"date": "2026-10-07", "staff": 25, "hours": 8.33333333333333, "ratio": 0.977456024623377, "reading": "within 15%", "made": 9877, "packed": 348, "note": ""}, {"date": "2026-10-08", "staff": 25, "hours": 8, "ratio": 1.29550565254329, "reading": "model too high", "made": 10234, "packed": 1647, "note": ""}, {"date": "2026-10-10", "staff": 25, "hours": 8, "ratio": 0.942988412409813, "reading": "within 15%", "made": 8355, "packed": 576, "note": ""}, {"date": "2026-10-11", "staff": 24, "hours": 8, "ratio": 1.09280732869995, "reading": "within 15%", "made": 9368, "packed": 198, "note": ""}, {"date": "2026-10-12", "staff": 24, "hours": 8, "ratio": 0.997165850431397, "reading": "within 15%", "made": 8417, "packed": 872, "note": ""}, {"date": "2026-10-13", "staff": 25, "hours": 10, "ratio": 0.816977995310245, "reading": "model too low", "made": 8121, "packed": 575, "note": ""}, {"date": "2026-10-14", "staff": 25, "hours": 9.5, "ratio": 0.981823607199818, "reading": "within 15%", "made": 9576, "packed": 489, "note": ""}], "last": {"date": "2026-10-14", "staff": 25, "hours": 9.5, "ratio": 0.981823607199818, "reading": "within 15%", "made": 9576, "packed": 489, "note": ""}, "pieces": [{"product": "Classic", "pcs": 27383}, {"product": "Kingdom", "pcs": 4097}, {"product": "Mini", "pcs": 25581}, {"product": "Cake", "pcs": 643}, {"product": "Coins", "pcs": 3858}, {"product": "Fingers", "pcs": 18528}, {"product": "Half", "pcs": 14772}, {"product": "Origin", "pcs": 6687}, {"product": "Winter", "pcs": 0}, {"product": "Ice Cream", "pcs": 2632}], "boxes": [{"box": "Big 30", "target": 190, "packed": 579, "left": 0, "recv": 185, "gap": -185, "out": 0, "store": 185, "asked": 650, "owed": 650}, {"box": "Big 24", "target": 0, "packed": 24, "left": 0, "recv": 120, "gap": -120, "out": 0, "store": 120, "asked": 37, "owed": 37}, {"box": "Big 12", "target": 137, "packed": 727, "left": 0, "recv": 120, "gap": 65, "out": 0, "store": 120, "asked": 507, "owed": 507}, {"box": "Big 6", "target": 32, "packed": 5, "left": 27, "recv": 37, "gap": -37, "out": 0, "store": 37, "asked": 20, "owed": 20}, {"box": "Large Bites", "target": null, "packed": 0, "left": null, "recv": 0, "gap": null, "out": 26, "store": -26, "asked": 33, "owed": 7}, {"box": "Mini", "target": 575, "packed": 220, "left": 355, "recv": 0, "gap": 120, "out": 28, "store": -28, "asked": 434, "owed": 406}, {"box": "Coins", "target": 3389, "packed": 1389, "left": 2000, "recv": 0, "gap": 124, "out": 0, "store": 0, "asked": 1467, "owed": 1467}, {"box": "Half", "target": 627, "packed": 0, "left": 627, "recv": 0, "gap": null, "out": 0, "store": 0, "asked": 485, "owed": 485}, {"box": "Origin", "target": 10000, "packed": 4421, "left": 5579, "recv": 0, "gap": 0, "out": 0, "store": 0, "asked": 0, "owed": 0}, {"box": "Fingers", "target": 217, "packed": 0, "left": 217, "recv": 0, "gap": null, "out": 0, "store": 0, "asked": 192, "owed": 192}, {"box": "Ice Cream", "target": 466, "packed": 711, "left": 0, "recv": 0, "gap": 0, "out": 0, "store": 0, "asked": 434, "owed": 434}, {"box": "Cake", "target": 394, "packed": 97.5, "left": 296.5, "recv": 0, "gap": 60, "out": 0, "store": 0, "asked": 508, "owed": 508}, {"box": "Classic pcs loose", "target": null, "packed": 350, "left": null, "recv": 0, "gap": 0, "out": 0, "store": 0, "asked": 2748, "owed": 2748}, {"box": "Kingdom pcs loose", "target": null, "packed": 0, "left": null, "recv": 0, "gap": null, "out": 0, "store": 0, "asked": 342, "owed": 342}, {"box": "Mini Raspberry loose", "target": null, "packed": 0, "left": null, "recv": 0, "gap": null, "out": 0, "store": 0, "asked": 13, "owed": 13}], "tot": {"store": 408, "recv": 462, "out": 54, "asked": 7870, "owed": 7816, "target": 16027, "packed": 8523.5, "left": 9101.5}, "stocktake": "2026-10-13", "month": {"month": "2026-10-01", "days_left": 14, "hours_day": 171.805734252038, "hours_total": 2405.28027952853, "verdict": "ON TRACK - the days left can carry what is left, inside a standard day.", "sens": [{"n": 18, "load": 1.19309537675026}, {"n": 20, "load": 1.07378583907524}, {"n": 22, "load": 0.97616894461385}, {"n": 25, "load": 0.859028671260188}]}, "names": [{"name": "Hassan", "where": ["Kitchen"]}, {"name": "Md Abdul Aziz", "where": ["Kitchen"]}, {"name": "Ajgor Ali", "where": ["Hallway", "Kitchen"]}, {"name": "Md Babu", "where": ["Kitchen"]}, {"name": "Md Arif", "where": ["Kitchen"]}, {"name": "Puran", "where": ["Kitchen"]}, {"name": "Palsang Lopchan", "where": ["Entrance"]}, {"name": "Mohammad All Amin", "where": ["Dishwashing Area", "Kitchen"]}, {"name": "Nur Nabbi", "where": ["Dishwashing Area"]}, {"name": "Mohin Uddin", "where": ["Kitchen"]}, {"name": "Om Prakash Budha", "where": ["Dishwashing Area", "Hallway", "Kitchen"]}, {"name": "Keerththanan", "where": ["Chocolate Room"]}, {"name": "Abdul Kareem", "where": ["Kitchen"]}, {"name": "Bhabindra B K", "where": ["Entrance"]}, {"name": "Anuj Kumar Singh", "where": ["Hallway", "Kitchen"]}, {"name": "Sandip Singh", "where": ["Chocolate Room"]}, {"name": "Sk Asif", "where": ["Chocolate Room"]}, {"name": "Bashith Vidurshan", "where": ["Chocolate Room"]}, {"name": "Aashon Gurung", "where": ["Chocolate Room"]}, {"name": "Giri Prasad Jhendi", "where": ["Kitchen"]}], "focus": [{"kind": "make", "items": [{"box": "Coins", "n": 2000, "hours": 900.0}, {"box": "Half", "n": 627, "hours": 282.1}, {"box": "Origin", "n": 5579, "hours": 167.4}]}, {"kind": "pack", "items": [{"box": "Classic pcs loose", "n": 2748}, {"box": "Coins", "n": 1467}, {"box": "Big 30", "n": 650}]}]}, BUILT = new Date("2026-10-15T16:45:47.722543");
 const $ = s => document.querySelector(s);
 
-/* ---------- two languages, one page ----------
-   Everything the page says itself is in here twice; everything that comes out of the
-   workbook stays in the workbook's own English, because translating a figure's label on
-   the fly is how the page and the file start disagreeing about what a column means. */
 const T = {
-  en:{title:"Ermine — Production", now:"Now", month:"Month", sales:"Sales", store:"Store",
-      read:"read from the file", just:"just now", hAgo:"h ago", dAgo:"days ago",
-      checks:"Check, in order", today:"Today — three ways",
-      pieces:"pieces", boxes:"boxes", people:"people", hours:"h",
-      who:"Who is in", roster:"on the roster", recorded:"recorded",
-      lastDays:"Last days recorded", day:"day", staff:"people", hrs:"hours",
-      ratio:"model / actual", packed:"boxes packed this month", of:"of",
-      hoursDay:"hours a day", daysLeft:"days left", atPeople:"At this many people",
-      share:"share of a 9-hour day each person would work",
-      measured:"Measured?", byBox:"By box", box:"box", target:"target",
-      packedC:"packed", left:"left", perDay:"per day", done:"% done",
-      owed:"still owed to sales",
-      owedNote:"everything they asked for since the month started, less everything taken",
-      askedPacked:"Asked, packed, owed", asked:"asked", inStore:"in store",
-      tenDays:"The ten days", total:"total",
-      waiting:"boxes packed and waiting",
-      waitNote:"stocktake {d}, plus what Ali has recorded since",
-      disagree:"chef and Ali disagree", byFlavour:"By flavour",
-      trend:"Hours per day, last 14 days", modelLine:"model", actualLine:"actual",
-      progress:"Progress by box", top:"biggest first"},
-  ar:{title:"إرمين — الإنتاج", now:"الآن", month:"الشهر", sales:"المبيعات", store:"المخزن",
-      read:"قراءة من الملف", just:"الآن", hAgo:" ساعة", dAgo:" يوم",
-      checks:"افحص بهذا الترتيب", today:"اليوم — ثلاث خطط",
-      pieces:"حبة", boxes:"بوكس", people:"شخص", hours:"س",
-      who:"من الموجود", roster:"على القائمة", recorded:"المسجَّل",
-      lastDays:"آخر الأيام المسجَّلة", day:"اليوم", staff:"أشخاص", hrs:"ساعات",
-      ratio:"النموذج / الفعلي", packed:"بوكسات عُبِّئت هذا الشهر", of:"من",
-      hoursDay:"ساعة يوميًا", daysLeft:"أيام متبقية", atPeople:"عند هذا العدد",
-      share:"حصة كل شخص من يوم تسع ساعات",
-      measured:"هل هو مقيس؟", byBox:"حسب البوكس", box:"البوكس", target:"المستهدف",
-      packedC:"عُبِّئ", left:"الباقي", perDay:"يوميًا", done:"٪ الإنجاز",
-      owed:"لهم عندنا",
-      owedNote:"كل ما طلبوه منذ أول الشهر، ناقص كل ما سحبوه",
-      askedPacked:"طلبوا · عُبِّئ · لهم", asked:"طلبوا", inStore:"في المخزن",
-      tenDays:"الأيام العشرة", total:"المجموع",
-      waiting:"بوكسات معبّأة تنتظر",
-      waitNote:"جرد {d}، وما سجّله علي بعده",
-      disagree:"خلاف بين الشيف وعلي", byFlavour:"حسب النكهة",
-      trend:"ساعات اليوم، آخر ١٤ يومًا", modelLine:"النموذج", actualLine:"الفعلي",
-      progress:"الإنجاز حسب البوكس", top:"الأكبر أولًا"}
+ en:{title:"Ermine — Production",
+   read:"read", just:"just now", hAgo:"h ago", dAgo:"d ago",
+   onTrack:"ON TRACK", attention:"NEEDS ATTENTION",
+   todayPlan:"The chef's plan for today", finish:"should finish",
+   suggested:"Suggested instead", pieces:"pieces", boxes:"boxes", people:"people",
+   hours:"h", wages:"wages", sar:"SAR",
+   lastShift:"Last shift", made:"made", packedP:"packed", drift:"drift",
+   driftOk:"the day took the hours the work explains",
+   driftLow:"the day took more hours than the work explains",
+   driftHigh:"the work took fewer hours than the model expects",
+   stockPcs:"Stock — pieces", stockBox:"Stock — boxes in the store",
+   fromChef:"in from the chef", toSales:"out to sales",
+   salesPlan:"Sales plan", asked:"asked for", owed:"still owed",
+   month:"The month", monthLeft:"boxes still to pack", perDay:"hours a day",
+   daysLeft:"days left",
+   focus:"Put the day into", focusMake:"make", focusPack:"pack",
+   floor:"On the floor today", noNames:"nobody placed yet",
+   trend:"Hours worked, last 14 days", actualLine:"actual", modelLine:"model",
+   box:"box", target:"target", still:"still", store:"store",
+   src:"from the planning workbook and Ali Nawaz's warehouse file"},
+ ar:{title:"إرمين — الإنتاج",
+   read:"قراءة", just:"الآن", hAgo:" ساعة", dAgo:" يوم",
+   onTrack:"ماشٍ تمام", attention:"يحتاج انتباهًا",
+   todayPlan:"خطة الشيف لليوم", finish:"المتوقَّع الانتهاء",
+   suggested:"المقترَح بدلًا منها", pieces:"حبة", boxes:"بوكس", people:"شخص",
+   hours:"س", wages:"أجور", sar:"ريال",
+   lastShift:"آخر وردية", made:"صُنع", packedP:"عُبِّئ", drift:"الانحراف",
+   driftOk:"اليوم استهلك الساعات التي يفسّرها العمل",
+   driftLow:"اليوم استهلك ساعات أكثر مما يفسّره العمل",
+   driftHigh:"العمل استهلك ساعات أقلّ مما يتوقّعه النموذج",
+   stockPcs:"المخزون — حبات", stockBox:"المخزون — بوكسات في المخزن",
+   fromChef:"وارد من الشيف", toSales:"صادر للمبيعات",
+   salesPlan:"خطط المبيعات", asked:"طلبوا", owed:"لهم عندنا",
+   month:"الشهر", monthLeft:"بوكسات باقية للتعبئة", perDay:"ساعة يوميًا",
+   daysLeft:"أيام متبقية",
+   focus:"ركّز اليوم على", focusMake:"صناعة", focusPack:"تعبئة",
+   floor:"على الأرضية اليوم", noNames:"لم يُوزَّع أحد بعد",
+   trend:"ساعات العمل، آخر ١٤ يومًا", actualLine:"الفعلي", modelLine:"النموذج",
+   box:"البوكس", target:"المستهدف", still:"الباقي", store:"المخزن",
+   src:"من ملف التخطيط وملف علي نواز"}
 };
 let L = localStorage.getItem("erm-lang") || "en";
-let t = k => T[L][k];
+const t = k => T[L][k];
 
-/* ---------- theme ----------
-   Three states, not two: follow the phone, or force light, or force dark. A toggle that
-   only flips light/dark quietly overrides the phone's night mode, and this page is read
-   at six in the morning and at eleven at night. */
-const THEMES = ["auto", "light", "dark"], GLYPH = {auto:"◐", light:"☀", dark:"☾"};
+const THEMES=["auto","light","dark"], GLYPH={auto:"◐",light:"☀",dark:"☾"};
 let TH = localStorage.getItem("erm-theme") || "auto";
 function applyTheme(){
-  const dark = TH === "dark" ||
-    (TH === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const dark = TH==="dark" || (TH==="auto" && matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   $("#theme").textContent = GLYPH[TH];
-  if (window.__charts) render();           // chart colours are baked in at draw time
+  if(window.__drawn) render();
 }
-$("#theme").onclick = () => {
-  TH = THEMES[(THEMES.indexOf(TH) + 1) % 3];
-  localStorage.setItem("erm-theme", TH); applyTheme();
-};
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+$("#theme").onclick=()=>{TH=THEMES[(THEMES.indexOf(TH)+1)%3];localStorage.setItem("erm-theme",TH);applyTheme();};
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
+$("#lang").onclick=()=>{L=L==="en"?"ar":"en";localStorage.setItem("erm-lang",L);render();};
 
-$("#lang").onclick = () => {
-  L = L === "en" ? "ar" : "en"; localStorage.setItem("erm-lang", L); render();
-};
+const loc=()=>L==="ar"?"ar-EG":"en-GB";
+const n0=v=>v==null?"—":Math.round(v).toLocaleString(loc());
+const n1=v=>v==null?"—":(Math.round(v*10)/10).toLocaleString(loc(),{minimumFractionDigits:1});
+const pc=v=>v==null?"—":Math.round(v*100).toLocaleString(loc())+"%";
+const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const dmy=s=>s?new Date(s+"T00:00:00").toLocaleDateString(loc(),{day:"2-digit",month:"short"}):"";
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
-/* ---------- formatting ---------- */
-const loc = () => L === "ar" ? "ar-EG" : "en-GB";
-const n0 = v => v==null ? "—" : Math.round(v).toLocaleString(loc());
-const n1 = v => v==null ? "—" : (Math.round(v*10)/10).toLocaleString(loc(),{minimumFractionDigits:1});
-const pc = v => v==null ? "—" : Math.round(v*100).toLocaleString(loc())+"%";
-const esc = s => String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-const dmy = s => s ? new Date(s+"T00:00:00").toLocaleDateString(loc(),{day:"2-digit",month:"short"}) : "";
-const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-
-/* A check is green when it says nothing needs doing. Matched on the workbook's own
-   wording so there is one phrasing in one place, not two that drift apart. */
-function tone(x){
-  if(/not listed|behind|not recorded|no headcount|not been earned|has not entered|empty/i.test(x)) return "warn";
-  if(/over by|DOES NOT FIT|missed the plan/i.test(x)) return "bad";
-  if(/up to date|nothing outstanding|Most of what is left|everyone|fits/i.test(x)) return "ok";
-  return "";
+window.__charts=[];
+function chart(id,cfg){
+  const el=document.getElementById(id); if(!el||!el.offsetParent) return;
+  Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
+  Chart.defaults.color=css("--dim");
+  cfg.options=Object.assign({responsive:true,maintainAspectRatio:false,
+    animation:{duration:450}},cfg.options||{});
+  for(const k of Object.keys(cfg.options.scales||{}))
+    Object.assign(cfg.options.scales[k],{grid:{color:css("--line"),drawBorder:false}});
+  window.__charts.push(new Chart(el,cfg));
 }
 
 function stamp(){
   const h=(Date.now()-BUILT)/36e5;
-  const age = h<1 ? t("just") : h<24 ? Math.round(h)+t("hAgo") : Math.round(h/24)+t("dAgo");
+  const age=h<1?t("just"):h<24?Math.round(h)+t("hAgo"):Math.round(h/24)+t("dAgo");
   const el=$("#stamp");
-  el.textContent = t("read")+" · "+age+" · "+BUILT.toLocaleString(loc(),
+  el.textContent=t("read")+" · "+age+" · "+BUILT.toLocaleString(loc(),
     {day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
-  el.classList.toggle("old", h>18);
+  el.classList.toggle("old",h>18);
 }
 
-/* ---------- charts ----------
-   Colours are read from the CSS variables at draw time rather than hard-coded, so one
-   theme switch repaints everything and there is no second palette to keep in step. */
-window.__charts = [];
-window.__pending = [];
-/* Chart.js measures its container when it is built, and a container inside a hidden tab
-   measures zero - the chart then never resizes when the tab is opened. So a chart is
-   REGISTERED here and only built once its section is on screen: immediately on a laptop,
-   where every section is visible, and on first tap on a phone. */
-function chart(id, cfg){ window.__pending.push([id, cfg]); flush(); }
-function flush(){
-  window.__pending = window.__pending.filter(([id, cfg])=>{
-    const el = document.getElementById(id);
-    if(!el || !el.offsetParent) return true;        // not on screen yet - keep it waiting
-    build(el, cfg); return false;
-  });
+/* Is the day going right? One judgement, from the three things that can go wrong: the
+   day does not fit, the last shift drifted, or the month cannot be finished. */
+function overall(){
+  const bad=[], warn=[];
+  const A=D.plans[0], last=D.last, M=D.month;
+  if(/DOES NOT FIT|over by/i.test(A.fits)) bad.push("today");
+  if(last && last.ratio!=null && (last.ratio<0.85||last.ratio>1.15)) warn.push("drift");
+  if(/OUT OF REACH/i.test(M.verdict)) bad.push("month");
+  else if(/OVERTIME/i.test(M.verdict)) warn.push("month");
+  return bad.length?"bad":warn.length?"warn":"ok";
 }
-function build(el, cfg){
-  const g = css("--dim"), ln = css("--line");
-  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
-  Chart.defaults.color = g;
-  cfg.options = Object.assign({responsive:true, maintainAspectRatio:false,
-    animation:{duration:450}}, cfg.options||{});
-  (cfg.options.scales = cfg.options.scales || {});
-  for(const k of Object.keys(cfg.options.scales))
-    Object.assign(cfg.options.scales[k], {grid:{color:ln, drawBorder:false},
-      ticks:Object.assign({color:g}, cfg.options.scales[k].ticks||{})});
-  window.__charts.push(new Chart(el, cfg));
-}
-function killCharts(){
-  window.__charts.forEach(c=>c.destroy()); window.__charts=[]; window.__pending=[];
-}
-
-/* ---------- sortable table ---------- */
-let TBL = 0;
-function table(rows, cols, sortBy){
-  const id = "t"+(++TBL);
-  setTimeout(()=>{
-    const el = document.getElementById(id); if(!el) return;
-    let key = sortBy, dir = -1;
-    const fmt = {s:v=>esc(v),
-      n:v=>v?n0(v):'<span style="opacity:.3">0</span>',
-      n1:v=>v?n1(v):'<span style="opacity:.3">0</span>',
-      p:v=>v==null?"—":`<span class="pill ${v>=1?"p-ok":v>=.5?"p-warn":"p-bad"}">${pc(v)}</span>`};
-    const draw = ()=>{
-      const ty = cols.find(c=>c[0]===key)[2];
-      const s = rows.slice().sort((a,b)=>{
-        const x=a[key], y=b[key];
-        if(ty==="s") return dir*String(x||"").localeCompare(String(y||""));
-        return dir*((y==null?-1:y)-(x==null?-1:x));
-      });
-      el.querySelector("tbody").innerHTML = s.map(r=>
-        `<tr class="${cols.slice(1).every(c=>!r[c[0]])?"zero":""}">` +
-        cols.map(c=>`<td>${fmt[c[2]](r[c[0]])}</td>`).join("") + `</tr>`).join("");
-      el.querySelectorAll("th").forEach(th=>th.dataset.dir = th.dataset.k===key ? dir : "");
-    };
-    el.querySelectorAll("th").forEach(th => th.onclick = ()=>{
-      if(key===th.dataset.k) dir=-dir; else { key=th.dataset.k; dir = th.dataset.t==="s"?1:-1; }
-      draw();
-    });
-    draw();
-  });
-  return `<div class="card scroll"><table id="${id}"><thead><tr>` +
-    cols.map(c=>`<th data-k="${c[0]}" data-t="${c[2]}">${esc(c[1])}</th>`).join("") +
-    `</tr></thead><tbody></tbody></table></div>`;
-}
-
-/* ---------- the four pages ---------- */
-const TABS=[["now","now"],["month","month"],["sales","sales"],["store","store"]];
 
 function render(){
-  killCharts();
-  document.documentElement.lang = L;
-  document.documentElement.dir = L==="ar" ? "rtl" : "ltr";
-  $("#title").textContent = t("title");
-  $("#lang").textContent = L==="en" ? "ع" : "EN";
+  window.__charts.forEach(c=>c.destroy()); window.__charts=[];
+  document.documentElement.lang=L;
+  document.documentElement.dir=L==="ar"?"rtl":"ltr";
+  $("#title").textContent=t("title");
+  $("#lang").textContent=L==="en"?"ع":"EN";
   stamp();
 
-  const sel = document.querySelector("nav button[aria-selected=true]");
-  const cur = sel ? sel.dataset.k : "now";
-  TABS.forEach(([k,l])=> $("#s-"+k).dataset.title = t(l));
-  $("#tabs").innerHTML = TABS.map(([k,l])=>
-    `<button data-k="${k}" aria-selected="${k===cur}">${t(l)}</button>`).join("");
-  $("#tabs").onclick = e => { const b=e.target.closest("button"); if(!b) return;
-    TABS.forEach(([k])=>{ $("#s-"+k).classList.toggle("on", k===b.dataset.k);
-      $(`#tabs button[data-k="${k}"]`).setAttribute("aria-selected", k===b.dataset.k); });
-    window.scrollTo({top:0,behavior:"smooth"});
-    setTimeout(flush, 30); };
+  const A=D.plans[0], last=D.last, M=D.month, X=D.tot;
+  const st=overall();
+  let h="";
 
-  now(); month(); sales(); store();
-  setTimeout(flush, 40);
-  addEventListener("resize", flush, {once:true});
-}
+  /* ---- the banner ---- */
+  h+=`<div class="banner ${st}">
+    <div class="lbl">${esc(dmy(D.today.date))}</div>
+    <div class="big">${st==="ok"?t("onTrack"):t("attention")}</div>
+    <div class="sub">${esc(D.today.committed)}
+      ${D.today.finish?` · ${t("finish")} ${esc(D.today.finish)}`:""}</div></div>`;
 
-function now(){
-  let h = `<h3>${t("checks")}</h3><div class="card">` + D.checks.map((c,i)=>
-      `<div class="chk"><span class="dot ${tone(c)}"></span><span class="n">${i+1}</span>
-       <span>${esc(c.replace(/^\d+\.\s*/,""))}</span></div>`).join("") + `</div>`;
-
-  h += `<h3>${t("today")}</h3>`;
-  const fit = s => /fits/.test(s) ? "p-ok" : /over/.test(s) ? "p-bad" : "p-warn";
-  D.plans.forEach(p=>{
-    h += `<div class="card"><div class="row" style="align-items:flex-start">
-      <div><div class="lbl">${esc(p.name)}</div>
-        <div class="muted">${esc(p.what.replace(/^[A-Z]+\s*-\s*/,""))}</div></div>
-      <div style="flex:0 0 auto;text-align:end">
-        <div class="big">${n0(p.hours)}<span class="unit">${t("hours")}</span></div>
-        <div class="muted">${n1(p.people)} ${t("people")}</div></div></div>
-      <div class="row" style="margin-top:10px;align-items:center">
-        <div><div class="lbl">${t("pieces")}</div><b>${n0(p.pcs)}</b></div>
-        <div><div class="lbl">${t("boxes")}</div><b>${n0(p.boxes)}</b></div>
-        <div style="flex:0 0 auto"><span class="pill ${fit(p.fits)}">${esc(p.fits)||"—"}</span></div>
-      </div></div>`;
-  });
-
-  const P=D.people;
-  h += `<h3>${t("who")}</h3><div class="card"><div class="row">
-    <div><div class="lbl">${t("roster")}</div><div class="big">${n0(P.roster)}</div>
-      <div class="muted">${esc(P.roster_note)}</div></div>
-    <div><div class="lbl">${t("recorded")}</div><div class="big">${n0(P.recorded)}</div>
-      <div class="muted">${esc(P.recorded_on)}</div></div></div></div>`;
-
-  if(D.log.length){
-    h += `<h3>${t("trend")}</h3><div class="card"><div class="chartbox"><canvas id="c-hours"></canvas></div></div>`;
-    h += `<h3>${t("lastDays")}</h3>` + table(D.log.map(r=>({
-        d:r.date, staff:r.staff, hours:r.hours, ratio:r.ratio})),
-      [["d",t("day"),"s"],["staff",t("staff"),"n"],["hours",t("hrs"),"n1"],
-       ["ratio",t("ratio"),"n1"]], "d");
-  }
-  $("#s-now").innerHTML = h;
-
-  if(D.log.length) setTimeout(()=>chart("c-hours",{type:"line",data:{
-    labels: D.log.map(r=>dmy(r.date)),
-    datasets:[
-      {label:t("actualLine"), data:D.log.map(r=>r.hours), borderColor:css("--accent"),
-       backgroundColor:css("--accent")+"22", tension:.35, fill:true, pointRadius:2.5},
-      {label:t("modelLine"), data:D.log.map(r=>r.hours!=null&&r.ratio!=null?r.hours*r.ratio:null),
-       borderColor:css("--dim"), borderDash:[5,4], tension:.35, pointRadius:0}]},
-    options:{plugins:{legend:{display:true,labels:{boxWidth:10,boxHeight:10,usePointStyle:true}}},
-             scales:{y:{beginAtZero:true}}}}));
-}
-
-function month(){
-  const M=D.month;
-  const done=D.boxes.reduce((a,b)=>a+(b.packed||0),0),
-        tgt=D.boxes.reduce((a,b)=>a+(b.target||0),0);
-  const vcls=/ON TRACK/.test(M.verdict)?"p-ok":/OVERTIME/.test(M.verdict)?"p-warn":"p-bad";
-  let h = `<div class="card">
-    <div class="lbl">${t("packed")}</div>
-    <div class="big">${n0(done)} <span class="unit">${t("of")} ${n0(tgt)}</span></div>
-    <div class="bar"><i style="width:${Math.min(100,100*done/(tgt||1))}%"></i></div>
-    <div class="row" style="margin-top:13px">
-      <div><div class="lbl">${t("hoursDay")}</div><div class="big">${n0(M.hours_day)}</div></div>
-      <div><div class="lbl">${t("daysLeft")}</div><div class="big">${n0(M.days_left)}</div></div>
+  /* ---- today: his plan, then what it would cost, then the alternatives ---- */
+  h+=`<div class="colA"><h3>${t("todayPlan")}</h3><div class="card">
+    <div class="row">
+      <div><div class="lbl">${t("hours")}</div><div class="big">${n0(A.hours)}</div></div>
+      <div><div class="lbl">${t("people")}</div><div class="big">${n1(A.people)}</div></div>
+      <div><div class="lbl">${t("wages")}</div><div class="big">${n0(A.cost)}
+        <span class="unit">${t("sar")}</span></div></div>
     </div>
-    <div style="margin-top:11px"><span class="pill ${vcls}">${esc(M.verdict)}</span></div></div>`;
+    <div style="margin-top:10px"><span class="pill ${/fits/.test(A.fits)?"p-ok":"p-bad"}">${esc(A.fits)}</span></div>
+    <div class="muted" style="margin-top:7px">${esc(D.today.finish_note)}</div></div>`;
 
-  if(M.sens.length){
-    h += `<h3>${t("atPeople")}</h3><div class="card">
-      <div class="chartbox" style="height:150px"><canvas id="c-sens"></canvas></div>
-      <div class="tiny">${t("share")}</div></div>`;
-  }
-  if(M.measured) h += `<div class="card"><div class="lbl">${t("measured")}</div>
-    <div style="margin-top:5px">${esc(M.measured)}</div></div>`;
+  h+=`<h3>${t("suggested")}</h3><div class="card"><div class="scroll"><table>
+    <thead><tr><th></th><th>${t("pieces")}</th><th>${t("boxes")}</th><th>${t("hours")}</th>
+      <th>${t("wages")}</th><th></th></tr></thead><tbody>`
+    + D.plans.slice(1).map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${n0(p.pcs)}</td>
+       <td>${n0(p.boxes)}</td><td>${n0(p.hours)}</td><td>${n0(p.cost)}</td>
+       <td><span class="pill ${/fits/.test(p.fits)?"p-ok":"p-bad"}">${/fits/.test(p.fits)?"✓":"✕"}</span></td></tr>`).join("")
+    + `</tbody></table></div></div>`;
 
-  const top = D.boxes.filter(b=>b.target).sort((a,b)=>(b.target||0)-(a.target||0)).slice(0,8);
-  if(top.length) h += `<h3>${t("progress")} · ${t("top")}</h3><div class="card">
-    <div class="chartbox tall"><canvas id="c-prog"></canvas></div></div>`;
+  /* ---- the shift that was actually worked ---- */
+  if(last){
+    const r=last.ratio, cls=r==null?"":(r<0.85||r>1.15)?"p-warn":"p-ok";
+    const say=r==null?"":r<0.85?t("driftLow"):r>1.15?t("driftHigh"):t("driftOk");
+    h+=`<h3>${t("lastShift")} · ${esc(dmy(last.date))}</h3><div class="card">
+      <div class="row">
+        <div><div class="lbl">${t("made")}</div><div class="mid">${n0(last.made)}</div></div>
+        <div><div class="lbl">${t("packedP")}</div><div class="mid">${n0(last.packed)}</div></div>
+        <div><div class="lbl">${t("hours")}</div><div class="mid">${n1(last.hours)}</div></div>
+        <div><div class="lbl">${t("people")}</div><div class="mid">${n0(last.staff)}</div></div>
+      </div>
+      <div style="margin-top:10px"><span class="pill ${cls}">${t("drift")} ${n1(r)}</span>
+        <span class="muted"> ${esc(say)}</span></div></div>`;
+    h+=`<div class="card"><div class="chartbox"><canvas id="c-h"></canvas></div></div></div>`;
+  } else h+=`</div>`;
 
-  h += `<h3>${t("byBox")}</h3>` + table(D.boxes,
-    [["box",t("box"),"s"],["target",t("target"),"n"],["packed",t("packedC"),"n"],
-     ["left",t("left"),"n"],["perday",t("perDay"),"n1"],["done",t("done"),"p"]], "left");
-  $("#s-month").innerHTML = h;
+  /* ---- what to put the day into ---- */
+  h+=`<div class="colB"><h3>${t("focus")}</h3><div class="card">`;
+  D.focus.forEach(f=>{
+    h+=`<div class="lbl" style="margin-top:4px">${f.kind==="make"?t("focusMake"):t("focusPack")}</div>`;
+    f.items.forEach(i=>h+=`<div class="fo"><span style="flex:1">${esc(i.box)}</span>
+      <b>${n0(i.n)}</b><span class="unit">${t("boxes")}</span>
+      ${i.hours?`<span class="muted">${n0(i.hours)}${t("hours")}</span>`:""}</div>`);
+  });
+  h+=`</div>`;
+
+  /* ---- the month ---- */
+  h+=`<h3>${t("month")}</h3><div class="card">
+    <div class="lbl">${t("monthLeft")}</div>
+    <div class="big">${n0(X.left)} <span class="unit">${L==="ar"?"من":"of"} ${n0(X.target)}</span></div>
+    <div class="bar"><i style="width:${Math.min(100,100*X.packed/(X.target||1))}%"></i></div>
+    <div class="row" style="margin-top:12px">
+      <div><div class="lbl">${t("perDay")}</div><div class="mid">${n0(M.hours_day)}</div></div>
+      <div><div class="lbl">${t("daysLeft")}</div><div class="mid">${n0(M.days_left)}</div></div>
+    </div>
+    <div class="chartbox" style="height:140px;margin-top:8px"><canvas id="c-s"></canvas></div></div>`;
+
+  /* ---- stock, both units, and the two flows ---- */
+  h+=`<h3>${t("stockBox")}</h3><div class="card"><div class="row">
+      <div><div class="lbl">${t("store")}</div><div class="big">${n0(X.store)}</div></div>
+      <div><div class="lbl">${t("fromChef")}</div><div class="mid">${n0(X.recv)}</div></div>
+      <div><div class="lbl">${t("toSales")}</div><div class="mid">${n0(X.out)}</div></div>
+    </div></div>`;
+  h+=`<h3>${t("stockPcs")}</h3><div class="card">
+      <div class="chartbox"><canvas id="c-p"></canvas></div></div></div>`;
+
+  /* ---- sales ---- */
+  h+=`<div class="colC"><h3>${t("salesPlan")}</h3><div class="card"><div class="row">
+      <div><div class="lbl">${t("asked")}</div><div class="mid">${n0(X.asked)}</div></div>
+      <div><div class="lbl">${t("owed")}</div><div class="big">${n0(X.owed)}</div></div>
+    </div>
+    <div class="scroll" style="margin-top:10px"><table><thead><tr>
+      <th>${t("box")}</th><th>${t("asked")}</th><th>${t("owed")}</th>
+      <th>${t("still")}</th><th>${t("store")}</th></tr></thead><tbody>`
+    + D.boxes.filter(b=>(b.asked||0)||(b.left||0)).map(b=>
+      `<tr><td>${esc(b.box)}</td><td>${n0(b.asked)}</td><td><b>${n0(b.owed)}</b></td>
+       <td>${n0(b.left)}</td><td>${n0(b.store)}</td></tr>`).join("")
+    + `</tbody></table></div></div>`;
+
+  /* ---- who is in ---- */
+  h+=`<h3>${t("floor")} · ${D.names.length}</h3><div class="card">`
+    + (D.names.length ? `<div class="names">` +
+        D.names.map(p=>`<span class="name">${esc(p.name)}</span>`).join("") + `</div>`
+      : `<div class="muted">${t("noNames")}</div>`)
+    + `<div class="src">${t("src")}</div></div></div>`;
+
+  $("#main").innerHTML = h;
+  window.__drawn = true;
 
   setTimeout(()=>{
-    if(M.sens.length) chart("c-sens",{type:"bar",data:{
+    if(last) chart("c-h",{type:"line",data:{
+      labels:D.log.map(r=>dmy(r.date)),
+      datasets:[
+        {label:t("actualLine"),data:D.log.map(r=>r.hours),borderColor:css("--accent"),
+         backgroundColor:css("--accent")+"22",tension:.35,fill:true,pointRadius:2.5},
+        {label:t("modelLine"),data:D.log.map(r=>r.hours!=null&&r.ratio!=null?r.hours*r.ratio:null),
+         borderColor:css("--dim"),borderDash:[5,4],tension:.35,pointRadius:0}]},
+      options:{plugins:{legend:{labels:{boxWidth:10,boxHeight:10,usePointStyle:true}}},
+               scales:{y:{beginAtZero:true}}}});
+    if(M.sens.length) chart("c-s",{type:"bar",data:{
       labels:M.sens.map(s=>n0(s.n)),
       datasets:[{data:M.sens.map(s=>s.load==null?null:s.load*100),
         backgroundColor:M.sens.map(s=>s.load>1?css("--bad"):s.load>.9?css("--warn"):css("--ok")),
-        borderRadius:6, barPercentage:.62}]},
+        borderRadius:6,barPercentage:.6}]},
       options:{plugins:{legend:{display:false},
         tooltip:{callbacks:{label:c=>Math.round(c.raw)+"%"}}},
         scales:{y:{beginAtZero:true,ticks:{callback:v=>v+"%"},suggestedMax:120}}}});
-    if(top.length) chart("c-prog",{type:"bar",data:{
-      labels:top.map(b=>b.box),
-      datasets:[{label:t("packedC"),data:top.map(b=>b.packed||0),
-                 backgroundColor:css("--accent"),borderRadius:5,barPercentage:.8},
-                {label:t("left"),data:top.map(b=>b.left||0),
-                 backgroundColor:css("--line"),borderRadius:5,barPercentage:.8}]},
-      options:{indexAxis:"y",plugins:{legend:{labels:{boxWidth:10,boxHeight:10,usePointStyle:true}}},
-        scales:{x:{stacked:true,beginAtZero:true},y:{stacked:true}}}});
-  });
-}
-
-function sales(){
-  const owed=D.boxes.reduce((a,b)=>a+(b.owed||0),0);
-  let h = `<div class="card"><div class="lbl">${t("owed")}</div>
-    <div class="big">${n0(owed)} <span class="unit">${t("boxes")}</span></div>
-    <div class="muted">${t("owedNote")}</div></div>`;
-  const top = D.boxes.filter(b=>b.owed).sort((a,b)=>(b.owed||0)-(a.owed||0)).slice(0,8);
-  if(top.length) h += `<div class="card"><div class="chartbox tall"><canvas id="c-owed"></canvas></div></div>`;
-  h += `<h3>${t("askedPacked")}</h3>` + table(D.boxes,
-    [["box",t("box"),"s"],["asked",t("asked"),"n"],["packed",t("packedC"),"n"],
-     ["owed",t("owed"),"n"],["store",t("inStore"),"n"]], "owed");
-  if(D.days.length){
-    h += `<h3>${t("tenDays")}</h3><div class="card scroll"><table><thead><tr><th>${t("box")}</th>`
-      + D.days.map(d=>`<th>${dmy(d)}</th>`).join("") + `<th>${t("total")}</th><th>${t("left")}</th></tr></thead><tbody>`
-      + D.grid.filter(g=>g.total).map(g=>`<tr><td>${esc(g.box)}</td>`
-        + g.days.map(v=>`<td>${v?n0(v):'<span style="opacity:.25">·</span>'}</td>`).join("")
-        + `<td><b>${n0(g.total)}</b></td><td>${n0(g.left)}</td></tr>`).join("")
-      + `</tbody></table></div>`;
-  }
-  $("#s-sales").innerHTML = h;
-  if(top.length) setTimeout(()=>chart("c-owed",{type:"bar",data:{
-    labels:top.map(b=>b.box),
-    datasets:[{data:top.map(b=>b.owed),backgroundColor:css("--accent"),
-               borderRadius:5,barPercentage:.75}]},
-    options:{indexAxis:"y",plugins:{legend:{display:false}},
-             scales:{x:{beginAtZero:true}}}}));
-}
-
-function store(){
-  const S=D.store;
-  let h = `<div class="card"><div class="lbl">${t("waiting")}</div>
-    <div class="big">${n0(S.boxes)}</div>
-    <div class="muted">${t("waitNote").replace("{d}", S.stocktake?dmy(S.stocktake):"—")}</div></div>`;
-  const gaps=D.boxes.filter(b=>b.gap);
-  if(gaps.length) h += `<div class="card"><div class="lbl">${t("disagree")}</div>` +
-    gaps.map(b=>`<div style="margin-top:7px;display:flex"><span style="flex:1">${esc(b.box)}</span>
-      <b>${b.gap>0?"+":""}${n0(b.gap)}</b></div>`).join("") + `</div>`;
-  const fl = D.flavours.filter(f=>f.box && f.now);
-  if(fl.length) h += `<div class="card"><div class="chartbox tall"><canvas id="c-fl"></canvas></div></div>`;
-  h += `<h3>${t("byFlavour")}</h3>` + table(D.flavours.filter(f=>f.box),
-    [["box",t("box"),"s"],["now",t("inStore"),"n"]], "now");
-  $("#s-store").innerHTML = h;
-  if(fl.length) setTimeout(()=>{
-    const s = fl.slice().sort((a,b)=>b.now-a.now).slice(0,10);
-    chart("c-fl",{type:"bar",data:{labels:s.map(f=>f.box),
-      datasets:[{data:s.map(f=>f.now),backgroundColor:css("--accent"),
+    const ps=D.pieces.filter(p=>p.pcs).sort((a,b)=>b.pcs-a.pcs);
+    if(ps.length) chart("c-p",{type:"bar",data:{labels:ps.map(p=>p.product),
+      datasets:[{data:ps.map(p=>p.pcs),backgroundColor:css("--accent"),
                  borderRadius:5,barPercentage:.75}]},
       options:{indexAxis:"y",plugins:{legend:{display:false}},
                scales:{x:{beginAtZero:true}}}});
-  });
+  },40);
 }
 
 applyTheme();
