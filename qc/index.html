@@ -185,10 +185,10 @@ button { cursor: pointer; }
       workers: 'عدد العمال المفحوصين', notes: 'ملاحظات عامة', notesSub: 'اختياري، تظهر في آخر التقرير',
       checked: 'تم فحص {d} من {t}', stepDown: 'أنقص درجة', stepUp: 'زد درجة', degC: '°م',
       submit: 'رفع التقرير', submitting: 'جارٍ الرفع…', submitMiss: 'ارفع رغم بنود لم تُفحص ({n})',
-      needEmp: 'اختر اسمك أولًا', copyWa: 'نسخ نص الواتساب', openWa: 'فتح واتساب', copied: 'تم النسخ', selectCopy: 'حدد النص وانسخه',
-      localMode: 'رفع التقارير غير مفعّل بعد. تقدر تنسخ التقرير للواتساب.',
+      needEmp: 'اختر اسمك أولًا', dateL: 'التاريخ', timeL: 'الوقت', noteL: 'الملاحظة', shareBtn: 'مشاركة PDF', saveBtn: 'حفظ PDF', preparing: 'جارٍ تجهيز الملف…', pdfFail: 'تعذّر إنشاء ملف PDF، حاول مرة ثانية', histPdf: 'حفظ PDF',
+      localMode: 'رفع التقارير غير مفعّل بعد. تقدر تحفظ التقرير كملف PDF.',
       queueN: 'تقارير بانتظار الرفع: {n}', retry: 'إعادة المحاولة',
-      doneSent: 'تم رفع التقرير', doneQueued: 'حُفظ التقرير على جهازك وسيُرفع عند عودة الاتصال', doneLocal: 'جاهز للنسخ', newCheck: 'فحص جديد', reportText: 'نص التقرير',
+      doneSent: 'تم رفع التقرير', doneQueued: 'حُفظ التقرير على جهازك وسيُرفع عند عودة الاتصال', doneLocal: 'جاهز للحفظ', newCheck: 'فحص جديد',
       mgrTitle: 'رمز المدير', mgrHelp: 'السجل والتصدير للمدير فقط.', mgrBtn: 'عرض السجل', lock: 'قفل',
       from: 'من', to: 'إلى', empAll: 'كل الموظفين', onlyIssues: 'التقارير ذات الملاحظات فقط', refresh: 'تحديث',
       expItems: 'تصدير البنود CSV', expReps: 'تصدير الملخص CSV', openSheet: 'فتح Google Sheets',
@@ -209,10 +209,10 @@ button { cursor: pointer; }
       workers: 'Workers checked', notes: 'General notes', notesSub: 'Optional, added at the end of the report',
       checked: '{d} of {t} checked', stepDown: 'Decrease by one degree', stepUp: 'Increase by one degree', degC: '°C',
       submit: 'Submit report', submitting: 'Uploading…', submitMiss: 'Submit anyway ({n} unchecked)',
-      needEmp: 'Choose your name first', copyWa: 'Copy WhatsApp text', openWa: 'Open WhatsApp', copied: 'Copied', selectCopy: 'Select the text and copy it',
-      localMode: 'Uploading is not enabled yet. You can copy the report to WhatsApp.',
+      needEmp: 'Choose your name first', dateL: 'Date', timeL: 'Time', noteL: 'Note', shareBtn: 'Share PDF', saveBtn: 'Save PDF', preparing: 'Preparing the file…', pdfFail: 'Could not create the PDF. Try again.', histPdf: 'Save PDF',
+      localMode: 'Uploading is not enabled yet. You can save the report as a PDF.',
       queueN: 'Reports waiting to upload: {n}', retry: 'Retry',
-      doneSent: 'Report submitted', doneQueued: 'Saved on this device. It will upload when you are back online', doneLocal: 'Ready to copy', newCheck: 'New check', reportText: 'Report text',
+      doneSent: 'Report submitted', doneQueued: 'Saved on this device. It will upload when you are back online', doneLocal: 'Ready to save', newCheck: 'New check',
       mgrTitle: 'Manager code', mgrHelp: 'History and export are for managers only.', mgrBtn: 'Show history', lock: 'Lock',
       from: 'From', to: 'To', empAll: 'All employees', onlyIssues: 'Reports with issues only', refresh: 'Refresh',
       expItems: 'Export items CSV', expReps: 'Export summary CSV', openSheet: 'Open Google Sheets',
@@ -334,7 +334,7 @@ button { cursor: pointer; }
       body: JSON.stringify(payload), signal: ctl ? ctl.signal : undefined
     }).then(function (r) { return r.json(); }).then(function (j) { clearTimeout(timer); return j; }, function (e) { clearTimeout(timer); throw e; });
   }
-  function errText(code) { var k = 'e_' + (code || 'error'); return T[S.lang][k] ? t(k) : t('e_error'); }
+  function errText(code) { if (code === 'pdf') return t('pdfFail'); var k = 'e_' + (code || 'error'); return T[S.lang][k] ? t(k) : t('e_error'); }
 
   /* ---------- status helpers ---------- */
   function unitStatus(u) {
@@ -386,46 +386,205 @@ button { cursor: pointer; }
     c.items.units.forEach(function (u) { u.action = u.note; });
     return c;
   }
-  function reportText(rep, lang) {
-    var ar = lang === 'ar', L = [], tt = repTotals(rep), issues = [];
-    var shiftName = rep.shift === 'evening' ? T[lang].evening : T[lang].morning;
-    L.push(ar ? '📋 *سجل فحص الجودة اليومي – إيرماين*' : '📋 *Daily Quality Check – Ermine*');
-    L.push((ar ? 'التاريخ: ' : 'Date: ') + dateLong(rep.date, lang) + ' – ' + timeLong(rep.time, lang));
-    L.push((ar ? 'الوردية: ' : 'Shift: ') + shiftName);
-    if (rep.employee) L.push((ar ? 'المفتش: ' : 'Inspector: ') + rep.employee);
-    L.push('');
-    L.push(ar ? '🌡️ *حرارة الثلاجات والمجمدات*' : '🌡️ *Fridge & freezer temperatures*');
-    rep.items.units.forEach(function (u) {
-      var name = nmL(u, lang);
-      if (!u.status) { L.push('⚪ ' + name + (ar ? ': لم يُفحص' : ': not checked'));return; }
-      var line = (u.status === 'ok' ? '✅ ' : '❌ ') + name + ': ' + ltr(u.temp + '°') + ' (' + (ar ? 'الحد ' : 'limit ') + ltr('≤ ' + u.limit + '°') + ')';
-      var note = (u.note || u.action || '').trim();
-      if (u.status === 'bad') { if (note) line += (ar ? ' – الإجراء: ' : ' – action: ') + note; issues.push('• ' + name + ': ' + ltr(u.temp + '°') + (note ? ' – ' + note : '')); }
-      L.push(line);
+  /* ---------- PDF export: draws each page on a canvas (the browser shapes Arabic), then wraps the JPEGs in a PDF ---------- */
+  var PDF_FONT = '"IBM Plex Sans Arabic","Dubai","Segoe UI",Tahoma,"DejaVu Sans",Arial,sans-serif';
+  function strBytes(s) { var b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i) & 255; return b; }
+  function dataUrlBytes(u) { var bin = atob(u.slice(u.indexOf(',') + 1)), b = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return b; }
+
+  function pdfFromJpegs(pages) {
+    var chunks = [], offs = [], len = 0, n = 2 + pages.length * 3;
+    function push(x) { var b = typeof x === 'string' ? strBytes(x) : x; chunks.push(b); len += b.length; }
+    function start(i) { offs[i] = len; push(i + ' 0 obj\n'); }
+    push('%PDF-1.4\n');
+    start(1); push('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+    var kids = pages.map(function (p, i) { return (3 + i * 3) + ' 0 R'; }).join(' ');
+    start(2); push('<< /Type /Pages /Kids [' + kids + '] /Count ' + pages.length + ' >>\nendobj\n');
+    pages.forEach(function (p, i) {
+      var pg = 3 + i * 3, ct = pg + 1, im = pg + 2, cs = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+      start(pg); push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + ct + ' 0 R >>\nendobj\n');
+      start(ct); push('<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream\nendobj\n');
+      start(im); push('<< /Type /XObject /Subtype /Image /Width ' + p.w + ' /Height ' + p.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + p.jpeg.length + ' >>\nstream\n');
+      push(p.jpeg); push('\nendstream\nendobj\n');
     });
-    L.push('');
-    L.push(ar ? '🧼 *نظافة المناطق والمعدات*' : '🧼 *Area & equipment cleanliness*');
-    rep.items.zones.forEach(function (z) {
-      var name = nmL(z, lang), note = (z.note || '').trim();
-      if (!z.status) { L.push('⚪ ' + name + (ar ? ': لم يُفحص' : ': not checked')); return; }
-      L.push((z.status === 'ok' ? '✅ ' : '❌ ') + name + (z.status === 'bad' && note ? ' – ' + note : ''));
-      if (z.status === 'bad') issues.push('• ' + name + (note ? ': ' + note : ''));
-    });
-    L.push('');
-    var w = String(rep.workers || '').trim();
-    L.push((ar ? '👷 *النظافة الشخصية للعمال*' : '👷 *Personal hygiene*') + (w ? (ar ? ' (عدد المفحوصين: ' : ' (workers checked: ') + w + ')' : ''));
-    rep.items.hyg.forEach(function (h) {
-      var name = nmL(h, lang), note = (h.note || '').trim();
-      if (!h.status) { L.push('⚪ ' + name + (ar ? ': لم يُفحص' : ': not checked')); return; }
-      L.push((h.status === 'ok' ? '✅ ' : '❌ ') + name + (h.status === 'bad' && note ? ' – ' + note : ''));
-      if (h.status === 'bad') issues.push('• ' + name + (note ? ': ' + note : ''));
-    });
-    if (issues.length) { L.push(''); L.push(ar ? '⚠️ *تحتاج متابعة*' : '⚠️ *Needs follow-up*'); issues.forEach(function (i) { L.push(i); }); }
-    if ((rep.notes || '').trim()) { L.push(''); L.push(ar ? '📝 *ملاحظات عامة*' : '📝 *General notes*'); L.push(rep.notes.trim()); }
-    L.push('');
-    L.push((ar ? 'الخلاصة: تم فحص ' + tt.done + ' من ' + tt.total + ' – ' : 'Summary: ' + tt.done + ' of ' + tt.total + ' checked – ') + issuesWord(tt.bad, lang));
-    return L.join('\n');
+    var xref = len, x = 'xref\n0 ' + (n + 1) + '\n0000000000 65535 f \n';
+    for (var i = 1; i <= n; i++) x += ('0000000000' + offs[i]).slice(-10) + ' 00000 n \n';
+    push(x + 'trailer\n<< /Size ' + (n + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+    var out = new Uint8Array(len), p0 = 0;
+    chunks.forEach(function (c) { out.set(c, p0); p0 += c.length; });
+    return out;
   }
+
+  function drawReportPages(rep, lang) {
+    var RTL = lang === 'ar', W = 1240, H = 1754, M = 84, CW = W - 2 * M, FOOT = 70;
+    var GREEN = '#014833', INK = '#14201B', DIM = '#66726C', LINE = '#E4E0D8', OK = '#1B7A45', BAD = '#BF2028', BADBG = '#FBE3E0', OKBG = '#E3F1E8';
+    var pages = [], cv, g, y;
+    function font(sz, w) { return (w || 400) + ' ' + sz + 'px ' + PDF_FONT; }
+    function newPage(first) {
+      cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+      g.direction = RTL ? 'rtl' : 'ltr'; g.textBaseline = 'alphabetic';
+      pages.push(cv);
+      if (first) { y = 0; return; }
+      g.fillStyle = GREEN; g.fillRect(0, 0, W, 86);
+      g.fillStyle = '#fff'; g.font = font(30, 600); g.textAlign = RTL ? 'right' : 'left';
+      g.fillText('ERMINE  ·  ' + (T[lang].title), RTL ? W - M : M, 55);
+      y = 86 + 40;
+    }
+    function sx(x) { return RTL ? W - M - x : M + x; }
+    function align() { g.textAlign = RTL ? 'right' : 'left'; }
+    function text(s, x, yy, sz, w, col) { g.font = font(sz, w); g.fillStyle = col || INK; align(); g.fillText(s, sx(x), yy); return g.measureText(s).width; }
+    function wrap(s, maxW, sz, w) {
+      g.font = font(sz, w); var out = [];
+      String(s || '').split(/\n/).forEach(function (para) {
+        var words = para.split(/\s+/).filter(Boolean), line = '';
+        if (!words.length) { out.push(''); return; }
+        words.forEach(function (wd) {
+          var tryLine = line ? line + ' ' + wd : wd;
+          if (g.measureText(tryLine).width <= maxW) { line = tryLine; return; }
+          if (line) out.push(line);
+          if (g.measureText(wd).width <= maxW) { line = wd; return; }
+          line = '';
+          for (var i = 0; i < wd.length; i++) { var t2 = line + wd[i]; if (g.measureText(t2).width > maxW && line) { out.push(line); line = wd[i]; } else line = t2; }
+        });
+        if (line) out.push(line);
+      });
+      return out;
+    }
+    function ensure(h) { if (y + h > H - M - FOOT) newPage(false); }
+    function rrect(x, yy, w, h, r, fill) {
+      var xx = RTL ? W - M - x - w : M + x;
+      g.fillStyle = fill; g.beginPath();
+      g.moveTo(xx + r, yy); g.lineTo(xx + w - r, yy); g.quadraticCurveTo(xx + w, yy, xx + w, yy + r);
+      g.lineTo(xx + w, yy + h - r); g.quadraticCurveTo(xx + w, yy + h, xx + w - r, yy + h);
+      g.lineTo(xx + r, yy + h); g.quadraticCurveTo(xx, yy + h, xx, yy + h - r);
+      g.lineTo(xx, yy + r); g.quadraticCurveTo(xx, yy, xx + r, yy); g.closePath(); g.fill();
+    }
+    function mark(st, cx, cy) {
+      g.beginPath(); g.arc(cx, cy, 17, 0, Math.PI * 2);
+      if (!st) { g.lineWidth = 3; g.strokeStyle = '#B9C2BD'; g.stroke(); return; }
+      g.fillStyle = st === 'ok' ? OK : BAD; g.fill();
+      g.strokeStyle = '#fff'; g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath();
+      if (st === 'ok') { g.moveTo(cx - 7, cy + 1); g.lineTo(cx - 2, cy + 7); g.lineTo(cx + 8, cy - 6); }
+      else { g.moveTo(cx - 6.5, cy - 6.5); g.lineTo(cx + 6.5, cy + 6.5); g.moveTo(cx + 6.5, cy - 6.5); g.lineTo(cx - 6.5, cy + 6.5); }
+      g.stroke();
+    }
+    function ltrText(s, xEdge, yy, sz, w, col, alignLeft) {
+      var d = g.direction; g.direction = 'ltr'; g.font = font(sz, w); g.fillStyle = col; g.textAlign = alignLeft ? 'left' : 'right'; g.fillText(s, xEdge, yy); g.direction = d;
+    }
+    function ltrWidth(s, sz, w) { var d = g.direction; g.direction = 'ltr'; g.font = font(sz, w); var m = g.measureText(s).width; g.direction = d; return m; }
+
+    /* ---- first page header ---- */
+    newPage(true);
+    g.fillStyle = GREEN; g.fillRect(0, 0, W, 200);
+    var d0 = g.direction; g.direction = 'ltr';
+    g.fillStyle = '#fff'; g.font = font(34, 600); g.textAlign = 'left';
+    var letters = 'ERMINE'.split(''), widths = letters.map(function (ch) { return g.measureText(ch).width + 9; }), tot = widths.reduce(function (a, b) { return a + b; }, 0) - 9, cx0 = RTL ? W - M - tot : M;
+    letters.forEach(function (ch, i) { g.fillText(ch, cx0, 78); cx0 += widths[i]; });
+    g.direction = d0;
+    g.fillStyle = '#fff'; g.font = font(58, 600); align(); g.fillText(T[lang].title, sx(0), 156);
+    y = 200 + 44;
+
+    /* ---- meta grid ---- */
+    var shiftName = rep.shift === 'evening' ? T[lang].evening : T[lang].morning;
+    var meta = [[T[lang].dateL, dateLong(rep.date, lang)], [T[lang].timeL, timeLong(rep.time, lang)], [T[lang].employee, rep.employee || '-'], [T[lang].shift, shiftName]];
+    if (String(rep.workers == null ? '' : rep.workers).trim() !== '') meta.push([T[lang].workers, String(rep.workers)]);
+    meta.forEach(function (m, i) {
+      var col = i % 2, row = Math.floor(i / 2), xo = col * (CW / 2), yy = y + row * 92;
+      text(m[0], xo, yy, 24, 400, DIM);
+      var lines = wrap(m[1], CW / 2 - 24, 32, 600);
+      text(lines[0] || '', xo, yy + 40, 32, 600, INK);
+    });
+    y += Math.ceil(meta.length / 2) * 92 + 12;
+
+    /* ---- summary strip ---- */
+    var done = 0, bad = 0, total = 0;
+    ['units', 'zones', 'hyg'].forEach(function (k) { ((rep.items && rep.items[k]) || []).forEach(function (it) { total++; if (it.status) done++; if (it.status === 'bad') bad++; }); });
+    rrect(0, y, CW, 84, 14, bad ? BADBG : OKBG);
+    text(T[lang].checked.replace('{d}', done).replace('{t}', total) + '   ·   ' + issuesWord(bad, lang), 28, y + 54, 32, 600, bad ? BAD : OK);
+    y += 84 + 36;
+
+    /* ---- sections ---- */
+    var secs = [['units', T[lang].sUnits], ['zones', T[lang].sZones], ['hyg', T[lang].sHyg]];
+    secs.forEach(function (sec) {
+      var list = (rep.items && rep.items[sec[0]]) || [];
+      if (!list.length) return;
+      ensure(70 + 90);
+      text(sec[1], 0, y + 34, 38, 600, GREEN);
+      var d = 0; list.forEach(function (it) { if (it.status) d++; });
+      var cnt = d + '/' + list.length, cw = ltrWidth(cnt, 26, 400);
+      ltrText(cnt, RTL ? M : W - M, y + 34, 26, 400, DIM, RTL);
+      g.strokeStyle = GREEN; g.lineWidth = 3; g.beginPath(); g.moveTo(M, y + 52); g.lineTo(W - M, y + 52); g.stroke();
+      y += 52 + 4;
+      list.forEach(function (it) {
+        var isUnit = sec[0] === 'units', valW = isUnit ? 330 : 0, nameW = CW - 64 - valW - 20;
+        var nameLines = wrap(nmL(it, lang), nameW, 30, 500);
+        var note = (it.status === 'bad') ? String(it.note || it.action || '').trim() : '';
+        var noteLines = note ? wrap(T[lang].noteL + ': ' + note, nameW, 26, 400) : [];
+        var rh = 24 + nameLines.length * 42 + (noteLines.length ? noteLines.length * 36 + 6 : 0) + 18;
+        ensure(rh);
+        if (it.status === 'bad') { g.fillStyle = BADBG; g.fillRect(M, y, CW, rh); }
+        mark(it.status, sx(28), y + 38);
+        var ty = y + 46;
+        nameLines.forEach(function (ln, i) { text(ln, 64, ty + i * 42, 30, 500, INK); });
+        ty += (nameLines.length - 1) * 42;
+        noteLines.forEach(function (ln, i) { text(ln, 64, ty + 42 + i * 36, 26, 400, BAD); });
+        if (isUnit) {
+          var vEdge = RTL ? M + 10 : W - M - 10;
+          if (it.status && it.temp != null && it.temp !== '') {
+            var a = String(it.temp) + '°', b2 = '  ≤ ' + it.limit + '°', wa = ltrWidth(a, 34, 600), wb = ltrWidth(b2, 24, 400), x0 = RTL ? vEdge : vEdge - wa - wb;
+            ltrText(a, x0, y + 46, 34, 600, it.status === 'bad' ? BAD : INK, true);
+            ltrText(b2, x0 + wa, y + 46, 24, 400, DIM, true);
+          } else {
+            ltrText('—', vEdge, y + 46, 34, 400, DIM, RTL);
+          }
+        }
+        g.strokeStyle = LINE; g.lineWidth = 2; g.beginPath(); g.moveTo(M, y + rh); g.lineTo(W - M, y + rh); g.stroke();
+        y += rh;
+      });
+      y += 36;
+    });
+
+    /* ---- general notes ---- */
+    if (String(rep.notes || '').trim()) {
+      var nl = wrap(rep.notes.trim(), CW - 56, 28, 400);
+      ensure(80 + nl.length * 40);
+      text(T[lang].notes, 0, y + 34, 38, 600, GREEN);
+      g.strokeStyle = GREEN; g.lineWidth = 3; g.beginPath(); g.moveTo(M, y + 52); g.lineTo(W - M, y + 52); g.stroke();
+      y += 52 + 38;
+      nl.forEach(function (ln, i) { text(ln, 0, y + i * 40, 28, 400, INK); });
+      y += nl.length * 40;
+    }
+
+    /* ---- footers (page count known now) ---- */
+    pages.forEach(function (c, i) {
+      var g2 = c.getContext('2d'); g2.direction = RTL ? 'rtl' : 'ltr';
+      g2.strokeStyle = LINE; g2.lineWidth = 2; g2.beginPath(); g2.moveTo(M, H - M - 36); g2.lineTo(W - M, H - M - 36); g2.stroke();
+      g2.font = font(22, 400); g2.fillStyle = DIM; g2.textAlign = RTL ? 'right' : 'left';
+      g2.fillText('Ermine QC  ·  ' + rep.date, RTL ? W - M : M, H - M - 4);
+      g2.direction = 'ltr'; g2.textAlign = RTL ? 'left' : 'right';
+      g2.fillText((i + 1) + ' / ' + pages.length, RTL ? M : W - M, H - M - 4);
+    });
+    return pages;
+  }
+
+  function pdfFileName(rep) { return 'Ermine-QC-' + String(rep.date || today()).replace(/[^0-9-]/g, '') + '-' + (rep.shift === 'evening' ? 'evening' : 'morning') + '.pdf'; }
+  function makePdf(rep, lang) {
+    var ready = Promise.resolve();
+    try { if (document.fonts && document.fonts.load) ready = Promise.all([document.fonts.load('400 24px "IBM Plex Sans Arabic"'), document.fonts.load('600 24px "IBM Plex Sans Arabic"')]).catch(function () {}); } catch (e) {}
+    return ready.then(function () {
+      var cvs = drawReportPages(rep, lang);
+      var bytes = pdfFromJpegs(cvs.map(function (c) { return { jpeg: dataUrlBytes(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }; }));
+      var name = pdfFileName(rep);
+      try { return new File([bytes], name, { type: 'application/pdf' }); }
+      catch (e) { var b = new Blob([bytes], { type: 'application/pdf' }); b.name = name; return b; }
+    });
+  }
+  function saveFile(file) {
+    var url = URL.createObjectURL(file), a = document.createElement('a');
+    a.href = url; a.download = file.name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 4000);
+  }
+  function canShareFile(file) { try { return !!(navigator.canShare && file && navigator.canShare({ files: [file] })); } catch (e) { return false; } }
 
   /* ---------- views ---------- */
   function gateView() {
@@ -488,19 +647,35 @@ button { cursor: pointer; }
     h += '<section class="panel"><div class="pan-head"><div><h2>' + t('sHyg') + '</h2><p>' + t('sHygSub') + '</p></div><span class="count" data-count="hyg">' + tt.per.hyg + '</span></div>' +
       '<div class="fields" style="padding-top:0;padding-bottom:12px"><div class="field"><label for="workers">' + t('workers') + '</label><input id="workers" class="num" type="number" inputmode="numeric" min="0" data-meta="workers" value="' + esc(f.workers) + '"></div></div>' +
       c.hyg.map(function (x) { return flagRow('hyg', x, t('hOk'), t('hBad')); }).join('') + '</section>';
-    h += '<section class="panel"><div class="pan-head"><div><h2>' + t('notes') + '</h2><p>' + t('notesSub') + '</p></div></div><div class="pad"><textarea id="notes" class="area" data-meta="notes" maxlength="1000" aria-label="' + t('notes') + '">' + esc(f.notes) + '</textarea></div>' +
-      '<div class="btns"><button class="btn alt" data-act="copy"><span data-copy-label>' + t('copyWa') + '</span></button><a id="wa" class="btn alt" href="https://wa.me/" target="_blank" rel="noopener">' + t('openWa') + '</a></div></section>';
+    h += '<section class="panel"><div class="pan-head"><div><h2>' + t('notes') + '</h2><p>' + t('notesSub') + '</p></div></div><div class="pad"><textarea id="notes" class="area" data-meta="notes" maxlength="1000" aria-label="' + t('notes') + '">' + esc(f.notes) + '</textarea></div></section>';
     return h;
   }
 
   function doneView() {
-    var l = S.last, rep = l.rep, msg = l.state === 'sent' ? t('doneSent') : l.state === 'queued' ? t('doneQueued') : t('doneLocal');
+    var l = S.last, rep = l.rep, msg = l.state === 'sent' ? t('doneSent') : l.state === 'queued' ? t('doneQueued') : t('doneLocal'), tt = repTotals(rep);
     return '<section class="panel"><div class="pan-head"><div><h2>' + msg + '</h2><p>' + esc(rep.employee) + ' · ' + dateLong(rep.date, S.lang) + '</p></div></div>' +
       (l.state === 'queued' ? '<div class="pad"><p class="note warn" style="margin:0">' + t('queueN', { n: S.queue.length }) + '</p></div>' : '') +
-      '<div class="pad"><label for="report" style="font-size:12.5px;color:var(--dim)">' + t('reportText') + '</label><textarea id="report" readonly>' + esc(reportText(rep, S.lang)) + '</textarea></div>' +
-      '<div class="btns"><button class="btn" data-act="copy-last"><span data-copy-label>' + t('copyWa') + '</span></button>' +
-      '<a class="btn alt" href="https://wa.me/?text=' + encodeURIComponent(reportText(rep, S.lang)) + '" target="_blank" rel="noopener">' + t('openWa') + '</a></div>' +
+      '<div class="pad"><p class="note ' + (tt.bad ? 'bad' : 'ok') + '" style="margin:0">' + t('checked', { d: tt.done, t: tt.total }) + ' · ' + issuesWord(tt.bad, S.lang) + '</p></div>' +
+      '<div id="pdfErr" class="pad" hidden><p class="note bad" style="margin:0" role="alert">' + t('pdfFail') + '</p></div>' +
+      '<div class="btns"><button class="btn" id="pdfShare" data-act="pdf-share" disabled>' + t('preparing') + '</button>' +
+      '<button class="btn alt" id="pdfSave" data-act="pdf-save" hidden>' + t('saveBtn') + '</button></div>' +
       '<div class="pad"><button class="btn alt" style="width:100%" data-act="newcheck">' + t('newCheck') + '</button></div></section>';
+  }
+  function updateDoneButtons() {
+    var l = S.last, sh = $('#pdfShare'), sv = $('#pdfSave'), er = $('#pdfErr');
+    if (!l || !sh || !sv) return;
+    if (l.pdfErr) { sh.hidden = true; sv.hidden = true; if (er) er.hidden = false; return; }
+    if (!l.file) { sh.hidden = false; sh.disabled = true; sh.textContent = t('preparing'); sv.hidden = true; return; }
+    if (canShareFile(l.file)) { sh.hidden = false; sh.disabled = false; sh.textContent = t('shareBtn'); sv.hidden = false; sv.className = 'btn alt'; sv.textContent = t('saveBtn'); }
+    else { sh.hidden = true; sv.hidden = false; sv.className = 'btn'; sv.textContent = t('saveBtn'); }
+  }
+  function preparePdf() {
+    var l = S.last; if (!l) return;
+    if (l.pdfLang !== S.lang) { l.file = null; l.preparing = false; l.pdfErr = false; }
+    if (l.file || l.preparing) { updateDoneButtons(); return; }
+    l.preparing = true; l.pdfLang = S.lang; updateDoneButtons();
+    makePdf(l.rep, S.lang).then(function (f) { l.file = f; l.preparing = false; if (S.last === l && S.view === 'done') updateDoneButtons(); },
+      function () { l.preparing = false; l.pdfErr = true; if (S.last === l && S.view === 'done') updateDoneButtons(); });
   }
 
   function histFiltered() {
@@ -529,6 +704,7 @@ button { cursor: pointer; }
     });
     if (String(r.workers || '') !== '') h += '<h3>' + t('workers') + '</h3><div>' + esc(r.workers) + '</div>';
     if (r.notes) h += '<h3>' + t('notes') + '</h3><div>' + esc(r.notes) + '</div>';
+    h += '<button class="btn alt sm" data-act="hist-pdf" data-id="' + esc(r.id) + '">' + t('histPdf') + '</button>';
     return h + '</div>';
   }
   function historyView() {
@@ -585,7 +761,7 @@ button { cursor: pointer; }
     }
     if (gate) v.innerHTML = gateView();
     else if (S.view === 'history' && S.apiOn) v.innerHTML = historyView();
-    else if (S.view === 'done' && S.last) v.innerHTML = doneView();
+    else if (S.view === 'done' && S.last) { v.innerHTML = doneView(); preparePdf(); }
     else { S.view = 'check'; v.innerHTML = checkView(); updateChips(); }
     renderBar();
   }
@@ -594,7 +770,7 @@ button { cursor: pointer; }
     if (S.view !== 'check' || (S.apiOn && !S.code)) { b.hidden = true; return; }
     b.hidden = false;
     b.innerHTML = '<div class="bar-in"><div class="prog"><b id="progTxt"></b><small id="progSub"></small><div class="meter"><i id="meter"></i></div></div>' +
-      (S.apiOn ? '<button class="btn" id="submitBtn" data-act="submit"></button>' : '<button class="btn" data-act="copy"><span data-copy-label>' + t('copyWa') + '</span></button>') + '</div>';
+      (S.apiOn ? '<button class="btn" id="submitBtn" data-act="submit"></button>' : '<button class="btn" data-act="pdf-now">' + t('saveBtn') + '</button>') + '</div>';
     derived();
   }
   function updateChips() {
@@ -618,26 +794,9 @@ button { cursor: pointer; }
     Object.keys(tt.per).forEach(function (k) { var c = document.querySelector('[data-count="' + k + '"]'); if (c) c.textContent = tt.per[k]; });
     var sb = $('#submitBtn');
     if (sb) { sb.disabled = S.busy; sb.textContent = S.busy ? t('submitting') : S.confirmMiss ? t('submitMiss', { n: tt.total - tt.done }) : t('submit'); }
-    var wa = $('#wa'); if (wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(reportText(buildReport(), S.lang));
   }
 
   /* ---------- actions ---------- */
-  var flashTimer = null;
-  function flash(btn, msg) {
-    var el = btn && btn.querySelector('[data-copy-label]'); if (!el) return;
-    var orig = el.getAttribute('data-orig') || el.textContent; el.setAttribute('data-orig', orig); el.textContent = msg;
-    clearTimeout(flashTimer); flashTimer = setTimeout(function () { el.textContent = orig; }, 1800);
-  }
-  function copyText(txt, btn) {
-    var fallback = function () {
-      var ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0';
-      document.body.appendChild(ta); ta.select();
-      var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
-      document.body.removeChild(ta); flash(btn, ok ? t('copied') : t('selectCopy'));
-    };
-    try { navigator.clipboard.writeText(txt).then(function () { flash(btn, t('copied')); }, fallback); } catch (e) { fallback(); }
-  }
-
   function flush() {
     if (S.flushing || !S.apiOn || !S.code) return Promise.resolve();
     S.flushing = true;
@@ -747,8 +906,25 @@ button { cursor: pointer; }
     if (act === 'exp-items') { exportItems(); return; }
     if (act === 'exp-reps') { exportReports(); return; }
     if (act === 'submit') { startSubmit(); return; }
-    if (act === 'copy') { copyText(reportText(buildReport(), S.lang), b); return; }
-    if (act === 'copy-last') { copyText(reportText(S.last.rep, S.lang), b); return; }
+    if (act === 'pdf-now') {
+      if (b.disabled) return; b.disabled = true;
+      makePdf(buildReport(), S.lang).then(function (f) { saveFile(f); b.disabled = false; }, function () { b.disabled = false; S.err = 'pdf'; });
+      return;
+    }
+    if (act === 'pdf-save') { if (S.last && S.last.file) saveFile(S.last.file); return; }
+    if (act === 'pdf-share') {
+      var lf = S.last && S.last.file; if (!lf) return;
+      if (canShareFile(lf)) { navigator.share({ files: [lf], title: 'Ermine QC' }).catch(function (e) { if (!e || e.name !== 'AbortError') saveFile(lf); }); }
+      else saveFile(lf);
+      return;
+    }
+    if (act === 'hist-pdf') {
+      var hr = (S.hist.reports || []).filter(function (x) { return x.id === b.dataset.id; })[0]; if (!hr || b.disabled) return;
+      b.disabled = true;
+      makePdf({ date: hr.date, time: String(hr.submittedAt || '').slice(11, 16), shift: hr.shift, employee: hr.employee, workers: hr.workers, notes: hr.notes, items: hr.items || {} }, S.lang)
+        .then(function (f) { saveFile(f); b.disabled = false; }, function () { b.disabled = false; });
+      return;
+    }
     if (act === 'newcheck') { S.view = 'check'; S.last = null; render(); window.scrollTo(0, 0); return; }
     if (act === 'retry') { S.queue.forEach(function (r) { delete r.failed; }); saveQueue(); flush(); render(); return; }
     if (!row) return;
