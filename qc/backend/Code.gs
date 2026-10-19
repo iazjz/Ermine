@@ -67,6 +67,15 @@ function route_(req) {
     case 'list':
       requireCode_(req.managerCode, MANAGER_CODE);
       return list_(req);
+    case 'tasksList':
+      requireCode_(req.managerCode, MANAGER_CODE);
+      return { ok: true, tasks: tasksList_(req) };
+    case 'tasksSave':
+      requireCode_(req.managerCode, MANAGER_CODE);
+      return tasksSave_(req.task);
+    case 'tasksDone':
+      requireCode_(req.managerCode, MANAGER_CODE);
+      return tasksDone_(req.id, req.done);
     default:
       throw new Error('unknown_action');
   }
@@ -268,4 +277,166 @@ function list_(req) {
   }
   out.sort(function (a, b) { return a.submittedAt < b.submittedAt ? 1 : a.submittedAt > b.submittedAt ? -1 : 0; });
   return { ok: true, reports: out.slice(0, 500), sheetUrl: ss.getUrl() };
+}
+
+/* ---------- tasks ---------- *
+ * The manager's task list, kept in a Tasks tab of this same sheet so there is
+ * one store and one code rather than two of each. Ticking a task archives it;
+ * a repeating task rolls to its next date instead.
+ */
+
+var TASK_HEADERS = ['id', 'created_at', 'title', 'owner', 'section', 'due_date',
+                    'due_time', 'priority', 'status', 'repeat', 'notes',
+                    'done_at', 'calendar_event'];
+
+function tasksSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Tasks');
+  if (!sh) {
+    sh = ss.insertSheet('Tasks');
+    sh.appendRow(TASK_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, TASK_HEADERS.length).setFontWeight('bold');
+    // Dates and times kept as TEXT on purpose. A sheet that helpfully reinterprets
+    // 10-11 as 10 November in one locale and 11 October in another is a sheet that
+    // quietly moves your deadlines.
+    sh.getRange('B:B').setNumberFormat('@');
+    sh.getRange('F:G').setNumberFormat('@');
+    sh.getRange('L:L').setNumberFormat('@');
+    sh.setColumnWidth(3, 320);
+    sh.setColumnWidth(11, 280);
+  }
+  return sh;
+}
+
+function tasksRows_() {
+  var sh = tasksSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return { sh: sh, rows: [] };
+  return { sh: sh, rows: sh.getRange(2, 1, last - 1, TASK_HEADERS.length).getValues() };
+}
+
+function taskObj_(r) {
+  return {
+    id: String(r[0]), createdAt: String(r[1]), title: String(r[2]),
+    owner: String(r[3]), section: String(r[4]), due: String(r[5]),
+    time: String(r[6]), priority: String(r[7]), status: String(r[8]),
+    repeat: String(r[9]), notes: String(r[10]), doneAt: String(r[11]),
+    event: String(r[12])
+  };
+}
+
+/* Open tasks by default; the finished ones when asked. Ticking a task is what sends
+   it to the archive - nothing is deleted and nothing changes sheet. */
+function tasksList_(req) {
+  var d = tasksRows_();
+  var want = req && req.archived ? true : false;
+  var out = [];
+  d.rows.forEach(function (r) {
+    if (!String(r[0])) return;
+    var o = taskObj_(r);
+    if ((o.status === 'Done') === want) out.push(o);
+  });
+  out.sort(function (a, b) {
+    var ad = a.due || '9999-99-99', bd = b.due || '9999-99-99';
+    if (ad !== bd) return ad < bd ? -1 : 1;
+    return a.createdAt < b.createdAt ? 1 : -1;
+  });
+  return out;
+}
+
+function tasksSave_(task) {
+  if (!task || !task.title || !String(task.title).trim()) throw new Error('no_title');
+  var d = tasksRows_();
+  var now = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm:ss");
+  var id = String(task.id || '').trim();
+  var row = [
+    id || ('K' + new Date().getTime().toString(36).toUpperCase()),
+    now,
+    clip_(task.title, 200),
+    clip_(task.owner, 60),
+    clip_(task.section, 60),
+    /^\d{4}-\d{2}-\d{2}$/.test(task.due) ? task.due : '',
+    /^\d{2}:\d{2}$/.test(task.time) ? task.time : '',
+    ['High', 'Medium', 'Low'].indexOf(task.priority) >= 0 ? task.priority : 'Medium',
+    ['To do', 'Doing', 'Waiting', 'Done'].indexOf(task.status) >= 0 ? task.status : 'To do',
+    clip_(task.repeat, 20),
+    clip_(task.notes, 600),
+    '',
+    clip_(task.event, 120)
+  ];
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    if (id) {
+      for (var i = 0; i < d.rows.length; i++) {
+        if (String(d.rows[i][0]) === id) {
+          row[1] = String(d.rows[i][1]) || now;   // keep the original created_at
+          row[11] = String(d.rows[i][11]);        // and any done_at already recorded
+          d.sh.getRange(i + 2, 1, 1, TASK_HEADERS.length).setValues([row]);
+          return { ok: true, task: taskObj_(row) };
+        }
+      }
+    }
+    d.sh.appendRow(row);
+    return { ok: true, task: taskObj_(row) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* Tick a task off, or put it back.
+   A repeating task does not close: its date moves to the next occurrence AFTER today
+   and it returns to the open list, because "every week" means the next one is due
+   however late this one was finished. done_at records when it was actually ticked. */
+function tasksDone_(id, done) {
+  if (!id) throw new Error('no_id');
+  var d = tasksRows_();
+  var today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    for (var i = 0; i < d.rows.length; i++) {
+      if (String(d.rows[i][0]) !== String(id)) continue;
+      var r = d.rows[i].slice();
+      if (done === false) {
+        r[8] = 'To do';
+        r[11] = '';
+      } else {
+        var rep = String(r[9] || '').trim();
+        var due = String(r[5] || '');
+        var next = (rep && due) ? nextDue_(due, rep, today) : '';
+        r[11] = today;
+        if (next) { r[5] = next; r[8] = 'To do'; r[12] = ''; }
+        else { r[8] = 'Done'; }
+      }
+      d.sh.getRange(i + 2, 1, 1, TASK_HEADERS.length).setValues([r]);
+      return { ok: true, task: taskObj_(r) };
+    }
+    throw new Error('not_found');
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function nextDue_(due, repeat, today) {
+  var p = due.split('-');
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  var t = today.split('-');
+  var now = new Date(Number(t[0]), Number(t[1]) - 1, Number(t[2]));
+  var step = { 'Daily': 1, 'Weekly': 7, 'Every 2 weeks': 14 }[repeat];
+  var guard = 0;
+  if (step) {
+    while (d <= now && guard++ < 2000) d.setDate(d.getDate() + step);
+  } else if (repeat === 'Monthly' || repeat === 'Quarterly') {
+    var n = (repeat === 'Monthly') ? 1 : 3;
+    while (d <= now && guard++ < 400) {
+      var day = d.getDate();
+      d.setDate(1);
+      d.setMonth(d.getMonth() + n);
+      var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      d.setDate(Math.min(day, last));
+    }
+  } else { return ''; }
+  return Utilities.formatDate(d, TZ, 'yyyy-MM-dd');
 }
