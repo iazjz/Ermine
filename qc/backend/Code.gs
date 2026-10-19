@@ -134,10 +134,10 @@ function ensureSheets_() {
 function readConfig_() {
   var ss = ensureSheets_();
   var sh = ss.getSheetByName('Config');
-  var cfg = { employees: [], units: [], zones: [], hyg: [] };
+  var cfg = { employees: [], units: [], zones: [], hyg: [], checks: [], roles: [], sections: [] };
   var last = sh.getLastRow();
   if (last < 2) return cfg;
-  var rows = sh.getRange(2, 1, last - 1, 7).getValues();
+  var rows = sh.getRange(2, 1, last - 1, 8).getValues();   // col 8 = roles
   rows.forEach(function (r, i) {
     var kind = String(r[0]).trim().toLowerCase();
     if (!kind) return;
@@ -152,7 +152,17 @@ function readConfig_() {
     var en = String(r[3]).trim();
     if (!ar && !en) return;
     var item = { id: id, ar: ar || en, en: en || ar };
-    if (kind === 'employee') {
+    if (kind === 'check') {
+      // The section rides in the `type` column and the roles in a new 8th column, so a
+      // sheet people already have open did not need restructuring.
+      item.section = String(r[4] || '').trim();
+      item.roles = String(r[7] || '').trim();
+      cfg.checks.push(item);
+    } else if (kind === 'role') {
+      cfg.roles.push(item);
+    } else if (kind === 'section') {
+      cfg.sections.push(item);
+    } else if (kind === 'employee') {
       cfg.employees.push(item);
     } else if (kind === 'unit') {
       var type = String(r[4]).trim().toLowerCase() === 'freezer' ? 'freezer' : 'fridge';
@@ -204,14 +214,15 @@ function submit_(rep) {
   var sections = [
     ['temperature', 'units', rep.items.units],
     ['cleanliness', 'zones', rep.items.zones],
-    ['hygiene', 'hyg', rep.items.hyg]
+    ['hygiene', 'hyg', rep.items.hyg],
+    ['checklist', 'checks', rep.items.checks]
   ];
-  var clean = { units: [], zones: [], hyg: [] };
+  var clean = { units: [], zones: [], hyg: [], checks: [] };
   var itemRows = [];
   var done = 0, total = 0, issues = 0;
 
   sections.forEach(function (s) {
-    var list = Array.isArray(s[2]) ? s[2].slice(0, 60) : [];
+    var list = Array.isArray(s[2]) ? s[2].slice(0, 200) : [];
     list.forEach(function (it) {
       var status = cleanStatus_(it.status);
       var temp = s[0] === 'temperature' ? numOrBlank_(it.temp) : '';
@@ -439,4 +450,190 @@ function nextDue_(due, repeat, today) {
     }
   } else { return ''; }
   return Utilities.formatDate(d, TZ, 'yyyy-MM-dd');
+}
+
+
+/* ---------- the role-based checklist ---------- *
+ * The five paper checklists - Chef de Partie, Head Chef, Storekeeper, Maintenance and
+ * the manager's weekly - merged into one catalogue. Every item names the roles it
+ * belongs to, so one list of 127 serves five people without any of them seeing the
+ * other four's work. An item naming no role belongs to everyone, which is how the
+ * original temperature, zone and hygiene items keep working untouched.
+ *
+ * Run seedChecklist() ONCE from the editor to write the catalogue into Config.
+ * After that Config is the source: edit the wording there, tick `hide` to retire a
+ * line, and change the roles column to move an item between people.
+ */
+var CHECK_ROLES = [
+  ['cdp', 'شيف دي بارتي', 'Chef de Partie'],
+  ['head', 'الشيف التنفيذي', 'Head Chef'],
+  ['store', 'أمين المخزن', 'Storekeeper'],
+  ['maint', 'الصيانة', 'Maintenance'],
+  ['qpm', 'مدير الجودة والإنتاج', 'Quality & Production Manager']
+];
+var CHECK_SECTIONS = [
+  ['before', 'قبل الوردية', 'Before shift'],
+  ['after', 'بعد الوردية', 'After shift'],
+  ['receiving', 'استلام المواد الخام', 'Raw material receiving'],
+  ['cold', 'غرفة التبريد', 'Cold store'],
+  ['freezer', 'المجمد', 'Freezer'],
+  ['safety', 'السلامة والتحضير', 'Safety & preparation'],
+  ['preventive', 'الصيانة الوقائية', 'Preventive maintenance'],
+  ['facility', 'فحص المبنى', 'Facility checks'],
+  ['weekly', 'المراجعة الأسبوعية', 'Weekly review']
+];
+var CHECK_CATALOGUE = [
+  ['check', 'b01', 'النظافة الشخصية سليمة — اليدان والزي وغطاء الشعر', 'Personal hygiene OK — hands, uniform, hair covering', 'before', '', false, 'cdp,head'],
+  ['check', 'b02', 'الحالة الصحية سليمة — لا مرض ولا جروح', 'Health condition OK — no illness or wounds', 'before', '', false, 'cdp,head,store'],
+  ['check', 'b03', 'منطقة الإنتاج المكلَّف بها محدَّدة', 'Assigned production area confirmed', 'before', '', false, 'cdp'],
+  ['check', 'b04', 'محطة العمل نظيفة وخالية من التلوث', 'Workstation clean and free from contamination', 'before', '', false, 'cdp'],
+  ['check', 'b05', 'التحقق من نظافة الوردية السابقة', 'Previous cleaning verified', 'before', '', false, 'cdp,head'],
+  ['check', 'b06', 'أدوات ومواد التنظيف متوفرة', 'Cleaning tools and chemicals available', 'before', '', false, 'cdp,head'],
+  ['check', 'b07', 'خطة الإنتاج مُراجَعة', 'Production and batch plan reviewed', 'before', '', false, 'cdp,head'],
+  ['check', 'b08', 'الوصفات المعتمدة متَّبَعة', 'Approved recipes followed', 'before', '', false, 'cdp'],
+  ['check', 'b09', 'المواد الخام متوفرة وضمن الصلاحية', 'Raw materials available and within expiry', 'before', '', false, 'cdp,head'],
+  ['check', 'b10', 'جودة المكونات مُتحقَّق منها', 'Ingredient quality verified', 'before', '', false, 'head'],
+  ['check', 'b11', 'التغليف سليم ونظيف', 'Packaging intact and clean', 'before', '', false, 'cdp'],
+  ['check', 'b12', 'المعدات والقوالب والأدوات نظيفة', 'Equipment, moulds and utensils clean', 'before', '', false, 'cdp'],
+  ['check', 'b13', 'المعايرة مفحوصة بصريًا (إن وُجدت)', 'Calibration visually checked (if applicable)', 'before', '', false, 'cdp'],
+  ['check', 'b14', 'الأفران وأجهزة التمبرنج جاهزة', 'Ovens and tempering machines ready', 'before', '', false, 'cdp'],
+  ['check', 'b15', 'الملصقات والتواريخ وأكواد التشغيلة متوفرة', 'Labels, dates and batch codes available', 'before', '', false, 'cdp'],
+  ['check', 'b16', 'الحضور والتغطية مؤكَّدان', 'Staff attendance and coverage confirmed', 'before', '', false, 'head'],
+  ['check', 'b17', 'نقاط التحكم الحرجة والبرامج التمهيدية مُراجَعة مع الفريق', 'CCPs / PRPs / SSOPs reviewed with the team', 'before', '', false, 'head'],
+  ['check', 'b18', 'المهام موزَّعة بوضوح', 'Tasks assigned clearly', 'before', '', false, 'head'],
+  ['check', 'b19', 'حالة المعدات مؤكَّدة', 'Equipment condition confirmed', 'before', '', false, 'head'],
+  ['check', 'b20', 'ملاحظات الصيانة الوقائية مُراجَعة', 'Preventive maintenance issues reviewed', 'before', '', false, 'head'],
+  ['check', 'b21', 'سجلات حرارة التبريد والتجميد مُراجَعة', 'Chiller and freezer temperature logs reviewed', 'before', '', false, 'head'],
+  ['check', 'b22', 'موازين الحرارة متوفرة', 'Thermometers available', 'before', '', false, 'head'],
+  ['check', 'b23', 'الطلبات الخاصة والانحرافات مُراجَعة', 'Special orders or deviations reviewed', 'before', '', false, 'head'],
+  ['check', 'a01', 'المنطقة نُظِّفت وعُقِّمت', 'Area cleaned and sanitised', 'after', '', false, 'cdp'],
+  ['check', 'a02', 'المعدات والقوالب والصواني نُظِّفت وخُزِّنت', 'Equipment, moulds and trays cleaned and stored', 'after', '', false, 'cdp'],
+  ['check', 'a03', 'المواد الكيميائية استُخدمت وخُزِّنت بشكل صحيح ومنفصل', 'Chemicals used correctly and stored separately', 'after', '', false, 'cdp'],
+  ['check', 'a04', 'المنتجات مخزَّنة على الحرارة الصحيحة', 'Products stored at the correct temperature', 'after', '', false, 'cdp,store'],
+  ['check', 'a05', 'مبدأ الوارد أولًا صادر أولًا مطبَّق', 'FIFO applied', 'after', '', false, 'cdp,store'],
+  ['check', 'a06', 'الهدر والمرفوضات مسجَّلة', 'Waste and rejected items recorded', 'after', '', false, 'cdp,head'],
+  ['check', 'a07', 'الأرضيات والمصارف نُظِّفت', 'Floors and drains cleaned', 'after', '', false, 'cdp'],
+  ['check', 'a08', 'الآلات مُطفأة بأمان', 'Machines switched off safely', 'after', '', false, 'cdp,maint'],
+  ['check', 'a09', 'التبريد والتجميد يعملان بشكل طبيعي', 'Chillers and freezers operating normally', 'after', '', false, 'cdp,store'],
+  ['check', 'a10', 'الانحرافات مُبلَّغ عنها', 'Deviations reported', 'after', '', false, 'cdp,head,store,maint'],
+  ['check', 'a11', 'الإجراءات التصحيحية مدوَّنة', 'Corrective actions noted', 'after', '', false, 'cdp,head,store'],
+  ['check', 'a12', 'كميات الإنتاج مسجَّلة', 'Production quantities recorded', 'after', '', false, 'cdp'],
+  ['check', 'a13', 'المنطقة جاهزة للوردية التالية', 'Area ready for the next shift', 'after', '', false, 'cdp'],
+  ['check', 'a14', 'الإنتاج أُنجز كما هو مخطَّط', 'Production completed as planned', 'after', '', false, 'head'],
+  ['check', 'a15', 'جودة المنتج النهائي مُتحقَّق منها', 'Finished product quality verified', 'after', '', false, 'head'],
+  ['check', 'a16', 'مراقبة نقاط التحكم الحرجة مُراجَعة', 'CCP monitoring reviewed', 'after', '', false, 'head'],
+  ['check', 'a17', 'سجلات الحرارة مُراجَعة وموقَّعة', 'Temperature logs reviewed and signed', 'after', '', false, 'head'],
+  ['check', 'a18', 'فعالية التنظيف مُتحقَّق منها', 'Cleaning effectiveness verified', 'after', '', false, 'head'],
+  ['check', 'a19', 'التخزين ووضع الملصقات والوارد أولًا مؤكَّدة', 'Storage, labelling and FIFO confirmed', 'after', '', false, 'head,store'],
+  ['check', 'a20', 'الإجراءات التصحيحية والوقائية محدَّدة', 'Corrective and preventive actions defined', 'after', '', false, 'head'],
+  ['check', 'a21', 'الهدر وإعادة التشغيل مُراجَعان', 'Waste and rework reviewed', 'after', '', false, 'head'],
+  ['check', 'a22', 'إطفاء المعدات مُتحقَّق منه', 'Equipment shutdown verified', 'after', '', false, 'head,maint'],
+  ['check', 'a23', 'التزام الفريق مُراجَع', 'Staff compliance reviewed', 'after', '', false, 'head'],
+  ['check', 'a24', 'تعليمات الوردية التالية مُجهَّزة', 'Instructions prepared for the next shift', 'after', '', false, 'head'],
+  ['check', 'a25', 'النظافة العامة والإنتاج معتمدان', 'Overall hygiene and production approved', 'after', '', false, 'head'],
+  ['check', 'r01', 'مركبة التوصيل نظيفة ومناسبة', 'Delivery vehicle clean and suitable', 'receiving', '', false, 'store'],
+  ['check', 'r02', 'المورّد معتمد', 'Supplier approved', 'receiving', '', false, 'store'],
+  ['check', 'r03', 'مستندات التوصيل متوفرة', 'Delivery documents available', 'receiving', '', false, 'store'],
+  ['check', 'r04', 'الصنف والكمية مطابقان لأمر الشراء', 'Product and quantity match the purchase order', 'receiving', '', false, 'store'],
+  ['check', 'r05', 'التغليف سليم ونظيف', 'Packaging intact and clean', 'receiving', '', false, 'store'],
+  ['check', 'r06', 'لا تلوث ولا أجسام غريبة', 'No contamination or foreign matter', 'receiving', '', false, 'store'],
+  ['check', 'r07', 'تواريخ الصلاحية مقبولة', 'Expiry dates acceptable', 'receiving', '', false, 'store'],
+  ['check', 'r08', 'حرارة المبرَّد مقبولة', 'Chilled temperature acceptable', 'receiving', '', false, 'store'],
+  ['check', 'r09', 'حرارة المجمَّد مقبولة', 'Frozen temperature acceptable', 'receiving', '', false, 'store'],
+  ['check', 'r10', 'البضائع الجافة خالية من الرطوبة', 'Dry goods free from moisture', 'receiving', '', false, 'store'],
+  ['check', 'r11', 'المرفوضات معزولة', 'Rejected items isolated', 'receiving', '', false, 'store'],
+  ['check', 'r12', 'المقبولات موسومة', 'Accepted items labelled', 'receiving', '', false, 'store'],
+  ['check', 'r13', 'منطقة الاستلام نظيفة', 'Receiving area clean', 'receiving', '', false, 'store'],
+  ['check', 'c01', 'غرفة التبريد نظيفة وبلا روائح', 'Chiller clean and odour-free', 'cold', '', false, 'store'],
+  ['check', 'c02', 'أختام الأبواب سليمة', 'Door seals OK', 'cold', '', false, 'store'],
+  ['check', 'c03', 'الأصناف مرفوعة عن الأرض وبعيدة عن الجدران', 'Items off the floor and away from walls', 'cold', '', false, 'store'],
+  ['check', 'c04', 'الخام ونصف المصنَّع والنهائي مفصولة', 'Raw, semi-finished and finished separated', 'cold', '', false, 'store'],
+  ['check', 'c05', 'الملصقات مكتملة', 'Labels complete', 'cold', '', false, 'store'],
+  ['check', 'c06', 'لا أصناف منتهية الصلاحية', 'No expired items', 'cold', '', false, 'store'],
+  ['check', 'c07', 'الحاويات مغطاة', 'Containers covered', 'cold', '', false, 'store'],
+  ['check', 'c08', 'لا تحميل زائد', 'No overloading', 'cold', '', false, 'store'],
+  ['check', 'c09', 'الانسكابات مُنظَّفة', 'Spills cleaned', 'cold', '', false, 'store'],
+  ['check', 'c10', 'الباب مغلق', 'Door closed', 'cold', '', false, 'store'],
+  ['check', 'f01', 'المجمد نظيف ومرتَّب', 'Freezer clean and organised', 'freezer', '', false, 'store'],
+  ['check', 'f02', 'أختام الأبواب سليمة', 'Door seals OK', 'freezer', '', false, 'store'],
+  ['check', 'f03', 'المنتجات مرصوصة بأمان', 'Products stacked safely', 'freezer', '', false, 'store'],
+  ['check', 'f04', 'الأصناف موسومة', 'Items labelled', 'freezer', '', false, 'store'],
+  ['check', 'f05', 'لا أصناف أُذيبت ثم جُمِّدت', 'No thawed or refrozen items', 'freezer', '', false, 'store'],
+  ['check', 'f06', 'لا تغليف تالف', 'No damaged packaging', 'freezer', '', false, 'store'],
+  ['check', 'f07', 'لا تراكم جليد', 'No ice build-up', 'freezer', '', false, 'store'],
+  ['check', 'f08', 'المجمد غير محمَّل زيادة', 'Freezer not overloaded', 'freezer', '', false, 'store'],
+  ['check', 'f09', 'الباب مغلق', 'Door closed', 'freezer', '', false, 'store'],
+  ['check', 'f10', 'الأصناف المنتهية أو المرفوضة معزولة', 'Expired or rejected items segregated', 'freezer', '', false, 'store'],
+  ['check', 'f11', 'الأصناف قريبة الانتهاء مُبلَّغ عنها', 'Near-expiry items communicated', 'freezer', '', false, 'store'],
+  ['check', 'f12', 'المخزن مؤمَّن', 'Store secured', 'freezer', '', false, 'store'],
+  ['check', 'm01', 'الأدوات متوفرة وبحالة جيدة', 'Tools available and in good condition', 'safety', '', false, 'maint'],
+  ['check', 'm02', 'المنطقة مفحوصة من المخاطر', 'Area checked for hazards', 'safety', '', false, 'maint'],
+  ['check', 'm03', 'لا أسلاك مكشوفة', 'No exposed wiring', 'safety', '', false, 'maint'],
+  ['check', 'm04', 'المشرف مُبلَّغ قبل بدء العمل', 'Supervisor informed before work', 'safety', '', false, 'maint'],
+  ['check', 'm05', 'الخلاطات تعمل بشكل طبيعي', 'Mixers working normally', 'preventive', '', false, 'maint'],
+  ['check', 'm06', 'الأفران تعمل بشكل صحيح', 'Ovens functioning correctly', 'preventive', '', false, 'maint'],
+  ['check', 'm07', 'أجهزة التمبرنج مستقرة', 'Tempering machines stable', 'preventive', '', false, 'maint'],
+  ['check', 'm08', 'الثلاجات والمجمدات تعمل', 'Refrigerators and freezers operating', 'preventive', '', false, 'maint'],
+  ['check', 'm09', 'المراوح والتهوية تعمل', 'Fans and ventilation working', 'preventive', '', false, 'maint'],
+  ['check', 'm10', 'لا تسريبات ماء أو زيت أو غاز', 'No leaks — water, oil or gas', 'preventive', '', false, 'maint'],
+  ['check', 'm11', 'الكابلات والقوابس سليمة', 'Cables and plugs intact', 'preventive', '', false, 'maint'],
+  ['check', 'm12', 'الإضاءة تعمل', 'Lighting operational', 'facility', '', false, 'maint'],
+  ['check', 'm13', 'إمداد المياه مستقر', 'Water supply stable', 'facility', '', false, 'maint'],
+  ['check', 'm14', 'التصريف يجري', 'Drainage flowing', 'facility', '', false, 'maint'],
+  ['check', 'm15', 'الأبواب والمفصلات تعمل', 'Doors and hinges functional', 'facility', '', false, 'maint'],
+  ['check', 'm16', 'الرفوف ثابتة', 'Shelving stable', 'facility', '', false, 'maint'],
+  ['check', 'm17', 'الجدران والأرضيات والأسقف بحالة جيدة', 'Walls, floors and ceilings in good condition', 'facility', '', false, 'maint'],
+  ['check', 'm18', 'الشفاطات والتهوية تعمل', 'Exhaust and ventilation working', 'facility', '', false, 'maint'],
+  ['check', 'm19', 'الأدوات نُظِّفت وخُزِّنت', 'Tools cleaned and stored', 'after', '', false, 'maint'],
+  ['check', 'm20', 'المنطقة نُظِّفت', 'Area cleaned', 'after', '', false, 'maint'],
+  ['check', 'm21', 'المعدات تُركت آمنة', 'Equipment left safe', 'after', '', false, 'maint'],
+  ['check', 'm22', 'الملاحظات أُبلغت للمشرف', 'Issues communicated to the supervisor', 'after', '', false, 'maint'],
+  ['check', 'w01', 'المخطَّط مقابل الفعلي مُراجَع', 'Plan versus actual reviewed', 'weekly', '', false, 'qpm'],
+  ['check', 'w02', 'الانحرافات محدَّدة', 'Deviations identified', 'weekly', '', false, 'qpm'],
+  ['check', 'w03', 'جودة المنتج مُتحقَّق منها', 'Product quality verified', 'weekly', '', false, 'qpm'],
+  ['check', 'w04', 'الفاقد وإعادة التشغيل مُراجَعان', 'Losses and rework reviewed', 'weekly', '', false, 'qpm'],
+  ['check', 'w05', 'الإجراءات التصحيحية محدَّدة', 'Corrective actions defined', 'weekly', '', false, 'qpm'],
+  ['check', 'w06', 'قوائم الفحص اليومية مُراجَعة', 'Daily checklists reviewed', 'weekly', '', false, 'qpm'],
+  ['check', 'w07', 'سجلات نقاط التحكم الحرجة مُراجَعة', 'CCP records reviewed', 'weekly', '', false, 'qpm'],
+  ['check', 'w08', 'سجلات الحرارة مُتحقَّق منها', 'Temperature logs verified', 'weekly', '', false, 'qpm'],
+  ['check', 'w09', 'سجلات التنظيف مُراجَعة', 'Cleaning records reviewed', 'weekly', '', false, 'qpm'],
+  ['check', 'w10', 'الالتزام بالنظافة مُلاحَظ', 'Hygiene compliance observed', 'weekly', '', false, 'qpm'],
+  ['check', 'w11', 'استخدام معدات الوقاية مُتحقَّق منه', 'PPE usage verified', 'weekly', '', false, 'qpm'],
+  ['check', 'w12', 'احتياجات التدريب محدَّدة', 'Training needs identified', 'weekly', '', false, 'qpm'],
+  ['check', 'w13', 'ظروف التخزين مُتحقَّق منها', 'Storage conditions verified', 'weekly', '', false, 'qpm'],
+  ['check', 'w14', 'الوارد أولًا والأقرب انتهاءً أولًا متَّبعان', 'FIFO / FEFO followed', 'weekly', '', false, 'qpm'],
+  ['check', 'w15', 'قريب الانتهاء مضبوط', 'Near-expiry controlled', 'weekly', '', false, 'qpm'],
+  ['check', 'w16', 'الفصل بين الأصناف مؤكَّد', 'Segregation confirmed', 'weekly', '', false, 'qpm'],
+  ['check', 'w17', 'سجلات الصيانة مُراجَعة', 'Maintenance logs reviewed', 'weekly', '', false, 'qpm'],
+  ['check', 'w18', 'الملاحظات المفتوحة متابَعة', 'Outstanding issues tracked', 'weekly', '', false, 'qpm'],
+  ['check', 'w19', 'حالة المبنى مقبولة', 'Facility condition acceptable', 'weekly', '', false, 'qpm'],
+  ['check', 'w20', 'السجلات مكتملة', 'Records complete', 'weekly', '', false, 'qpm'],
+  ['check', 'w21', 'موقَّعة ومؤرَّخة', 'Signed and dated', 'weekly', '', false, 'qpm'],
+  ['check', 'w22', 'محفوظة بشكل صحيح', 'Filed correctly', 'weekly', '', false, 'qpm']
+];
+
+
+function seedChecklist() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var cfg = ss.getSheetByName('Config') || ensureSheets_().getSheetByName('Config');
+  var last = cfg.getLastRow();
+  var have = {};
+  if (last > 1) {
+    cfg.getRange(2, 1, last - 1, 2).getValues().forEach(function (r) {
+      have[String(r[0]).trim().toLowerCase() + '|' + String(r[1]).trim()] = true;
+    });
+  }
+  if (cfg.getRange(1, 8).getValue() !== 'roles') cfg.getRange(1, 8).setValue('roles');
+  var add = [];
+  CHECK_ROLES.forEach(function (r) {
+    if (!have['role|' + r[0]]) add.push(['role', r[0], r[1], r[2], '', '', false, '']);
+  });
+  CHECK_SECTIONS.forEach(function (x) {
+    if (!have['section|' + x[0]]) add.push(['section', x[0], x[1], x[2], '', '', false, '']);
+  });
+  CHECK_CATALOGUE.forEach(function (c) {
+    if (!have['check|' + c[1]]) add.push(c);
+  });
+  if (add.length) cfg.getRange(cfg.getLastRow() + 1, 1, add.length, 8).setValues(add);
+  return 'added ' + add.length + ' row(s); skipped ' + (CHECK_CATALOGUE.length + CHECK_ROLES.length + CHECK_SECTIONS.length - add.length) + ' already there';
 }

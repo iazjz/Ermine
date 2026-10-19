@@ -179,7 +179,7 @@ button { cursor: pointer; }
 (function () {
   'use strict';
   var CFG = window.ERMINE_QC || {};
-  var KEY = { lang: 'eqc.lang', code: 'eqc.code', cfg: 'eqc.cfg', draft: 'eqc.draft', queue: 'eqc.queue', emp: 'eqc.emp', shift: 'eqc.shift' };
+  var KEY = { lang: 'eqc.lang', code: 'eqc.code', cfg: 'eqc.cfg', draft: 'eqc.draft', queue: 'eqc.queue', emp: 'eqc.emp', shift: 'eqc.shift', role: 'eqc.role' };
 
   /* ---------- storage (every call guarded: private tabs can throw) ---------- */
   function sget(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -196,6 +196,9 @@ button { cursor: pointer; }
       docTitle: 'Ermine QC', title: 'فحص الجودة اليومي', tabCheck: 'الفحص', tabHist: 'السجل',
       gateTitle: 'رمز الفريق', gateHelp: 'اطلب الرمز من مدير الجودة. يُحفظ على هذا الجهاز مرة واحدة.', gateBtn: 'دخول', gateWait: 'جارٍ التحقق…',
       employee: 'الموظف', chooseEmp: 'اختر اسمك', shift: 'الوردية', morning: 'صباحية', evening: 'مسائية',
+      role: 'الدور', chooseRole: 'اختر دورك', needRole: 'اختر الدور والتاريخ والوردية أولًا',
+      lockedSub: 'لن تظهر بنود الفحص قبل اختيار الدور — كل دور له قائمته.',
+      sChecks: 'قائمة الدور', sChecksSub: 'البنود الخاصة بدورك في هذه الوردية',
       sUnits: 'حرارة الثلاجات والمجمدات', sUnitsSub: 'سجّل القراءة الحالية لكل وحدة',
       sZones: 'نظافة المناطق والمعدات', sZonesSub: 'نظيف أو يحتاج معالجة، ولو احتاج اكتب السبب',
       sHyg: 'النظافة الشخصية للعمال', sHygSub: 'فحص العمال عند بداية الوردية',
@@ -232,6 +235,9 @@ button { cursor: pointer; }
       docTitle: 'Ermine QC', title: 'Daily quality check', tabCheck: 'Check', tabHist: 'History',
       gateTitle: 'Team code', gateHelp: 'Ask the quality manager for the code. It is saved on this device once.', gateBtn: 'Enter', gateWait: 'Checking…',
       employee: 'Employee', chooseEmp: 'Choose your name', shift: 'Shift', morning: 'Morning', evening: 'Evening',
+      role: 'Role', chooseRole: 'Choose your role', needRole: 'Choose the role, date and shift first',
+      lockedSub: 'The checklist stays hidden until a role is chosen — each role has its own.',
+      sChecks: 'Your checklist', sChecksSub: 'The items your role is responsible for this shift',
       sUnits: 'Fridge & freezer temperatures', sUnitsSub: 'Record the current reading for each unit',
       sZones: 'Area & equipment cleanliness', sZonesSub: 'Clean or needs action; add the reason if it does',
       sHyg: 'Personal hygiene of workers', sHygSub: 'Check workers at the start of the shift',
@@ -306,8 +312,8 @@ button { cursor: pointer; }
     ]
   };
   function normConfig(c) {
-    var o = { employees: [], units: [], zones: [], hyg: [] };
-    ['employees', 'units', 'zones', 'hyg'].forEach(function (k) { o[k] = Array.isArray(c && c[k]) ? c[k] : []; });
+    var o = { employees: [], units: [], zones: [], hyg: [], checks: [], roles: [] };
+    ['employees', 'units', 'zones', 'hyg', 'checks', 'roles'].forEach(function (k) { o[k] = Array.isArray(c && c[k]) ? c[k] : []; });
     if (!o.units.length && !o.zones.length && !o.hyg.length) return DEFAULTS;
     return o;
   }
@@ -338,7 +344,7 @@ button { cursor: pointer; }
 
   /* ---------- state ---------- */
   function emptyForm() {
-    return { day: today(), employee: sget(KEY.emp) || '', shift: sget(KEY.shift) || 'morning', workers: '', notes: '', units: {}, zones: {}, hyg: {} };
+    return { day: today(), role: sget(KEY.role) || '', employee: sget(KEY.emp) || '', shift: sget(KEY.shift) || 'morning', workers: '', notes: '', units: {}, zones: {}, hyg: {}, checks: {} };
   }
   function loadDraft() {
     var d = jget(KEY.draft, null), f = emptyForm();
@@ -379,6 +385,40 @@ button { cursor: pointer; }
   }
   function errText(code) { if (code === 'pdf') return t('pdfFail'); var k = 'e_' + (code || 'error'); return T[S.lang][k] ? t(k) : t('e_error'); }
 
+  /* ---------- roles ---------- *
+   * An item with no roles listed belongs to everyone - that is how the five original
+   * items (temperatures, zones, hygiene) keep working without being re-tagged. An item
+   * that names roles is shown only to those, which is what turns one 127-line catalogue
+   * into the twenty-odd lines any one person is actually responsible for.             */
+  function inRole(it, role) {
+    var r = (it && it.roles ? String(it.roles) : '').trim();
+    if (!r) return true;
+    if (!role) return false;
+    return r.split(',').some(function (x) { return x.trim() === role; });
+  }
+  function myChecks() {
+    return (S.config.checks || []).filter(function (it) { return inRole(it, S.form.role); });
+  }
+  function bySection(list) {
+    var order = [], map = {};
+    list.forEach(function (it) {
+      var k = it.section || 'other';
+      if (!map[k]) { map[k] = []; order.push(k); }
+      map[k].push(it);
+    });
+    return order.map(function (k) { return { id: k, items: map[k] }; });
+  }
+  function sectionName(id) {
+    var s = (S.config.sections || []).filter(function (x) { return x.id === id; })[0];
+    return s ? (S.lang === 'ar' ? s.ar : s.en) : id;
+  }
+  /* Nothing may be filled in before we know who is filling it, for which day and which
+     shift. A tick with no role attached is a tick nobody owns. */
+  function ready() {
+    var f = S.form;
+    return !!(f.role && f.day && f.shift);
+  }
+
   /* ---------- status helpers ---------- */
   function unitStatus(u) {
     var r = S.form.units[u.id], v = r ? parseFloat(r.temp) : NaN;
@@ -392,7 +432,7 @@ button { cursor: pointer; }
   }
   function totals() {
     var c = S.config, done = 0, bad = 0, total = 0, per = {};
-    var groups = [['units', c.units, unitStatus], ['zones', c.zones, function (z) { return flagStatus(S.form.zones, z.id); }], ['hyg', c.hyg, function (h) { return flagStatus(S.form.hyg, h.id); }]];
+    var groups = [['units', c.units, unitStatus], ['zones', c.zones, function (z) { return flagStatus(S.form.zones, z.id); }], ['hyg', c.hyg, function (h) { return flagStatus(S.form.hyg, h.id); }], ['checks', myChecks(), function (x) { return flagStatus(S.form.checks, x.id); }]];
     groups.forEach(function (g) {
       var d = 0;
       g[1].forEach(function (it) { total++; var s = g[2](it); if (s) { done++; d++; } if (s === 'bad') bad++; });
@@ -402,7 +442,7 @@ button { cursor: pointer; }
   }
   function repTotals(rep) {
     var done = 0, bad = 0, total = 0;
-    ['units', 'zones', 'hyg'].forEach(function (k) {
+    ['units', 'zones', 'hyg', 'checks'].forEach(function (k) {
       ((rep.items && rep.items[k]) || []).forEach(function (it) { total++; if (it.status) done++; if (it.status === 'bad') bad++; });
     });
     return { done: done, bad: bad, total: total };
@@ -412,8 +452,13 @@ button { cursor: pointer; }
   function buildReport() {
     var f = S.form, c = S.config;
     return {
-      id: uid(), date: today(), time: nowHM(), shift: f.shift, employee: f.employee.trim(), workers: f.workers, notes: f.notes, lang: S.lang,
+      id: uid(), date: today(), time: nowHM(), shift: f.shift, role: f.role, employee: f.employee.trim(), workers: f.workers, notes: f.notes, lang: S.lang,
       items: {
+        checks: myChecks().map(function (x) {
+          var r = f.checks[x.id] || {}, st = flagStatus(f.checks, x.id);
+          return { id: x.id, ar: x.ar, en: x.en, section: x.section, roles: x.roles,
+                   limit: null, temp: null, status: st, note: st === 'bad' ? (r.note || '') : '' };
+        }),
         units: c.units.map(function (u) {
           var r = f.units[u.id] || {}, st = unitStatus(u);
           return { id: u.id, ar: u.ar, en: u.en, type: u.type, limit: u.limit, temp: st ? parseFloat(r.temp) : null, status: st, note: st === 'bad' ? (r.action || '') : '' };
@@ -680,10 +725,35 @@ button { cursor: pointer; }
 
   function checkView() {
     var c = S.config, f = S.form, tt = totals(), h = '<div id="banner">' + bannerHtml() + '</div>';
-    h += '<section class="panel"><div class="pad" style="padding-bottom:0"><b>' + t('dateL') + ': ' + dateLong(today(), S.lang) + '</b></div><div class="fields two"><div class="field"><label for="emp">' + t('employee') + '</label>' + empControl() + '</div>' +
+    var roleOpts = (c.roles || []).map(function (r) {
+      return '<option value="' + esc(r.id) + '"' + (f.role === r.id ? ' selected' : '') + '>' + esc(S.lang === 'ar' ? r.ar : r.en) + '</option>';
+    }).join('');
+    h += '<section class="panel"><div class="pad" style="padding-bottom:0"><b>' + t('dateL') + ': ' + dateLong(today(), S.lang) + '</b></div>' +
+      '<div class="fields two"><div class="field"><label for="role">' + t('role') + '</label>' +
+      '<select id="role" data-meta="role"><option value="">' + t('chooseRole') + '</option>' + roleOpts + '</select></div>' +
+      '<div class="field"><label for="emp">' + t('employee') + '</label>' + empControl() + '</div></div>' +
+      '<div class="fields two"><div class="field"><label for="emp2" style="visibility:hidden">.</label></div>' +
       '<div class="field"><label for="shift">' + t('shift') + '</label><select id="shift" data-meta="shift"><option value="morning"' + (f.shift === 'morning' ? ' selected' : '') + '>' + t('morning') + '</option>' +
       '<option value="evening"' + (f.shift === 'evening' ? ' selected' : '') + '>' + t('evening') + '</option></select></div></div>' +
-      (S.err ? '<p class="note bad" role="alert" style="margin:0 14px 14px">' + esc(S.err === 'needEmp' ? t('needEmp') : errText(S.err)) + '</p>' : '') + '</section>';
+      (S.err ? '<p class="note bad" role="alert" style="margin:0 14px 14px">' + esc(S.err === 'needEmp' ? t('needEmp') : S.err === 'needRole' ? t('needRole') : errText(S.err)) + '</p>' : '') + '</section>';
+
+    /* Nothing below this line exists until the role, the day and the shift are known.
+       A half-filled checklist with no owner is worse than an empty one: it looks done. */
+    if (!ready()) {
+      h += '<section class="panel"><div class="pan-head"><div><h2>' + t('needRole') + '</h2><p>' + t('lockedSub') + '</p></div></div></section>';
+      return h;
+    }
+
+    var mine = myChecks();
+    if (mine.length) {
+      bySection(mine).forEach(function (grp) {
+        var d = 0;
+        grp.items.forEach(function (it) { if (flagStatus(S.form.checks, it.id)) d++; });
+        h += '<section class="panel"><div class="pan-head"><div><h2>' + esc(sectionName(grp.id)) + '</h2><p>' + t('sChecksSub') + '</p></div>' +
+          '<span class="count">' + d + '/' + grp.items.length + '</span></div>' +
+          grp.items.map(function (x) { return flagRow('checks', x, t('zOk'), t('zBad')); }).join('') + '</section>';
+      });
+    }
     h += '<section class="panel"><div class="pan-head"><div><h2>' + t('sUnits') + '</h2><p>' + t('sUnitsSub') + '</p></div><span class="count" data-count="units">' + tt.per.units + '</span></div>' + c.units.map(unitRow).join('') + '</section>';
     h += '<section class="panel"><div class="pan-head"><div><h2>' + t('sZones') + '</h2><p>' + t('sZonesSub') + '</p></div><span class="count" data-count="zones">' + tt.per.zones + '</span></div>' +
       c.zones.map(function (z) { return flagRow('zones', z, t('zOk'), t('zBad')); }).join('') + '</section>';
@@ -862,12 +932,13 @@ button { cursor: pointer; }
 
   function startSubmit() {
     if (S.busy) return;
+    if (!S.form.role) { S.err = 'needRole'; render(); var r0 = $('#role'); if (r0) { r0.focus(); r0.scrollIntoView({ block: 'center' }); } return; }
     if (!S.form.employee.trim()) { S.err = 'needEmp'; render(); var e = $('#emp'); if (e) { e.focus(); e.scrollIntoView({ block: 'center' }); } return; }
     S.err = '';
     var rep = buildReport(), tt = repTotals(rep), miss = tt.total - tt.done;
     if (miss > 0 && !S.confirmMiss) { S.confirmMiss = true; derived(); setTimeout(function () { S.confirmMiss = false; derived(); }, 6000); return; }
     S.confirmMiss = false;
-    sset(KEY.emp, S.form.employee); sset(KEY.shift, S.form.shift);
+    sset(KEY.emp, S.form.employee); sset(KEY.shift, S.form.shift); sset(KEY.role, S.form.role);
     S.queue.push(rep); saveQueue();
     S.last = { rep: rep, state: 'queued' };
     S.form = emptyForm(); saveDraft();
@@ -1265,7 +1336,7 @@ button { cursor: pointer; }
   });
   document.addEventListener('change', function (e) {
     var el = e.target;
-    if (el.dataset.meta === 'employee' || el.dataset.meta === 'shift') { S.form[el.dataset.meta] = el.value; saveDraft(); return; }
+    if (el.dataset.meta === 'employee' || el.dataset.meta === 'shift' || el.dataset.meta === 'role') { S.form[el.dataset.meta] = el.value; saveDraft(); if (el.dataset.meta === 'role') { sset(KEY.role, el.value); S.err = ''; render(); } return; }
     if (el.dataset.h) {
       var k = el.dataset.h;
       S.hist[k] = el.type === 'checkbox' ? el.checked : el.value;
