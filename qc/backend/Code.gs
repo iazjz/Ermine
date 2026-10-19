@@ -12,6 +12,7 @@ var TZ = 'Asia/Riyadh';
 var REPORT_HEADERS = ['id', 'submitted_at', 'date', 'shift', 'employee', 'workers', 'done', 'total', 'issues', 'notes', 'lang', 'items_json'];
 var ITEM_HEADERS = ['report_id', 'date', 'time', 'shift', 'employee', 'section', 'item_ar', 'item_en', 'value', 'limit', 'status', 'note'];
 var CONFIG_HEADERS = ['kind', 'id', 'ar', 'en', 'type', 'limit', 'hide'];
+var ACTION_HEADERS = ['id', 'created_at', 'updated_at', 'report_id', 'date', 'section', 'item_id', 'item_ar', 'item_en', 'employee', 'problem', 'owner', 'action', 'due', 'status', 'closed_at'];
 
 var DEFAULT_CONFIG = [
   ['unit', 'u1', 'ثلاجة التحضير', 'Prep fridge', 'fridge', 5],
@@ -67,6 +68,12 @@ function route_(req) {
     case 'list':
       requireCode_(req.managerCode, MANAGER_CODE);
       return list_(req);
+    case 'actions':
+      requireCode_(req.managerCode, MANAGER_CODE);
+      return actions_();
+    case 'action_save':
+      requireCode_(req.managerCode, MANAGER_CODE);
+      return actionSave_(req.entry);
     default:
       throw new Error('unknown_action');
   }
@@ -112,6 +119,17 @@ function ensureSheets_() {
     cfg.getRange(2, 1, DEFAULT_CONFIG.length, 6).setValues(DEFAULT_CONFIG);
     cfg.getRange(2, 7, 300, 1).insertCheckboxes();
     cfg.getRange('H1').setValue('kind: employee | unit | zone | hygiene.  type: fridge | freezer.  limit: max °C.  hide: tick to hide a row.');
+  }
+  var acts = ss.getSheetByName('Actions');
+  if (!acts) {
+    acts = ss.insertSheet('Actions');
+    acts.appendRow(ACTION_HEADERS);
+    acts.setFrozenRows(1);
+    acts.getRange(1, 1, 1, ACTION_HEADERS.length).setFontWeight('bold');
+    acts.getRange('B:C').setNumberFormat('@');
+    acts.getRange('E:E').setNumberFormat('@');
+    acts.getRange('N:N').setNumberFormat('@');
+    acts.getRange('P:P').setNumberFormat('@');
   }
   if (made) {
     ['Sheet1', 'ورقة1'].forEach(function (n) {
@@ -256,16 +274,88 @@ function list_(req) {
   if (last > 1) {
     var rows = rs.getRange(2, 1, last - 1, REPORT_HEADERS.length).getValues();
     rows.forEach(function (r) {
-      var d = String(r[2]);
+      var d = cellStr_(r[2], 'yyyy-MM-dd');
       if (d < from || d > to) return;
       var items = {};
       try { items = JSON.parse(r[11]); } catch (e) { items = {}; }
       out.push({
-        id: String(r[0]), submittedAt: String(r[1]), date: d, shift: String(r[3]), employee: String(r[4]),
+        id: String(r[0]), submittedAt: cellStr_(r[1], "yyyy-MM-dd'T'HH:mm:ssXXX"), date: d, shift: String(r[3]), employee: String(r[4]),
         workers: r[5], done: r[6], total: r[7], issues: r[8], notes: String(r[9]), lang: String(r[10]), items: items
       });
     });
   }
   out.sort(function (a, b) { return a.submittedAt < b.submittedAt ? 1 : a.submittedAt > b.submittedAt ? -1 : 0; });
   return { ok: true, reports: out.slice(0, 500), sheetUrl: ss.getUrl() };
+}
+
+// Sheets sometimes turns a typed date into a real Date; read both forms as the same text.
+function cellStr_(v, fmt) {
+  if (v instanceof Date) return Utilities.formatDate(v, TZ, fmt);
+  return String(v == null ? '' : v);
+}
+
+/* ---------- corrective actions ---------- */
+
+function actionRow_(r) {
+  return {
+    id: String(r[0]), createdAt: cellStr_(r[1], "yyyy-MM-dd'T'HH:mm:ssXXX"), updatedAt: cellStr_(r[2], "yyyy-MM-dd'T'HH:mm:ssXXX"),
+    reportId: String(r[3]), date: cellStr_(r[4], 'yyyy-MM-dd'), section: String(r[5]), itemId: String(r[6]),
+    itemAr: String(r[7]), itemEn: String(r[8]), employee: String(r[9]), problem: String(r[10]),
+    owner: String(r[11]), action: String(r[12]), due: cellStr_(r[13], 'yyyy-MM-dd'),
+    status: String(r[14]) === 'done' ? 'done' : 'open', closedAt: cellStr_(r[15], "yyyy-MM-dd'T'HH:mm:ssXXX")
+  };
+}
+
+function actions_() {
+  var sh = ensureSheets_().getSheetByName('Actions');
+  var last = sh.getLastRow(), out = [];
+  if (last > 1) {
+    sh.getRange(2, 1, last - 1, ACTION_HEADERS.length).getValues().forEach(function (r) { if (r[0]) out.push(actionRow_(r)); });
+  }
+  out.sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0; });
+  return { ok: true, actions: out.slice(0, 1000) };
+}
+
+function actionSave_(e) {
+  if (!e || typeof e !== 'object') throw new Error('invalid_action');
+  var section = e.section === 'units' || e.section === 'zones' || e.section === 'hyg' ? e.section : '';
+  var reportId = String(e.reportId || '');
+  var itemId = clip_(e.itemId, 60);
+  var due = /^\d{4}-\d{2}-\d{2}$/.test(e.due) ? e.due : '';
+  var status = e.status === 'done' ? 'done' : 'open';
+  var owner = clip_(e.owner, 80), action = clip_(e.action, 500);
+  if (!section || !itemId || !/^[A-Za-z0-9_-]{8,64}$/.test(reportId)) throw new Error('invalid_action');
+  if (!owner || !action) throw new Error('invalid_action');
+  var date = /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  var stamp = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm:ssXXX");
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = ensureSheets_().getSheetByName('Actions');
+    var last = sh.getLastRow(), rowNo = 0, old = null;
+    if (last > 1) {
+      var rows = sh.getRange(2, 1, last - 1, ACTION_HEADERS.length).getValues();
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var same = e.id ? String(r[0]) === String(e.id) : (String(r[3]) === reportId && String(r[5]) === section && String(r[6]) === itemId);
+        if (same) { rowNo = i + 2; old = r; break; }
+      }
+    }
+    if (e.id && !rowNo) throw new Error('not_found');
+    var closedAt = status === 'done' ? (old && String(old[14]) === 'done' && old[15] ? cellStr_(old[15], "yyyy-MM-dd'T'HH:mm:ssXXX") : stamp) : '';
+    var row;
+    if (rowNo) {
+      row = [old[0], old[1], stamp, old[3], old[4], old[5], old[6], old[7], old[8], old[9], old[10], safe_(owner), safe_(action), due, status, closedAt];
+      sh.getRange(rowNo, 1, 1, ACTION_HEADERS.length).setValues([row]);
+    } else {
+      var id = 'a' + Utilities.formatDate(new Date(), TZ, 'yyMMddHHmmss') + Math.random().toString(36).slice(2, 7);
+      row = [id, stamp, stamp, reportId, date, section, itemId, safe_(clip_(e.itemAr, 120)), safe_(clip_(e.itemEn, 120)),
+        safe_(clip_(e.employee, 80)), safe_(clip_(e.problem, 300)), safe_(owner), safe_(action), due, status, closedAt];
+      sh.appendRow(row);
+    }
+    return { ok: true, action: actionRow_(row) };
+  } finally {
+    lock.releaseLock();
+  }
 }

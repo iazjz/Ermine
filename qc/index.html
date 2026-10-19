@@ -140,6 +140,26 @@ button { cursor: pointer; }
 .empty { padding: 26px 14px; text-align: center; color: var(--dim); }
 #report { width: 100%; min-height: 240px; background: var(--field); border: 1px solid var(--line); border-radius: 9px; padding: 12px; font-size: 14px; line-height: 1.7; white-space: pre-wrap; resize: vertical; }
 @media (max-width: 380px) { .fields.two, .filters { grid-template-columns: 1fr; } }
+.seg3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px; }
+.seg3 button { min-height: 44px; border-radius: 9px; border: 1px solid var(--line); background: var(--field); font-weight: 500; }
+.seg3 button[aria-pressed="true"] { background: var(--okbg); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.act { border-top: 1px solid var(--line); padding: 12px 14px; display: grid; gap: 6px; }
+.act .det { font-size: 14px; }
+.act .det.dim { color: var(--dim); font-size: 13px; }
+.act .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.act .editor { display: grid; gap: 10px; margin-top: 6px; }
+.chip.warn { background: rgba(184,101,15,.14); color: var(--warn); }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px 14px; }
+.kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--field); }
+.kpi small { display: block; font-size: 12.5px; color: var(--dim); }
+.kpi b { display: block; font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 2px 0; }
+.kpi .vs { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.kpi .vs.good { color: var(--ok); }
+.kpi .vs.badc { color: var(--bad); }
+.kv { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 14px; }
+.kv > span { min-width: 0; }
+.kv small { display: block; font-size: 12.5px; color: var(--dim); }
+.kv b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -189,12 +209,24 @@ button { cursor: pointer; }
       localMode: 'رفع التقارير غير مفعّل بعد. تقدر تحفظ التقرير كملف PDF.',
       queueN: 'تقارير بانتظار الرفع: {n}', retry: 'إعادة المحاولة',
       doneSent: 'تم رفع التقرير', doneQueued: 'حُفظ التقرير على جهازك وسيُرفع عند عودة الاتصال', doneLocal: 'جاهز للحفظ', newCheck: 'فحص جديد',
-      mgrTitle: 'رمز المدير', mgrHelp: 'السجل والتصدير للمدير فقط.', mgrBtn: 'عرض السجل', lock: 'قفل',
+      mgrTitle: 'رمز المدير', mgrHelp: 'السجل والإجراءات والتقرير الأسبوعي للمدير فقط.', mgrBtn: 'دخول', lock: 'قفل',
       from: 'من', to: 'إلى', empAll: 'كل الموظفين', onlyIssues: 'التقارير ذات الملاحظات فقط', refresh: 'تحديث',
       expItems: 'تصدير البنود CSV', expReps: 'تصدير الملخص CSV', openSheet: 'فتح Google Sheets',
       loading: 'جارٍ التحميل…', none: 'لا توجد تقارير في هذه الفترة', noIssues: 'بدون ملاحظات', histSum: '{r} تقرير، {i}',
-      e_bad_code: 'الرمز غير صحيح', e_net: 'تعذّر الاتصال، حاول مرة ثانية', e_setup_incomplete: 'لم يكتمل إعداد الخدمة', e_error: 'حدث خطأ، حاول مرة ثانية',
-      noteWait: 'رفض الخادم تقريرًا، تأكد من البيانات وأعد المحاولة'
+      e_bad_code: 'الرمز غير صحيح', e_net: 'تعذّر الاتصال، حاول مرة ثانية', e_setup_incomplete: 'لم يكتمل إعداد الخدمة', e_invalid_action: 'بيانات الإجراء غير صحيحة', e_not_found: 'الإجراء غير موجود', e_error: 'حدث خطأ، حاول مرة ثانية',
+      noteWait: 'رفض الخادم تقريرًا، تأكد من البيانات وأعد المحاولة',
+      tabAct: 'الإجراءات', tabWk: 'الأسبوعي',
+      actOpen: 'مفتوحة', actLate: 'متأخرة', actDoneL: 'مغلقة', actAll: 'الكل', actTitle: 'الإجراءات التصحيحية',
+      actNoAct: 'مشاكل بدون إجراء', actNoActSub: 'مشاكل آخر 45 يومًا لم يُفتح لها إجراء', actNoActNone: 'كل المشاكل لها إجراء',
+      actCreate: 'إنشاء إجراء', actEdit: 'تعديل', actClose: 'تم الإغلاق', actReopen: 'إعادة فتح',
+      actOwner: 'المسؤول', actWhat: 'الإجراء المطلوب', actDue: 'الموعد', actSave: 'حفظ', actCancel: 'إلغاء',
+      actNone: 'لا توجد إجراءات', actNeed: 'اكتب المسؤول والإجراء أولًا', actOverdue: 'متأخر', actClosedOn: 'أُغلق {d}',
+      actDueOn: 'الموعد {d}', actFrom: 'فحص {d}', actExport: 'تصدير الإجراءات CSV', probTemp: 'الحرارة {t}° والحد {l}°',
+      wkTitle: 'التقرير الأسبوعي', wkSummary: 'ملخص الأسبوع', wkPrev: 'الأسبوع السابق', wkNext: 'الأسبوع التالي', wkReports: 'التقارير', wkRate: 'نسبة المطابقة',
+      wkIssues: 'المشاكل', wkOpenActs: 'إجراءات مفتوحة', wkVs: 'السابق: {v}', wkTop: 'أكثر البنود تكرارًا للمشاكل',
+      wkBySec: 'حسب القسم', wkByEmp: 'حسب الموظف', wkByDay: 'حسب اليوم', wkTemps: 'أعلى قراءة حرارة', wkNoData: 'لا توجد تقارير في هذا الأسبوع',
+      wkTimes: '{n} مرة', wkNoProb: 'لم تُسجَّل مشاكل', wkNoActWarn: '{n} مشكلة بدون إجراء. افتح تبويب الإجراءات', wkLateWarn: '{n} إجراء متأخر',
+      wkRepN: '{n} تقرير', wkOver: 'خارج الحد {n}', secUnits: 'الحرارة', secZones: 'نظافة المناطق', secHyg: 'النظافة الشخصية', wkNoReps: 'بدون تقارير'
     },
     en: {
       docTitle: 'Ermine QC', title: 'Daily quality check', tabCheck: 'Check', tabHist: 'History',
@@ -213,12 +245,24 @@ button { cursor: pointer; }
       localMode: 'Uploading is not enabled yet. You can save the report as a PDF.',
       queueN: 'Reports waiting to upload: {n}', retry: 'Retry',
       doneSent: 'Report submitted', doneQueued: 'Saved on this device. It will upload when you are back online', doneLocal: 'Ready to save', newCheck: 'New check',
-      mgrTitle: 'Manager code', mgrHelp: 'History and export are for managers only.', mgrBtn: 'Show history', lock: 'Lock',
+      mgrTitle: 'Manager code', mgrHelp: 'History, actions and the weekly report are for managers only.', mgrBtn: 'Enter', lock: 'Lock',
       from: 'From', to: 'To', empAll: 'All employees', onlyIssues: 'Reports with issues only', refresh: 'Refresh',
       expItems: 'Export items CSV', expReps: 'Export summary CSV', openSheet: 'Open Google Sheets',
       loading: 'Loading…', none: 'No reports in this period', noIssues: 'No issues', histSum: '{r} reports, {i}',
       e_bad_code: 'Wrong code', e_net: 'Could not connect. Try again.', e_setup_incomplete: 'Backend setup is not finished', e_error: 'Something went wrong. Try again.',
-      noteWait: 'The server rejected a report. Check the data and retry'
+      noteWait: 'The server rejected a report. Check the data and retry',
+      tabAct: 'Actions', tabWk: 'Weekly',
+      actOpen: 'Open', actLate: 'Overdue', actDoneL: 'Closed', actAll: 'All', actTitle: 'Corrective actions',
+      actNoAct: 'Issues without an action', actNoActSub: 'Issues in the last 45 days with no action opened', actNoActNone: 'Every issue has an action',
+      actCreate: 'Create action', actEdit: 'Edit', actClose: 'Mark closed', actReopen: 'Reopen',
+      actOwner: 'Owner', actWhat: 'Action required', actDue: 'Due date', actSave: 'Save', actCancel: 'Cancel',
+      actNone: 'No actions', actNeed: 'Enter the owner and the action first', actOverdue: 'Overdue', actClosedOn: 'Closed {d}',
+      actDueOn: 'Due {d}', actFrom: 'Check of {d}', actExport: 'Export actions CSV', probTemp: 'Temp {t}° (limit {l}°)',
+      wkTitle: 'Weekly report', wkSummary: 'Week summary', wkPrev: 'Previous week', wkNext: 'Next week', wkReports: 'Reports', wkRate: 'Compliance',
+      wkIssues: 'Issues', wkOpenActs: 'Open actions', wkVs: 'Before: {v}', wkTop: 'Most repeated issues',
+      wkBySec: 'By section', wkByEmp: 'By employee', wkByDay: 'By day', wkTemps: 'Highest temperature reading', wkNoData: 'No reports this week',
+      wkTimes: '{n} times', wkNoProb: 'No issues recorded', wkNoActWarn: '{n} issues have no action. Open the Actions tab', wkLateWarn: '{n} overdue actions',
+      wkRepN: '{n} reports', wkOver: '{n} over limit', secUnits: 'Temperatures', secZones: 'Area cleanliness', secHyg: 'Personal hygiene', wkNoReps: 'No reports'
     }
   };
   function t(k, v) {
@@ -240,11 +284,8 @@ button { cursor: pointer; }
   var DEFAULTS = {
     employees: [],
     units: [
-      { id: 'u1', ar: 'ثلاجة التحضير', en: 'Prep fridge', type: 'fridge', limit: 5 },
-      { id: 'u2', ar: 'ثلاجة الألبان والكريمة', en: 'Dairy & cream fridge', type: 'fridge', limit: 5 },
-      { id: 'u3', ar: 'ثلاجة المنتج النهائي', en: 'Finished product fridge', type: 'fridge', limit: 5 },
-      { id: 'u4', ar: 'مجمد 1', en: 'Freezer 1', type: 'freezer', limit: -18 },
-      { id: 'u5', ar: 'مجمد المخزن', en: 'Storage freezer', type: 'freezer', limit: -18 }
+      { id: 'u1', ar: 'ثلاجة', en: 'Fridge', type: 'fridge', limit: 5 },
+      { id: 'u4', ar: 'فريزر', en: 'Freezer', type: 'freezer', limit: -18 }
     ],
     zones: [
       { id: 'z1', ar: 'منطقة الاستلام', en: 'Receiving area' },
@@ -316,7 +357,9 @@ button { cursor: pointer; }
     busy: false, flushing: false, confirmMiss: false, err: '', gateErr: '', gateBusy: false,
     last: null,
     mgr: mget('eqc.mgr'),
-    hist: { loading: false, err: '', reports: null, sheetUrl: '', from: daysAgo(29), to: today(), emp: '', onlyIssues: false, open: {}, mgrErr: '' }
+    hist: { loading: false, err: '', reports: null, sheetUrl: '', from: daysAgo(29), to: today(), emp: '', onlyIssues: false, open: {}, mgrErr: '' },
+    act: { loading: false, err: '', list: null, reports: null, filter: 'open', edit: null, busy: false, formErr: '' },
+    wk: { loading: false, err: '', reports: null, start: weekStartOf(today()), week: '' }
   };
   if (!Array.isArray(S.queue)) S.queue = [];
   S.form = loadDraft();
@@ -709,12 +752,7 @@ button { cursor: pointer; }
   }
   function historyView() {
     var h = S.hist;
-    if (!S.mgr) {
-      return '<section class="panel"><div class="pan-head"><div><h2>' + t('mgrTitle') + '</h2><p>' + t('mgrHelp') + '</p></div></div><div class="fields">' +
-        '<div class="field"><label for="mgr-code">' + t('mgrTitle') + '</label><input id="mgr-code" class="txt" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false"></div>' +
-        (h.mgrErr ? '<p class="note bad" role="alert">' + esc(errText(h.mgrErr)) + '</p>' : '') +
-        '<button class="btn" data-act="mgr">' + t('mgrBtn') + '</button></div></section>';
-    }
+    if (!S.mgr) return mgrGateHtml();
     var reps = h.reports, emps = {}, out = '';
     (reps || []).forEach(function (r) { emps[r.employee] = 1; });
     var empOpts = '<option value="">' + t('empAll') + '</option>' + Object.keys(emps).sort().map(function (e) { return '<option value="' + esc(e) + '"' + (e === h.emp ? ' selected' : '') + '>' + esc(e) + '</option>'; }).join('');
@@ -756,11 +794,15 @@ button { cursor: pointer; }
     var gate = S.apiOn && !S.code, tabs = $('#tabs'), v = $('#view');
     tabs.hidden = gate || !S.apiOn;
     if (!tabs.hidden) {
-      tabs.innerHTML = '<button data-act="tab" data-v="check"' + (S.view !== 'history' ? ' aria-current="page"' : '') + '>' + t('tabCheck') + '</button>' +
-        '<button data-act="tab" data-v="history"' + (S.view === 'history' ? ' aria-current="page"' : '') + '>' + t('tabHist') + '</button>';
+      tabs.innerHTML = [['check', 'tabCheck'], ['history', 'tabHist'], ['actions', 'tabAct'], ['weekly', 'tabWk']].map(function (x) {
+        var on = x[0] === 'check' ? (S.view !== 'history' && S.view !== 'actions' && S.view !== 'weekly') : S.view === x[0];
+        return '<button data-act="tab" data-v="' + x[0] + '"' + (on ? ' aria-current="page"' : '') + '>' + t(x[1]) + '</button>';
+      }).join('');
     }
     if (gate) v.innerHTML = gateView();
     else if (S.view === 'history' && S.apiOn) v.innerHTML = historyView();
+    else if (S.view === 'actions' && S.apiOn) v.innerHTML = actionsView();
+    else if (S.view === 'weekly' && S.apiOn) v.innerHTML = weeklyView();
     else if (S.view === 'done' && S.last) { v.innerHTML = doneView(); preparePdf(); }
     else { S.view = 'check'; v.innerHTML = checkView(); updateChips(); }
     renderBar();
@@ -857,14 +899,14 @@ button { cursor: pointer; }
     api({ action: 'list', managerCode: S.mgr, from: h.from, to: h.to }, 30000).then(function (res) {
       h.loading = false;
       if (res && res.ok) { h.reports = res.reports || []; h.sheetUrl = res.sheetUrl || ''; }
-      else if (res && res.error === 'bad_code') { S.mgr = ''; mdel('eqc.mgr'); h.mgrErr = 'bad_code'; h.reports = null; }
+      else if (res && res.error === 'bad_code') { mgrBad(); }
       else h.err = (res && res.error) || 'error';
       render();
     }).catch(function () { h.loading = false; h.err = 'net'; render(); });
   }
   function tryMgr() {
     var v = (($('#mgr-code') || {}).value || '').trim(); if (!v) return;
-    S.mgr = v; mset('eqc.mgr', v); S.hist.mgrErr = ''; loadHistory();
+    S.mgr = v; mset('eqc.mgr', v); S.hist.mgrErr = ''; loadManagerView();
   }
 
   function csvCell(v) { var s = String(v == null ? '' : v); if (/^[=+\-@]/.test(s) && isNaN(Number(s))) s = "'" + s; return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
@@ -892,15 +934,281 @@ button { cursor: pointer; }
     download('ermine-qc-reports-' + today() + '.csv', rows);
   }
 
+  /* ---------- manager views: actions + weekly ---------- */
+  function ymd(d) { return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); }
+  function addDays(s, n) { var d = parseDay(s); d.setDate(d.getDate() + n); return ymd(d); }
+  function weekStartOf(s) { var d = parseDay(s); d.setDate(d.getDate() - d.getDay()); return ymd(d); }
+  function dayShort(s, lang) {
+    try { return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(parseDay(s)); }
+    catch (e) { return s; }
+  }
+  function dayMonth(s, lang) {
+    try { return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', { day: 'numeric', month: 'long' }).format(parseDay(s)); }
+    catch (e) { return s; }
+  }
+  function mgrGateHtml() {
+    var h = S.hist;
+    return '<section class="panel"><div class="pan-head"><div><h2>' + t('mgrTitle') + '</h2><p>' + t('mgrHelp') + '</p></div></div><div class="fields">' +
+      '<div class="field"><label for="mgr-code">' + t('mgrTitle') + '</label><input id="mgr-code" class="txt" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false"></div>' +
+      (h.mgrErr ? '<p class="note bad" role="alert">' + esc(errText(h.mgrErr)) + '</p>' : '') +
+      '<button class="btn" data-act="mgr">' + t('mgrBtn') + '</button></div></section>';
+  }
+  function mgrBad() {
+    S.mgr = ''; mdel('eqc.mgr'); S.hist.mgrErr = 'bad_code'; S.hist.reports = null; S.act.list = null; S.act.reports = null; S.wk.reports = null;
+  }
+  function mgrApi(payload, ms) {
+    payload.managerCode = S.mgr;
+    return api(payload, ms || 30000).then(function (res) {
+      if (res && res.error === 'bad_code') { mgrBad(); throw new Error('bad_code'); }
+      if (!res || !res.ok) throw new Error((res && res.error) || 'error');
+      return res;
+    });
+  }
+  function loadManagerView() {
+    if (S.view === 'history') loadHistory(); else if (S.view === 'actions') loadActions(); else if (S.view === 'weekly') loadWeekly();
+  }
+  function problemKey(r, sec, it) { return r.id + '|' + sec + '|' + it.id; }
+  function probText(sec, it) {
+    var s = sec === 'units' && it.temp != null && it.temp !== '' ? t('probTemp', { t: it.temp, l: it.limit }) : '';
+    if (it.note) s += (s ? ' — ' : '') + it.note;
+    return s;
+  }
+  function problemsOf(reps) {
+    var out = [];
+    (reps || []).forEach(function (r) {
+      ['units', 'zones', 'hyg'].forEach(function (sec) {
+        ((r.items && r.items[sec]) || []).forEach(function (it) { if (it.status === 'bad') out.push({ key: problemKey(r, sec, it), rep: r, sec: sec, it: it }); });
+      });
+    });
+    out.sort(function (a, b) { return a.rep.date < b.rep.date ? 1 : a.rep.date > b.rep.date ? -1 : (a.rep.submittedAt < b.rep.submittedAt ? 1 : -1); });
+    return out;
+  }
+  function actionKeys() {
+    var m = {};
+    ((S.act.list) || []).forEach(function (a) { m[a.reportId + '|' + a.section + '|' + a.itemId] = a; });
+    return m;
+  }
+  function isLate(a) { return a.status !== 'done' && a.due && a.due < today(); }
+
+  function loadActions() {
+    var a = S.act; a.loading = true; a.err = ''; render();
+    Promise.all([
+      mgrApi({ action: 'actions' }),
+      mgrApi({ action: 'list', from: daysAgo(44), to: today() })
+    ]).then(function (rs) {
+      a.loading = false; a.list = rs[0].actions || []; a.reports = rs[1].reports || []; render();
+    }).catch(function (e) { a.loading = false; a.err = e && e.message === 'bad_code' ? '' : (e && e.message && e.message !== 'Failed to fetch' ? e.message : 'net'); render(); });
+  }
+  function nameOf(a) { return a['item' + (S.lang === 'ar' ? 'Ar' : 'En')] || a.itemAr || a.itemEn || ''; }
+  function actionRowHtml(a) {
+    var late = isLate(a), done = a.status === 'done', edit = S.act.edit && S.act.edit.mode === 'edit' && S.act.edit.id === a.id;
+    var chip = done ? '<span class="chip ok">' + t('actDoneL') + '</span>' : late ? '<span class="chip bad">' + t('actOverdue') + '</span>' : '<span class="chip warn">' + t('actOpen') + '</span>';
+    var h = '<div class="act"><div class="rowtop"><div class="nm">' + esc(nameOf(a)) + '<small>' + t('actFrom', { d: dayMonth(a.date, S.lang) }) + (a.employee ? ' · ' + esc(a.employee) : '') + '</small></div>' + chip + '</div>';
+    if (a.problem) h += '<div class="det dim">' + esc(a.problem) + '</div>';
+    h += '<div class="det"><b>' + esc(a.owner) + '</b> — ' + esc(a.action) + '</div>';
+    var meta = [];
+    if (a.due) meta.push(t('actDueOn', { d: dayMonth(a.due, S.lang) }));
+    if (done && a.closedAt) meta.push(t('actClosedOn', { d: dayMonth(a.closedAt.slice(0, 10), S.lang) }));
+    if (meta.length) h += '<div class="det dim">' + meta.join(' · ') + '</div>';
+    if (edit) h += editorHtml(a);
+    else h += '<div class="acts"><button class="btn sm' + (done ? ' alt' : '') + '" data-act="act-toggle" data-id="' + esc(a.id) + '">' + (done ? t('actReopen') : t('actClose')) + '</button>' +
+      '<button class="btn alt sm" data-act="act-edit" data-id="' + esc(a.id) + '">' + t('actEdit') + '</button></div>';
+    return h + '</div>';
+  }
+  function editorHtml(a) {
+    var emps = (S.config.employees || []).map(function (e) { return '<option value="' + esc(nmL(e, S.lang)) + '"></option>'; }).join('');
+    return '<div class="editor"><div class="field"><label for="ae-owner">' + t('actOwner') + '</label><input id="ae-owner" class="txt" list="ae-emps" value="' + esc(a ? a.owner : '') + '" maxlength="80"><datalist id="ae-emps">' + emps + '</datalist></div>' +
+      '<div class="field"><label for="ae-action">' + t('actWhat') + '</label><textarea id="ae-action" class="area" maxlength="500">' + esc(a ? a.action : '') + '</textarea></div>' +
+      '<div class="field"><label for="ae-due">' + t('actDue') + '</label><input id="ae-due" type="date" value="' + esc(a ? a.due : addDays(today(), 3)) + '"></div>' +
+      (S.act.formErr ? '<p class="note bad" role="alert" style="margin:0">' + esc(S.act.formErr) + '</p>' : '') +
+      '<div class="acts"><button class="btn sm" data-act="act-save"' + (S.act.busy ? ' disabled' : '') + '>' + t('actSave') + '</button><button class="btn alt sm" data-act="act-cancel">' + t('actCancel') + '</button></div></div>';
+  }
+  function actionsView() {
+    if (!S.mgr) return mgrGateHtml();
+    var a = S.act, out = '';
+    var list = a.list || [], open = list.filter(function (x) { return x.status !== 'done'; }), late = list.filter(isLate);
+    out += '<section class="panel"><div class="pan-head"><div><h2>' + t('actTitle') + '</h2><p>' + t('actOpen') + ': ' + open.length + ' · ' + t('actLate') + ': ' + late.length + '</p></div></div>' +
+      '<div class="seg3" style="padding-top:0">' + [['open', t('actOpen')], ['done', t('actDoneL')], ['all', t('actAll')]].map(function (f) {
+        return '<button data-act="act-filter" data-v="' + f[0] + '" aria-pressed="' + (a.filter === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="btns" style="padding-top:0"><button class="btn" data-act="act-load"' + (a.loading ? ' disabled' : '') + '>' + (a.loading ? t('loading') : t('refresh')) + '</button><button class="btn alt" data-act="lock">' + t('lock') + '</button></div></section>';
+    if (a.err) out += '<p class="note bad" role="alert">' + esc(errText(a.err)) + '</p>';
+    if (a.list) {
+      var keys = actionKeys(), probs = problemsOf(a.reports).filter(function (p) { return !keys[p.key]; });
+      out += '<section class="panel"><div class="pan-head"><div><h2>' + t('actNoAct') + '</h2><p>' + t('actNoActSub') + '</p></div><span class="count">' + probs.length + '</span></div>';
+      if (!probs.length) out += '<div class="empty">' + t('actNoActNone') + '</div>';
+      probs.forEach(function (p) {
+        var editing = a.edit && a.edit.mode === 'new' && a.edit.key === p.key;
+        out += '<div class="act"><div class="rowtop"><div class="nm">' + esc(nmL(p.it, S.lang)) + '<small>' + esc(dayMonth(p.rep.date, S.lang)) + ' · ' + esc(p.rep.employee) + '</small></div><span class="chip bad">' + t(p.sec === 'units' ? 'chipBad' : p.sec === 'zones' ? 'zBad' : 'hBad') + '</span></div>';
+        var pt = probText(p.sec, p.it); if (pt) out += '<div class="det dim">' + esc(pt) + '</div>';
+        out += editing ? editorHtml(null) : '<div class="acts"><button class="btn sm" data-act="act-new" data-key="' + esc(p.key) + '">' + t('actCreate') + '</button></div>';
+        out += '</div>';
+      });
+      out += '</section>';
+      var shown = list.filter(function (x) { return a.filter === 'all' || (a.filter === 'done' ? x.status === 'done' : x.status !== 'done'); });
+      shown.sort(function (x, y) { var lx = isLate(x) ? 0 : 1, ly = isLate(y) ? 0 : 1; return lx !== ly ? lx - ly : (x.due || '9999') < (y.due || '9999') ? -1 : 1; });
+      out += '<section class="panel"><div class="pan-head"><div><h2>' + t('actTitle') + '</h2></div><span class="count">' + shown.length + '</span></div>';
+      if (!shown.length) out += '<div class="empty">' + t('actNone') + '</div>';
+      shown.forEach(function (x) { out += actionRowHtml(x); });
+      if (list.length) out += '<div class="pad" style="padding-top:12px"><button class="btn alt" style="width:100%" data-act="act-export">' + t('actExport') + '</button></div>';
+      out += '</section>';
+    }
+    return out;
+  }
+  function saveAction() {
+    var a = S.act, ed = a.edit; if (!ed || a.busy) return;
+    var owner = (($('#ae-owner') || {}).value || '').trim(), what = (($('#ae-action') || {}).value || '').trim(), due = (($('#ae-due') || {}).value || '');
+    if (!owner || !what) { a.formErr = t('actNeed'); render(); return; }
+    var entry;
+    if (ed.mode === 'edit') {
+      var x = (a.list || []).filter(function (q) { return q.id === ed.id; })[0]; if (!x) return;
+      entry = { id: x.id, reportId: x.reportId, section: x.section, itemId: x.itemId, date: x.date, owner: owner, action: what, due: due, status: x.status };
+    } else {
+      var p = problemsOf(a.reports).filter(function (q) { return q.key === ed.key; })[0]; if (!p) return;
+      entry = { reportId: p.rep.id, section: p.sec, itemId: p.it.id, itemAr: p.it.ar, itemEn: p.it.en, employee: p.rep.employee, problem: probText(p.sec, p.it), date: p.rep.date, owner: owner, action: what, due: due, status: 'open' };
+    }
+    a.busy = true; a.formErr = ''; render();
+    sendAction(entry);
+  }
+  function sendAction(entry) {
+    var a = S.act;
+    mgrApi({ action: 'action_save', entry: entry }, 30000).then(function (res) {
+      a.busy = false; a.edit = null; a.formErr = '';
+      var saved = res.action, i = -1;
+      (a.list || []).forEach(function (q, k) { if (q.id === saved.id) i = k; });
+      if (!a.list) a.list = [];
+      if (i >= 0) a.list[i] = saved; else a.list.unshift(saved);
+      render();
+    }).catch(function (e) { a.busy = false; a.formErr = e && e.message === 'bad_code' ? '' : errText(e && e.message === 'Failed to fetch' ? 'net' : (e && e.message) || 'error'); render(); });
+  }
+  function toggleAction(id) {
+    var x = (S.act.list || []).filter(function (q) { return q.id === id; })[0]; if (!x || S.act.busy) return;
+    S.act.busy = true;
+    sendAction({ id: x.id, reportId: x.reportId, section: x.section, itemId: x.itemId, date: x.date, owner: x.owner, action: x.action, due: x.due, status: x.status === 'done' ? 'open' : 'done' });
+  }
+  function exportActions() {
+    var rows = [['id', 'report_date', 'section', 'item_ar', 'item_en', 'employee', 'problem', 'owner', 'action', 'due', 'status', 'created_at', 'closed_at']];
+    (S.act.list || []).forEach(function (x) { rows.push([x.id, x.date, x.section, x.itemAr, x.itemEn, x.employee, x.problem, x.owner, x.action, x.due, x.status, x.createdAt, x.closedAt]); });
+    download('ermine-qc-actions-' + today() + '.csv', rows);
+  }
+
+  /* weekly report */
+  function weekStats(reps, start) {
+    var end = addDays(start, 6), o = { n: 0, checked: 0, bad: 0, rate: null, items: {}, sec: { units: 0, zones: 0, hyg: 0 }, emp: {}, day: {}, temps: {} };
+    (reps || []).forEach(function (r) {
+      if (r.date < start || r.date > end) return;
+      o.n++;
+      var d = o.day[r.date] = o.day[r.date] || { n: 0, bad: 0 }; d.n++;
+      var e = o.emp[r.employee || '-'] = o.emp[r.employee || '-'] || { n: 0, bad: 0 }; e.n++;
+      ['units', 'zones', 'hyg'].forEach(function (sec) {
+        ((r.items && r.items[sec]) || []).forEach(function (it) {
+          if (it.status) o.checked++;
+          if (it.status === 'bad') {
+            o.bad++; o.sec[sec]++; d.bad++; e.bad++;
+            var k = sec + '|' + it.id, m = o.items[k] = o.items[k] || { it: it, n: 0 }; m.n++;
+          }
+          if (sec === 'units' && it.temp != null && it.temp !== '' && !isNaN(parseFloat(it.temp))) {
+            var tp = o.temps[it.id] = o.temps[it.id] || { it: it, max: -Infinity, over: 0 }, v = parseFloat(it.temp);
+            if (v > tp.max) tp.max = v;
+            if (it.status === 'bad') tp.over++;
+          }
+        });
+      });
+    });
+    if (o.checked) o.rate = Math.round((o.checked - o.bad) / o.checked * 1000) / 10;
+    return o;
+  }
+  function kpiHtml(label, cur, prev, lowGood, suffix) {
+    var s = cur == null ? '-' : cur + (suffix || ''), vs = '';
+    if (prev != null && cur != null) {
+      var diff = Math.round((cur - prev) * 10) / 10, cls = diff === 0 ? '' : ((diff < 0) === !!lowGood ? ' good' : ' badc');
+      vs = '<span class="vs' + cls + '">' + (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '') + t('wkVs', { v: prev + (suffix || '') }) + '</span>';
+    } else if (prev == null) vs = '<span class="vs">' + t('wkVs', { v: '-' }) + '</span>';
+    return '<div class="kpi"><small>' + label + '</small><b>' + s + '</b>' + vs + '</div>';
+  }
+  function loadWeekly() {
+    var w = S.wk; w.loading = true; w.err = ''; render();
+    Promise.all([
+      mgrApi({ action: 'list', from: addDays(w.start, -7), to: addDays(w.start, 6) }),
+      mgrApi({ action: 'actions' })
+    ]).then(function (rs) {
+      w.loading = false; w.reports = rs[0].reports || []; S.act.list = rs[1].actions || []; w.week = w.start; render();
+    }).catch(function (e) { w.loading = false; w.err = e && e.message === 'bad_code' ? '' : (e && e.message && e.message !== 'Failed to fetch' ? e.message : 'net'); render(); });
+  }
+  function weeklyView() {
+    if (!S.mgr) return mgrGateHtml();
+    var w = S.wk, out = '', thisWeek = weekStartOf(today());
+    out += '<section class="panel"><div class="pan-head"><div><h2>' + t('wkTitle') + '</h2><p>' + dayMonth(w.start, S.lang) + ' – ' + dayMonth(addDays(w.start, 6), S.lang) + '</p></div></div>' +
+      '<div class="btns" style="padding-top:0"><button class="btn alt" data-act="wk-prev"' + (w.loading ? ' disabled' : '') + '>' + t('wkPrev') + '</button>' +
+      '<button class="btn alt" data-act="wk-next"' + (w.loading || w.start >= thisWeek ? ' disabled' : '') + '>' + t('wkNext') + '</button></div>' +
+      '<div class="pad"><button class="btn" style="width:100%" data-act="wk-load"' + (w.loading ? ' disabled' : '') + '>' + (w.loading ? t('loading') : t('refresh')) + '</button></div>' +
+      '<div class="pad" style="padding-top:0"><button class="btn alt" style="width:100%" data-act="lock">' + t('lock') + '</button></div></section>';
+    if (w.err) out += '<p class="note bad" role="alert">' + esc(errText(w.err)) + '</p>';
+    if (!w.reports || w.week !== w.start) return out;
+    var cur = weekStats(w.reports, w.start), prev = weekStats(w.reports, addDays(w.start, -7));
+    var list = S.act.list || [], open = list.filter(function (x) { return x.status !== 'done'; }), late = list.filter(isLate);
+    if (!cur.n) { return out + '<section class="panel"><div class="empty">' + t('wkNoData') + '</div></section>'; }
+    var keys = actionKeys(), noAct = problemsOf(w.reports.filter(function (r) { return r.date >= w.start && r.date <= addDays(w.start, 6); })).filter(function (p) { return !keys[p.key]; }).length;
+    out += '<section class="panel"><div class="pan-head"><div><h2>' + t('wkSummary') + '</h2></div></div><div class="kpis">' +
+      kpiHtml(t('wkReports'), cur.n, prev.n, false) + kpiHtml(t('wkRate'), cur.rate, prev.rate, false, '%') +
+      kpiHtml(t('wkIssues'), cur.bad, prev.n ? prev.bad : null, true) +
+      '<div class="kpi"><small>' + t('wkOpenActs') + '</small><b>' + open.length + '</b><span class="vs' + (late.length ? ' badc' : '') + '">' + (late.length ? t('wkLateWarn', { n: late.length }) : '') + '</span></div></div>' +
+      (noAct ? '<p class="note warn" style="margin:0 14px 14px">' + t('wkNoActWarn', { n: noAct }) + '</p>' : '') + '</section>';
+    var top = Object.keys(cur.items).map(function (k) { return { k: k, m: cur.items[k] }; }).sort(function (a, b) { return b.m.n - a.m.n; }).slice(0, 5);
+    out += '<section class="panel"><div class="pan-head"><div><h2>' + t('wkTop') + '</h2></div></div>';
+    if (!top.length) out += '<div class="empty">' + t('wkNoProb') + '</div>';
+    top.forEach(function (x) {
+      var pv = prev.items[x.k];
+      out += '<div class="kv"><span>' + esc(nmL(x.m.it, S.lang)) + (pv ? '<small>' + t('wkVs', { v: pv.n }) + '</small>' : '') + '</span><b>' + t('wkTimes', { n: x.m.n }) + '</b></div>';
+    });
+    out += '</section>';
+    out += '<section class="panel"><div class="pan-head"><div><h2>' + t('wkBySec') + '</h2></div></div>' +
+      [['units', 'secUnits'], ['zones', 'secZones'], ['hyg', 'secHyg']].map(function (s) {
+        return '<div class="kv"><span>' + t(s[1]) + '<small>' + t('wkVs', { v: prev.sec[s[0]] }) + '</small></span><b>' + cur.sec[s[0]] + '</b></div>'; }).join('') + '</section>';
+    var temps = Object.keys(cur.temps).map(function (k) { return cur.temps[k]; });
+    if (temps.length) {
+      out += '<section class="panel"><div class="pan-head"><div><h2>' + t('wkTemps') + '</h2></div></div>' + temps.map(function (x) {
+        return '<div class="kv"><span>' + esc(nmL(x.it, S.lang)) + '<small>' + t('limit') + ' <bdi>' + esc(x.it.limit) + '°</bdi>' + (x.over ? ' · ' + t('wkOver', { n: x.over }) : '') + '</small></span><b><bdi>' + x.max + '°</bdi></b></div>'; }).join('') + '</section>';
+    }
+    var emps = Object.keys(cur.emp).sort(function (a, b) { return cur.emp[b].n - cur.emp[a].n; });
+    out += '<section class="panel"><div class="pan-head"><div><h2>' + t('wkByEmp') + '</h2></div></div>' + emps.map(function (n) {
+      return '<div class="kv"><span>' + esc(n) + '<small>' + t('wkRepN', { n: cur.emp[n].n }) + '</small></span><b>' + issuesWord(cur.emp[n].bad, S.lang) + '</b></div>'; }).join('') + '</section>';
+    var days = '';
+    for (var i = 0; i < 7; i++) {
+      var ds = addDays(w.start, i), dd = cur.day[ds];
+      days += '<div class="kv"><span>' + dayShort(ds, S.lang) + '</span><b>' + (dd ? t('wkRepN', { n: dd.n }) + ' · ' + issuesWord(dd.bad, S.lang) : '<span style="color:var(--dim);font-weight:400">' + t('wkNoReps') + '</span>') + '</b></div>';
+    }
+    out += '<section class="panel"><div class="pan-head"><div><h2>' + t('wkByDay') + '</h2></div></div>' + days + '</section>';
+    return out;
+  }
+
   /* ---------- events ---------- */
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (!b) return;
     var act = b.dataset.act, row = b.closest('.row'), kind = row && row.dataset.kind, id = row && row.dataset.id;
     if (act === 'lang') { S.lang = S.lang === 'ar' ? 'en' : 'ar'; sset(KEY.lang, S.lang); render(); return; }
-    if (act === 'tab') { S.view = b.dataset.v; render(); if (S.view === 'history' && S.mgr && !S.hist.reports && !S.hist.loading) loadHistory(); return; }
+    if (act === 'tab') {
+      S.view = b.dataset.v; render();
+      if (S.mgr) {
+        if (S.view === 'history' && !S.hist.reports && !S.hist.loading) loadHistory();
+        else if (S.view === 'actions' && !S.act.list && !S.act.loading) loadActions();
+        else if (S.view === 'weekly' && (!S.wk.reports || S.wk.week !== S.wk.start) && !S.wk.loading) loadWeekly();
+      }
+      window.scrollTo(0, 0); return;
+    }
+    if (act === 'act-filter') { S.act.filter = b.dataset.v; render(); return; }
+    if (act === 'act-load') { loadActions(); return; }
+    if (act === 'act-new') { S.act.edit = { mode: 'new', key: b.dataset.key }; S.act.formErr = ''; render(); var o1 = $('#ae-owner'); if (o1) o1.focus(); return; }
+    if (act === 'act-edit') { S.act.edit = { mode: 'edit', id: b.dataset.id }; S.act.formErr = ''; render(); return; }
+    if (act === 'act-cancel') { S.act.edit = null; S.act.formErr = ''; render(); return; }
+    if (act === 'act-save') { saveAction(); return; }
+    if (act === 'act-toggle') { toggleAction(b.dataset.id); return; }
+    if (act === 'act-export') { exportActions(); return; }
+    if (act === 'wk-load') { loadWeekly(); return; }
+    if (act === 'wk-prev') { S.wk.start = addDays(S.wk.start, -7); loadWeekly(); return; }
+    if (act === 'wk-next') { if (S.wk.start < weekStartOf(today())) { S.wk.start = addDays(S.wk.start, 7); loadWeekly(); } return; }
     if (act === 'gate') { tryGate(); return; }
     if (act === 'mgr') { tryMgr(); return; }
-    if (act === 'lock') { S.mgr = ''; mdel('eqc.mgr'); S.hist.reports = null; render(); return; }
+    if (act === 'lock') { S.mgr = ''; mdel('eqc.mgr'); S.hist.reports = null; S.act.list = null; S.act.reports = null; S.wk.reports = null; render(); return; }
     if (act === 'hist-load') { loadHistory(); return; }
     if (act === 'hist-open') { S.hist.open[b.dataset.id] = !S.hist.open[b.dataset.id]; render(); return; }
     if (act === 'exp-items') { exportItems(); return; }
