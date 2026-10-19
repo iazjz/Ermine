@@ -637,7 +637,7 @@ button { cursor: pointer; }
 
   function checkView() {
     var c = S.config, f = S.form, tt = totals(), h = '<div id="banner">' + bannerHtml() + '</div>';
-    h += '<section class="panel"><div class="fields two"><div class="field"><label for="emp">' + t('employee') + '</label>' + empControl() + '</div>' +
+    h += '<section class="panel"><div class="pad" style="padding-bottom:0"><b>' + t('dateL') + ': ' + dateLong(today(), S.lang) + '</b></div><div class="fields two"><div class="field"><label for="emp">' + t('employee') + '</label>' + empControl() + '</div>' +
       '<div class="field"><label for="shift">' + t('shift') + '</label><select id="shift" data-meta="shift"><option value="morning"' + (f.shift === 'morning' ? ' selected' : '') + '>' + t('morning') + '</option>' +
       '<option value="evening"' + (f.shift === 'evening' ? ' selected' : '') + '>' + t('evening') + '</option></select></div></div>' +
       (S.err ? '<p class="note bad" role="alert" style="margin:0 14px 14px">' + esc(S.err === 'needEmp' ? t('needEmp') : errText(S.err)) + '</p>' : '') + '</section>';
