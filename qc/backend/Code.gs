@@ -613,6 +613,49 @@ var CHECK_CATALOGUE = [
 ];
 
 
+/* The people who actually fill a checklist, and the role each one defaults to.
+ * Everybody else on the floor is hidden rather than deleted: a name that has signed a
+ * report before must keep existing, or that report loses its author. */
+var CHECK_PEOPLE = [
+  ['emp-youssef', 'يوسف',  'Youssef',        'head'],
+  ['emp-nitish',  'نيتيش', 'Nitish Bisht',   'cdp'],
+  ['emp-gihan',   'غيهان', 'Gihan Fernando', 'cdp'],
+  ['emp-thamim',  'تميم',  'Thamim Ansari',  'cdp'],
+  ['emp-mahesh',  'ماهيش', 'Mahesh Chanaka', 'cdp'],
+  ['emp-ali',     'علي',   'Ali Nawaz',      'store'],
+  ['emp-asif',    'عاصف',  'Sk Asif',        'store']
+];
+
+/** Put the seven on the list and hide the rest. Run from seedChecklist(). */
+function seedPeople_(cfg) {
+  var last = cfg.getLastRow();
+  if (last < 2) return 0;
+  var rows = cfg.getRange(2, 1, last - 1, 8).getValues();
+  var keep = {}, touched = 0;
+  CHECK_PEOPLE.forEach(function (p) { keep[p[0]] = p; });
+  rows.forEach(function (r, i) {
+    if (String(r[0]).trim().toLowerCase() !== 'employee') return;
+    var id = String(r[1]).trim();
+    var row = i + 2;
+    if (keep[id]) {
+      cfg.getRange(row, 3).setValue(keep[id][1]);
+      cfg.getRange(row, 4).setValue(keep[id][2]);
+      cfg.getRange(row, 7).setValue(false);
+      cfg.getRange(row, 8).setValue(keep[id][3]);
+      delete keep[id];
+    } else {
+      cfg.getRange(row, 7).setValue(true);     // hidden, never deleted
+    }
+    touched++;
+  });
+  var add = [];
+  CHECK_PEOPLE.forEach(function (p) {
+    if (keep[p[0]]) add.push(['employee', p[0], p[1], p[2], '', '', false, p[3]]);
+  });
+  if (add.length) cfg.getRange(cfg.getLastRow() + 1, 1, add.length, 8).setValues(add);
+  return touched + add.length;
+}
+
 function seedChecklist() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var cfg = ss.getSheetByName('Config') || ensureSheets_().getSheetByName('Config');
@@ -635,5 +678,6 @@ function seedChecklist() {
     if (!have['check|' + c[1]]) add.push(c);
   });
   if (add.length) cfg.getRange(cfg.getLastRow() + 1, 1, add.length, 8).setValues(add);
-  return 'added ' + add.length + ' row(s); skipped ' + (CHECK_CATALOGUE.length + CHECK_ROLES.length + CHECK_SECTIONS.length - add.length) + ' already there';
+  var people = seedPeople_(cfg);
+  return 'added ' + add.length + ' row(s); people touched ' + people + '; skipped ' + (CHECK_CATALOGUE.length + CHECK_ROLES.length + CHECK_SECTIONS.length - add.length) + ' already there';
 }
