@@ -711,6 +711,7 @@ var CHECK_PEOPLE = [
   ['emp-nitish',  'نيتيش', 'Nitish Bisht',   'Senior CDP',             'cdp'],
   ['emp-mahesh',  'ماهيش', 'Mahesh Chanaka', 'CDP',                    'cdp'],
   ['emp-thamim',  'تميم',  'Thamim Ansari',  'CDP',                    'cdp'],
+  ['emp-aziz',    'عزيز',  'Aziz',           'Operations Manager',     'qpm'],
   ['emp-ali',     'علي',   'Ali Nawaz',      'Storekeeper',            'store'],
   /* Asif Cheema, maintenance - NOT Sk Asif, who works in the kitchen and has no
    * checklist. Two different people whose first names match; the full name is
