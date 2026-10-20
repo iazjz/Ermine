@@ -1,0 +1,68 @@
+# One question, asked once: can a machine with no sign-in download the workbook from a
+# OneDrive share link? Nowhere else can answer it. Aziz's Mac is signed in, so of course
+# it works there. The build sandbox has no route to Microsoft. A browser refuses the
+# request on cross-origin grounds before it is sent. A plain runner on the open internet
+# is the only honest place to ask.
+#
+# The link is typed into the run dialog, not stored: a test should leave no secret behind.
+
+name: OneDrive reachability check
+
+on:
+  workflow_dispatch:
+    inputs:
+      share_url:
+        description: "OneDrive share link (masked in the log, nothing is stored)"
+        required: true
+        type: string
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hide the link from the log
+        run: echo "::add-mask::${{ inputs.share_url }}"
+
+      - name: Try every route a server could use
+        env:
+          URL: ${{ inputs.share_url }}
+        shell: python
+        run: |
+          import base64, os, urllib.request, urllib.error
+
+          url = os.environ["URL"].strip()
+          UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) ermine-check"}
+
+          def attempt(name, target):
+              try:
+                  req = urllib.request.Request(target, headers=UA)
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      body = r.read(4000000)
+                      ct = r.headers.get("Content-Type", "")
+                      xlsx = body[:2] == b"PK"
+                      tag = "LOOKS LIKE AN XLSX" if xlsx else "content-type: " + ct[:40]
+                      print("  %-22s HTTP %s  %9d bytes  %s" % (name, r.status, len(body), tag))
+                      return xlsx and len(body) > 50000
+              except urllib.error.HTTPError as e:
+                  print("  %-22s HTTP %s" % (name, e.code))
+              except Exception as e:
+                  print("  %-22s %s: %s" % (name, type(e).__name__, str(e)[:60]))
+              return False
+
+          b64 = base64.urlsafe_b64encode(url.encode()).decode().rstrip("=")
+          sep = "&" if "?" in url else "?"
+          tries = [
+              ("share + download=1", url + sep + "download=1"),
+              ("the link as given", url),
+              ("legacy shares API", "https://api.onedrive.com/v1.0/shares/u!" + b64 + "/root/content"),
+              ("graph shares API", "https://graph.microsoft.com/v1.0/shares/u!" + b64 + "/driveItem/content"),
+          ]
+          print("Trying each route a server could use:\n")
+          ok = [n for n, t in tries if attempt(n, t)]
+          print()
+          if ok:
+              print("WORKS. A usable route exists: " + ", ".join(ok))
+          else:
+              print("NONE of the routes returned the file.")
+              print("An anonymous OneDrive link is not machine-downloadable,")
+              print("so the hourly rebuild cannot be fed this way.")
