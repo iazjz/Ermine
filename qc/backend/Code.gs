@@ -712,7 +712,10 @@ var CHECK_PEOPLE = [
   ['emp-mahesh',  'ماهيش', 'Mahesh Chanaka', 'CDP',                    'cdp'],
   ['emp-thamim',  'تميم',  'Thamim Ansari',  'CDP',                    'cdp'],
   ['emp-ali',     'علي',   'Ali Nawaz',      'Storekeeper',            'store'],
-  ['emp-asif',    'عاصف',  'Sk Asif',        'Maintenance Technician', 'maint']
+  /* Asif Cheema, maintenance - NOT Sk Asif, who works in the kitchen and has no
+   * checklist. Two different people whose first names match; the full name is
+   * carried here so the row can never be read as the other man. */
+  ['emp-asif',    'عاصف تشيما', 'Asif Cheema',  'Maintenance Technician', 'maint']
 ];
 
 /** Put the seven on the list and hide the rest. Run from seedChecklist(). */
