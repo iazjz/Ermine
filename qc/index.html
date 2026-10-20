@@ -161,6 +161,18 @@ button { cursor: pointer; }
 .kv > span { min-width: 0; }
 .kv small { display: block; font-size: 12.5px; color: var(--dim); }
 .kv b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.who { display: grid; gap: 8px; padding: 14px; }
+.whoBtn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  min-height: 56px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--card); color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.whoBtn b { font-size: 16px; font-weight: 700; }
+.whoBtn small { color: var(--dim); font-size: 13px; }
+.whoBtn:active { background: var(--field); }
+.whoNow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0;
+  min-height: 44px; }
+.whoNow b { font-size: 16px; }
+.whoNow small { color: var(--dim); font-size: 13px; }
+.whoNow .btn { margin-inline-start: auto; width: auto; }
 </style>
 </head>
 <body>
@@ -180,7 +192,7 @@ button { cursor: pointer; }
 (function () {
   'use strict';
   var CFG = window.ERMINE_QC || {};
-  var KEY = { lang: 'eqc.lang', code: 'eqc.code', cfg: 'eqc.cfg', draft: 'eqc.draft', queue: 'eqc.queue', emp: 'eqc.emp', shift: 'eqc.shift', role: 'eqc.role' };
+  var KEY = { lang: 'eqc.lang', code: 'eqc.code', cfg: 'eqc.cfg', draft: 'eqc.draft', queue: 'eqc.queue', emp: 'eqc.emp', shift: 'eqc.shift', role: 'eqc.role', me: 'eqc.me' };
 
   /* ---------- storage (every call guarded: private tabs can throw) ---------- */
   function sget(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -195,10 +207,14 @@ button { cursor: pointer; }
   var T = {
     ar: {
       docTitle: 'Ermine QC', title: 'فحص الجودة اليومي', tabCheck: 'الفحص', tabHist: 'السجل',
-      gateTitle: 'رمز الفريق', gateHelp: 'اطلب الرمز من مدير الجودة. يُحفظ على هذا الجهاز مرة واحدة.', gateBtn: 'دخول', gateWait: 'جارٍ التحقق…',
+      gateTitle: 'من أنت؟', gateHelp: 'اختر اسمك، ثم أدخل رمزك الخاص.', gateBtn: 'دخول', gateWait: 'جارٍ التحقق…',
+      whoWait: 'جارٍ تحميل الأسماء…', whoRetry: 'إعادة المحاولة', whoNone: 'لا توجد أسماء. راجع مدير الجودة.',
+      pinTitle: 'رمزك الخاص', pinHelp: 'رمز خاص بك وحدك. اطلبه من مدير الجودة إن لم يكن لديك.',
+      notMe: 'لست أنا', noCodeYet: 'لم يُحدَّد رمز لك بعد. راجع مدير الجودة.',
+      signedAs: 'مسجَّل الدخول', signOut: 'خروج',
       employee: 'الموظف', chooseEmp: 'اختر اسمك', shift: 'الوردية', morning: 'صباحية', evening: 'مسائية',
-      role: 'الدور', chooseRole: 'اختر دورك', needRole: 'اختر الدور والتاريخ والوردية أولًا',
-      lockedSub: 'لن تظهر بنود الفحص قبل اختيار الدور — كل دور له قائمته.',
+      role: 'الدور', chooseRole: 'اختر دورك', needRole: 'اختر التاريخ والوردية أولًا',
+      lockedSub: 'لن تظهر بنود الفحص قبل تحديد اليوم والوردية.',
       sChecks: 'قائمة الدور', sChecksSub: 'البنود الخاصة بدورك في هذه الوردية',
       sUnits: 'حرارة الثلاجات والمجمدات', sUnitsSub: 'سجّل القراءة الحالية لكل وحدة',
       sZones: 'نظافة المناطق والمعدات', sZonesSub: 'نظيف أو يحتاج معالجة، ولو احتاج اكتب السبب',
@@ -234,10 +250,14 @@ button { cursor: pointer; }
     },
     en: {
       docTitle: 'Ermine QC', title: 'Daily quality check', tabCheck: 'Check', tabHist: 'History',
-      gateTitle: 'Team code', gateHelp: 'Ask the quality manager for the code. It is saved on this device once.', gateBtn: 'Enter', gateWait: 'Checking…',
+      gateTitle: 'Who are you?', gateHelp: 'Pick your name, then enter your own code.', gateBtn: 'Enter', gateWait: 'Checking…',
+      whoWait: 'Loading names…', whoRetry: 'Try again', whoNone: 'No names yet. Ask the quality manager.',
+      pinTitle: 'Your own code', pinHelp: 'This code is yours alone. Ask the quality manager if you do not have one.',
+      notMe: 'Not me', noCodeYet: 'You have no code set yet. Ask the quality manager.',
+      signedAs: 'Signed in', signOut: 'Sign out',
       employee: 'Employee', chooseEmp: 'Choose your name', shift: 'Shift', morning: 'Morning', evening: 'Evening',
-      role: 'Role', chooseRole: 'Choose your role', needRole: 'Choose the role, date and shift first',
-      lockedSub: 'The checklist stays hidden until a role is chosen — each role has its own.',
+      role: 'Role', chooseRole: 'Choose your role', needRole: 'Choose the date and shift first',
+      lockedSub: 'The checklist stays hidden until the day and shift are set.',
       sChecks: 'Your checklist', sChecksSub: 'The items your role is responsible for this shift',
       sUnits: 'Fridge & freezer temperatures', sUnitsSub: 'Record the current reading for each unit',
       sZones: 'Area & equipment cleanliness', sZonesSub: 'Clean or needs action; add the reason if it does',
@@ -345,7 +365,12 @@ button { cursor: pointer; }
 
   /* ---------- state ---------- */
   function emptyForm() {
-    return { day: today(), role: sget(KEY.role) || '', employee: sget(KEY.emp) || '', shift: sget(KEY.shift) || 'morning', workers: '', notes: '', units: {}, zones: {}, hyg: {}, checks: {} };
+    /* The role and the name are no longer typed or chosen - they are whoever signed in.
+       That is the whole change: a tick now belongs to a person who proved it was them,
+       not to whichever name happened to be left in the dropdown. */
+    var me = S && S.me;
+    return { day: today(), role: me ? me.role : '', employee: me ? (me.ar || me.en) : '',
+             shift: sget(KEY.shift) || 'morning', workers: '', notes: '', units: {}, zones: {}, hyg: {}, checks: {} };
   }
   function loadDraft() {
     var d = jget(KEY.draft, null), f = emptyForm();
@@ -358,6 +383,8 @@ button { cursor: pointer; }
     view: 'check',
     apiOn: !!CFG.apiUrl,
     code: sget(KEY.code) || '',
+    me: jget(KEY.me, null),
+    who: { list: null, loading: false, err: '', pick: null },
     config: normConfig(jget(KEY.cfg, null)),
     form: null,
     queue: jget(KEY.queue, []),
@@ -384,7 +411,9 @@ button { cursor: pointer; }
       body: JSON.stringify(payload), signal: ctl ? ctl.signal : undefined
     }).then(function (r) { return r.json(); }).then(function (j) { clearTimeout(timer); return j; }, function (e) { clearTimeout(timer); throw e; });
   }
-  function errText(code) { if (code === 'pdf') return t('pdfFail'); var k = 'e_' + (code || 'error'); return T[S.lang][k] ? t(k) : t('e_error'); }
+  function errText(code) {
+    if (code === 'unknown_employee') return t('whoNone');
+    if (code === 'no_code_set') return t('noCodeYet'); if (code === 'pdf') return t('pdfFail'); var k = 'e_' + (code || 'error'); return T[S.lang][k] ? t(k) : t('e_error'); }
 
   /* ---------- roles ---------- *
    * An item with no roles listed belongs to everyone - that is how the five original
@@ -397,8 +426,9 @@ button { cursor: pointer; }
     if (!role) return false;
     return r.split(',').some(function (x) { return x.trim() === role; });
   }
+  function myRole() { return (S.me && S.me.role) || S.form.role || ''; }
   function myChecks() {
-    return (S.config.checks || []).filter(function (it) { return inRole(it, S.form.role); });
+    return (S.config.checks || []).filter(function (it) { return inRole(it, myRole()); });
   }
   function bySection(list) {
     var order = [], map = {};
@@ -417,7 +447,7 @@ button { cursor: pointer; }
      shift. A tick with no role attached is a tick nobody owns. */
   function ready() {
     var f = S.form;
-    return !!(f.role && f.day && f.shift);
+    return !!((S.apiOn ? S.me : true) && myRole() && f.day && f.shift);
   }
 
   /* ---------- status helpers ---------- */
@@ -453,7 +483,9 @@ button { cursor: pointer; }
   function buildReport() {
     var f = S.form, c = S.config;
     return {
-      id: uid(), date: today(), time: nowHM(), shift: f.shift, role: f.role, employee: f.employee.trim(), workers: f.workers, notes: f.notes, lang: S.lang,
+      id: uid(), date: today(), time: nowHM(), shift: f.shift, role: myRole(),
+      employeeId: (S.me && S.me.id) || '', employee: (f.employee || '').trim(),
+      title: (S.me && S.me.title) || '', workers: f.workers, notes: f.notes, lang: S.lang,
       items: {
         checks: myChecks().map(function (x) {
           var r = f.checks[x.id] || {}, st = flagStatus(f.checks, x.id);
@@ -676,12 +708,42 @@ button { cursor: pointer; }
   function canShareFile(file) { try { return !!(navigator.canShare && file && navigator.canShare({ files: [file] })); } catch (e) { return false; } }
 
   /* ---------- views ---------- */
+  /* Two screens, in this order: who are you, then prove it.
+     Splitting them matters on a shared tablet. The first screen is public - the names of
+     the people who work here are on the door anyway. The second is private, and the code
+     typed into it is checked by the server and never stored anywhere a browser can read
+     it back. The old single team code is gone from this screen: one code everybody knows
+     is one code that tells you nothing about who actually did the round. */
   function gateView() {
-    return '<section class="panel"><div class="pan-head"><div><h2>' + t('gateTitle') + '</h2><p>' + t('gateHelp') + '</p></div></div>' +
-      '<div class="fields"><div class="field"><label for="gate-code">' + t('gateTitle') + '</label>' +
-      '<input id="gate-code" class="txt" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false"></div>' +
+    return S.who.pick ? pinView() : whoView();
+  }
+
+  function whoView() {
+    var w = S.who, h = '<section class="panel"><div class="pan-head"><div><h2>' + t('gateTitle') +
+      '</h2><p>' + t('gateHelp') + '</p></div></div>';
+    if (w.loading) h += '<div class="pad"><p class="note">' + t('whoWait') + '</p></div>';
+    else if (w.err) h += '<div class="pad"><p class="note bad" role="alert">' + esc(errText(w.err)) + '</p>' +
+      '<button class="btn alt" data-act="who-load">' + t('whoRetry') + '</button></div>';
+    else if (!w.list || !w.list.length) h += '<div class="pad"><p class="note warn">' + t('whoNone') + '</p>' +
+      '<button class="btn alt" data-act="who-load">' + t('whoRetry') + '</button></div>';
+    else h += '<div class="who">' + w.list.map(function (p) {
+      return '<button class="whoBtn" data-act="who-pick" data-id="' + esc(p.id) + '">' +
+        '<b>' + esc(nm(p)) + '</b>' + (p.title ? '<small>' + esc(p.title) + '</small>' : '') + '</button>';
+    }).join('') + '</div>';
+    return h + '</section>';
+  }
+
+  function pinView() {
+    var p = S.who.pick;
+    return '<section class="panel"><div class="pan-head"><div><h2>' + esc(nm(p)) + '</h2><p>' +
+      (p.title ? esc(p.title) + ' · ' : '') + t('pinHelp') + '</p></div></div>' +
+      '<div class="fields"><div class="field"><label for="gate-code">' + t('pinTitle') + '</label>' +
+      '<input id="gate-code" class="txt" type="password" inputmode="numeric" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false"></div>' +
+      (p.hasCode === false ? '<p class="note warn">' + t('noCodeYet') + '</p>' : '') +
       (S.gateErr ? '<p class="note bad" role="alert">' + esc(errText(S.gateErr)) + '</p>' : '') +
-      '<button class="btn" data-act="gate"' + (S.gateBusy ? ' disabled' : '') + '>' + (S.gateBusy ? t('gateWait') : t('gateBtn')) + '</button></div></section>';
+      '<button class="btn" data-act="gate"' + (S.gateBusy ? ' disabled' : '') + '>' +
+      (S.gateBusy ? t('gateWait') : t('gateBtn')) + '</button>' +
+      '<button class="btn alt" data-act="who-back">' + t('notMe') + '</button></div></section>';
   }
 
   function bannerHtml() {
@@ -695,13 +757,14 @@ button { cursor: pointer; }
     return h;
   }
 
+  /* Offline, with no backend, there is nobody to sign in against - so the name stays a
+     plain box in that one case and nothing else changes. */
   function empControl() {
-    var f = S.form, list = S.config.employees;
-    if (!list.length) return '<input id="emp" class="txt" data-meta="employee" value="' + esc(f.employee) + '" autocomplete="name" maxlength="80">';
-    var o = '<option value="">' + t('chooseEmp') + '</option>', found = false;
-    list.forEach(function (e) { var sel = e.ar === f.employee; if (sel) found = true; o += '<option value="' + esc(e.ar) + '"' + (sel ? ' selected' : '') + '>' + esc(nm(e)) + '</option>'; });
-    if (f.employee && !found) o += '<option value="' + esc(f.employee) + '" selected>' + esc(f.employee) + '</option>';
-    return '<select id="emp" data-meta="employee">' + o + '</select>';
+    var f = S.form;
+    if (!S.apiOn) return '<input id="emp" class="txt" data-meta="employee" value="' + esc(f.employee) + '" autocomplete="name" maxlength="80">';
+    return '<p class="whoNow"><b>' + esc(f.employee || '-') + '</b>' +
+      (S.me && S.me.title ? '<small>' + esc(S.me.title) + '</small>' : '') +
+      '<button class="btn sm alt" data-act="signout">' + t('signOut') + '</button></p>';
   }
 
   function unitRow(u) {
@@ -726,14 +789,8 @@ button { cursor: pointer; }
 
   function checkView() {
     var c = S.config, f = S.form, tt = totals(), h = '<div id="banner">' + bannerHtml() + '</div>';
-    var roleOpts = (c.roles || []).map(function (r) {
-      return '<option value="' + esc(r.id) + '"' + (f.role === r.id ? ' selected' : '') + '>' + esc(S.lang === 'ar' ? r.ar : r.en) + '</option>';
-    }).join('');
     h += '<section class="panel"><div class="pad" style="padding-bottom:0"><b>' + t('dateL') + ': ' + dateLong(today(), S.lang) + '</b></div>' +
-      '<div class="fields two"><div class="field"><label for="role">' + t('role') + '</label>' +
-      '<select id="role" data-meta="role"><option value="">' + t('chooseRole') + '</option>' + roleOpts + '</select></div>' +
-      '<div class="field"><label for="emp">' + t('employee') + '</label>' + empControl() + '</div></div>' +
-      '<div class="fields two"><div class="field"><label for="emp2" style="visibility:hidden">.</label></div>' +
+      '<div class="fields two"><div class="field"><label for="emp">' + t('signedAs') + '</label>' + empControl() + '</div>' +
       '<div class="field"><label for="shift">' + t('shift') + '</label><select id="shift" data-meta="shift"><option value="morning"' + (f.shift === 'morning' ? ' selected' : '') + '>' + t('morning') + '</option>' +
       '<option value="evening"' + (f.shift === 'evening' ? ' selected' : '') + '>' + t('evening') + '</option></select></div></div>' +
       (S.err ? '<p class="note bad" role="alert" style="margin:0 14px 14px">' + esc(S.err === 'needEmp' ? t('needEmp') : S.err === 'needRole' ? t('needRole') : errText(S.err)) + '</p>' : '') + '</section>';
@@ -862,7 +919,7 @@ button { cursor: pointer; }
     document.title = t('docTitle');
     $('#langBtn').textContent = S.lang === 'ar' ? 'EN' : 'عربي';
     $('#appSub').textContent = t('title');
-    var gate = S.apiOn && !S.code, tabs = $('#tabs'), v = $('#view');
+    var gate = S.apiOn && !(S.me && S.code), tabs = $('#tabs'), v = $('#view');
     tabs.hidden = gate || !S.apiOn;
     if (!tabs.hidden) {
       tabs.innerHTML = [['check', 'tabCheck'], ['history', 'tabHist'], ['actions', 'tabAct'], ['weekly', 'tabWk']].map(function (x) {
@@ -880,7 +937,7 @@ button { cursor: pointer; }
   }
   function renderBar() {
     var b = $('#bar');
-    if (S.view !== 'check' || (S.apiOn && !S.code)) { b.hidden = true; return; }
+    if (S.view !== 'check' || (S.apiOn && !(S.me && S.code))) { b.hidden = true; return; }
     b.hidden = false;
     b.innerHTML = '<div class="bar-in"><div class="prog"><b id="progTxt"></b><small id="progSub"></small><div class="meter"><i id="meter"></i></div></div>' +
       (S.apiOn ? '<button class="btn" id="submitBtn" data-act="submit"></button>' : '<button class="btn" data-act="pdf-now">' + t('saveBtn') + '</button>') + '</div>';
@@ -911,18 +968,20 @@ button { cursor: pointer; }
 
   /* ---------- actions ---------- */
   function flush() {
-    if (S.flushing || !S.apiOn || !S.code) return Promise.resolve();
+    if (S.flushing || !S.apiOn || !S.code || !S.me) return Promise.resolve();
     S.flushing = true;
     function step() {
       var rep = S.queue.filter(function (r) { return !r.failed; })[0];
       if (!rep) { S.flushing = false; afterFlush(); return Promise.resolve(); }
-      return api({ action: 'submit', code: S.code, report: forServer(rep) }).then(function (res) {
+      return api({ action: 'submit', code: S.code, employee: S.me.id, report: forServer(rep) }).then(function (res) {
         if (res && res.ok) {
           S.queue = S.queue.filter(function (x) { return x.id !== rep.id; }); saveQueue();
           if (S.last && S.last.rep.id === rep.id) S.last.state = 'sent';
           return step();
         }
-        if (res && res.error === 'bad_code') { S.flushing = false; S.code = ''; sdel(KEY.code); S.gateErr = 'bad_code'; render(); return; }
+        if (res && (res.error === 'bad_code' || res.error === 'unknown_employee' || res.error === 'no_code_set')) {
+          S.flushing = false; signOut(res.error); return;
+        }
         rep.failed = (res && res.error) || 'error'; saveQueue(); return step();
       }, function () { S.flushing = false; afterFlush(); });
     }
@@ -933,13 +992,13 @@ button { cursor: pointer; }
 
   function startSubmit() {
     if (S.busy) return;
-    if (!S.form.role) { S.err = 'needRole'; render(); var r0 = $('#role'); if (r0) { r0.focus(); r0.scrollIntoView({ block: 'center' }); } return; }
+    if (S.apiOn && !S.me) { signOut(''); return; }
     if (!S.form.employee.trim()) { S.err = 'needEmp'; render(); var e = $('#emp'); if (e) { e.focus(); e.scrollIntoView({ block: 'center' }); } return; }
     S.err = '';
     var rep = buildReport(), tt = repTotals(rep), miss = tt.total - tt.done;
     if (miss > 0 && !S.confirmMiss) { S.confirmMiss = true; derived(); setTimeout(function () { S.confirmMiss = false; derived(); }, 6000); return; }
     S.confirmMiss = false;
-    sset(KEY.emp, S.form.employee); sset(KEY.shift, S.form.shift); sset(KEY.role, S.form.role);
+    sset(KEY.emp, S.form.employee); sset(KEY.shift, S.form.shift);
     S.queue.push(rep); saveQueue();
     S.last = { rep: rep, state: 'queued' };
     S.form = emptyForm(); saveDraft();
@@ -949,21 +1008,52 @@ button { cursor: pointer; }
   }
 
   function loadConfig() {
-    if (!S.apiOn || !S.code) return Promise.resolve();
-    return api({ action: 'config', code: S.code }, 12000).then(function (res) {
+    if (!S.apiOn || !S.code || !S.me) return Promise.resolve();
+    return api({ action: 'config', code: S.code, employee: S.me.id }, 12000).then(function (res) {
       if (res && res.ok && res.config) { var nc = normConfig(res.config), changed = JSON.stringify(nc) !== JSON.stringify(S.config); S.config = nc; sset(KEY.cfg, JSON.stringify(nc)); if (changed && S.view === 'check') render(); }
-      else if (res && res.error === 'bad_code') { S.code = ''; sdel(KEY.code); S.gateErr = 'bad_code'; render(); }
+      else if (res && (res.error === 'bad_code' || res.error === 'unknown_employee' || res.error === 'no_code_set')) signOut(res.error);
     }).catch(function () {});
   }
+
+  /* The roster is fetched without any code - see whoList_ in the backend. */
+  function loadWho(force) {
+    var w = S.who;
+    if (w.loading || (!force && w.list && w.list.length)) return;
+    w.loading = true; w.err = ''; render();
+    api({ action: 'who' }, 15000).then(function (res) {
+      w.loading = false;
+      if (res && res.ok) w.list = res.people || [];
+      else w.err = (res && res.error) || 'error';
+      render();
+    }).catch(function () { w.loading = false; w.err = 'net'; render(); });
+  }
+
   function tryGate() {
-    var v = ($('#gate-code') || {}).value || '';
-    v = v.trim(); if (!v) return;
+    var p = S.who.pick, el = $('#gate-code');
+    if (!p) return;
+    var v = ((el || {}).value || '').trim();
+    if (!v) { if (el) el.focus(); return; }
     S.gateBusy = true; S.gateErr = ''; render();
-    api({ action: 'config', code: v }, 15000).then(function (res) {
+    api({ action: 'signIn', employee: p.id, code: v }, 15000).then(function (res) {
       S.gateBusy = false;
-      if (res && res.ok) { S.code = v; sset(KEY.code, v); S.config = normConfig(res.config); sset(KEY.cfg, JSON.stringify(S.config)); S.gateErr = ''; render(); flush(); }
-      else { S.gateErr = (res && res.error) || 'error'; render(); }
+      if (res && res.ok && res.me) {
+        S.me = res.me; sset(KEY.me, JSON.stringify(S.me));
+        S.code = v; sset(KEY.code, v);
+        S.config = normConfig(res.config); sset(KEY.cfg, JSON.stringify(S.config));
+        /* A new person must not inherit the last person's half-ticked sheet. */
+        sdel(KEY.draft); S.form = emptyForm(); saveDraft();
+        S.who.pick = null; S.gateErr = ''; S.view = 'check';
+        render(); flush();
+      } else { S.gateErr = (res && res.error) || 'error'; render(); }
     }).catch(function () { S.gateBusy = false; S.gateErr = 'net'; render(); });
+  }
+
+  function signOut(err) {
+    S.me = null; S.code = '';
+    sdel(KEY.me); sdel(KEY.code); sdel(KEY.draft);
+    S.who.pick = null; S.gateErr = err || '';
+    S.form = emptyForm(); saveDraft();
+    S.view = 'check'; render(); loadWho(true);
   }
 
   function loadHistory() {
@@ -1279,6 +1369,16 @@ button { cursor: pointer; }
     if (act === 'wk-prev') { S.wk.start = addDays(S.wk.start, -7); loadWeekly(); return; }
     if (act === 'wk-next') { if (S.wk.start < weekStartOf(today())) { S.wk.start = addDays(S.wk.start, 7); loadWeekly(); } return; }
     if (act === 'gate') { tryGate(); return; }
+    if (act === 'who-load') { loadWho(true); return; }
+    if (act === 'who-pick') {
+      var who = (S.who.list || []).filter(function (x) { return x.id === b.dataset.id; })[0];
+      if (!who) return;
+      S.who.pick = who; S.gateErr = ''; render();
+      var gc = $('#gate-code'); if (gc) gc.focus();
+      return;
+    }
+    if (act === 'who-back') { S.who.pick = null; S.gateErr = ''; render(); return; }
+    if (act === 'signout') { signOut(''); return; }
     if (act === 'mgr') { tryMgr(); return; }
     if (act === 'lock') { S.mgr = ''; mdel('eqc.mgr'); S.hist.reports = null; S.act.list = null; S.act.reports = null; S.wk.reports = null; render(); return; }
     if (act === 'hist-load') { loadHistory(); return; }
@@ -1354,7 +1454,8 @@ button { cursor: pointer; }
 
   /* ---------- start ---------- */
   render();
-  if (S.apiOn && S.code) { loadConfig(); flush(); }
+  if (S.apiOn && S.me && S.code) { loadConfig(); flush(); }
+  else if (S.apiOn) loadWho(true);
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
 })();
 </script>

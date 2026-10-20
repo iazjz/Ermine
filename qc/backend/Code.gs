@@ -58,11 +58,19 @@ function doPost(e) {
 
 function route_(req) {
   switch (req.action) {
+    case 'signIn':
+      return signIn_(req.employee, req.code);
     case 'config':
-      requireCode_(req.code, TEAM_CODE);
+      requireEmployee_(req.employee, req.code);
       return { ok: true, config: readConfig_() };
+    case 'who':
+      /* The sign-in screen needs the list of names BEFORE anyone has proved who they
+       * are, so this one action is open. It returns names and job titles only - never a
+       * code, and never which checklist anyone fills. A name on a factory door is not a
+       * secret; the code beside it is. */
+      return { ok: true, people: whoList_() };
     case 'submit':
-      requireCode_(req.code, TEAM_CODE);
+      requireEmployee_(req.report && req.report.employeeId, req.code);
       return submit_(req.report);
     case 'list':
       requireCode_(req.managerCode, MANAGER_CODE);
@@ -88,6 +96,78 @@ function setupIncomplete_() {
 
 function requireCode_(given, expected) {
   if (String(given || '') !== expected) throw new Error('bad_code');
+}
+
+/* Every person has their own code, held in column I of Config and never sent to any
+ * browser. The client posts an id and a code; the server answers yes or no. That is the
+ * whole point of doing it here rather than in the page: a code that is never downloaded
+ * cannot be read out of the page by the next person to pick up the tablet.
+ *
+ * TEAM_CODE still works as a master key so a forgotten code never stops the day. */
+function findPerson_(id) {
+  if (!id) return null;
+  var sh = ensureSheets_().getSheetByName('Config');
+  var last = sh.getLastRow();
+  if (last < 2) return null;
+  var rows = sh.getRange(2, 1, last - 1, 9).getValues();
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (String(r[0]).trim().toLowerCase() !== 'employee') continue;
+    if (String(r[1]).trim() !== String(id).trim()) continue;
+    var hide = r[6] === true || String(r[6]).toUpperCase() === 'TRUE';
+    if (hide) return null;
+    return {
+      id: String(r[1]).trim(),
+      ar: String(r[2]).trim() || String(r[3]).trim(),
+      en: String(r[3]).trim() || String(r[2]).trim(),
+      title: String(r[4] || '').trim(),
+      role: String(r[7] || '').trim(),
+      code: String(r[8] == null ? '' : r[8]).trim()
+    };
+  }
+  return null;
+}
+
+function requireEmployee_(id, code) {
+  var given = String(code || '');
+  var p = findPerson_(id);
+  if (!p) throw new Error('unknown_employee');
+  if (given && given === TEAM_CODE) return p;
+  if (!p.code) throw new Error('no_code_set');
+  if (given !== p.code) throw new Error('bad_code');
+  return p;
+}
+
+function signIn_(id, code) {
+  var p = requireEmployee_(id, code);
+  return {
+    ok: true,
+    me: { id: p.id, ar: p.ar, en: p.en, title: p.title, role: p.role },
+    config: readConfig_()
+  };
+}
+
+function whoList_() {
+  var sh = ensureSheets_().getSheetByName('Config');
+  var last = sh.getLastRow();
+  if (last < 2) return [];
+  var rows = sh.getRange(2, 1, last - 1, 9).getValues();
+  var out = [];
+  rows.forEach(function (r) {
+    if (String(r[0]).trim().toLowerCase() !== 'employee') return;
+    var hide = r[6] === true || String(r[6]).toUpperCase() === 'TRUE';
+    if (hide) return;
+    var ar = String(r[2]).trim(), en = String(r[3]).trim();
+    if (!ar && !en) return;
+    out.push({
+      id: String(r[1]).trim(),
+      ar: ar || en,
+      en: en || ar,
+      title: String(r[4] || '').trim(),
+      hasCode: !!String(r[8] == null ? '' : r[8]).trim()
+    });
+  });
+  return out;
 }
 
 /* ---------- sheets ---------- */
@@ -120,7 +200,8 @@ function ensureSheets_() {
     cfg.getRange(1, 1, 1, CONFIG_HEADERS.length).setFontWeight('bold');
     cfg.getRange(2, 1, DEFAULT_CONFIG.length, 6).setValues(DEFAULT_CONFIG);
     cfg.getRange(2, 7, 300, 1).insertCheckboxes();
-    cfg.getRange('H1').setValue('kind: employee | unit | zone | hygiene.  type: fridge | freezer.  limit: max °C.  hide: tick to hide a row.');
+    cfg.getRange('I1').setValue('code');
+  cfg.getRange('H1').setValue('kind: employee | unit | zone | hygiene.  type: fridge | freezer.  limit: max °C.  hide: tick to hide a row.');
   }
   if (made) {
     ['Sheet1', 'ورقة1'].forEach(function (n) {
@@ -137,7 +218,7 @@ function readConfig_() {
   var cfg = { employees: [], units: [], zones: [], hyg: [], checks: [], roles: [], sections: [] };
   var last = sh.getLastRow();
   if (last < 2) return cfg;
-  var rows = sh.getRange(2, 1, last - 1, 8).getValues();   // col 8 = roles
+  var rows = sh.getRange(2, 1, last - 1, 9).getValues();   // 8 = roles, 9 = personal code
   rows.forEach(function (r, i) {
     var kind = String(r[0]).trim().toLowerCase();
     if (!kind) return;
@@ -163,6 +244,9 @@ function readConfig_() {
     } else if (kind === 'section') {
       cfg.sections.push(item);
     } else if (kind === 'employee') {
+      item.title = String(r[4] || '').trim();
+      item.role = String(r[7] || '').trim();
+      // column 9 holds their code and is deliberately NOT copied into the reply
       cfg.employees.push(item);
     } else if (kind === 'unit') {
       var type = String(r[4]).trim().toLowerCase() === 'freezer' ? 'freezer' : 'fridge';
@@ -616,14 +700,19 @@ var CHECK_CATALOGUE = [
 /* The people who actually fill a checklist, and the role each one defaults to.
  * Everybody else on the floor is hidden rather than deleted: a name that has signed a
  * report before must keep existing, or that report loses its author. */
+/* id, Arabic name, English name, job title, which catalogue role they fill.
+ * Title and role are different things on purpose: a Sous Chef and a Head Chef run the
+ * same checks, and a Senior CDP runs the CDP's, so five job titles map onto three
+ * checklists. Keeping them apart means a promotion changes a title without rewriting
+ * anyone's checklist. */
 var CHECK_PEOPLE = [
-  ['emp-youssef', 'يوسف',  'Youssef',        'head'],
-  ['emp-nitish',  'نيتيش', 'Nitish Bisht',   'cdp'],
-  ['emp-gihan',   'غيهان', 'Gihan Fernando', 'cdp'],
-  ['emp-thamim',  'تميم',  'Thamim Ansari',  'cdp'],
-  ['emp-mahesh',  'ماهيش', 'Mahesh Chanaka', 'cdp'],
-  ['emp-ali',     'علي',   'Ali Nawaz',      'store'],
-  ['emp-asif',    'عاصف',  'Sk Asif',        'store']
+  ['emp-youssef', 'يوسف',  'Youssef',        'Head Chef',              'head'],
+  ['emp-gihan',   'غيهان', 'Gihan Fernando', 'Sous Chef',              'head'],
+  ['emp-nitish',  'نيتيش', 'Nitish Bisht',   'Senior CDP',             'cdp'],
+  ['emp-mahesh',  'ماهيش', 'Mahesh Chanaka', 'CDP',                    'cdp'],
+  ['emp-thamim',  'تميم',  'Thamim Ansari',  'CDP',                    'cdp'],
+  ['emp-ali',     'علي',   'Ali Nawaz',      'Storekeeper',            'store'],
+  ['emp-asif',    'عاصف',  'Sk Asif',        'Maintenance Technician', 'maint']
 ];
 
 /** Put the seven on the list and hide the rest. Run from seedChecklist(). */
@@ -640,9 +729,11 @@ function seedPeople_(cfg) {
     if (keep[id]) {
       cfg.getRange(row, 3).setValue(keep[id][1]);
       cfg.getRange(row, 4).setValue(keep[id][2]);
+      cfg.getRange(row, 5).setValue(keep[id][3]);   // job title
       cfg.getRange(row, 7).setValue(false);
-      cfg.getRange(row, 8).setValue(keep[id][3]);
-      delete keep[id];
+      cfg.getRange(row, 8).setValue(keep[id][4]);   // checklist role
+      delete keep[id];                               // column 9 is their code, left alone
+
     } else {
       cfg.getRange(row, 7).setValue(true);     // hidden, never deleted
     }
@@ -650,9 +741,10 @@ function seedPeople_(cfg) {
   });
   var add = [];
   CHECK_PEOPLE.forEach(function (p) {
-    if (keep[p[0]]) add.push(['employee', p[0], p[1], p[2], '', '', false, p[3]]);
+    if (keep[p[0]]) add.push(['employee', p[0], p[1], p[2], p[3], '', false, p[4], '']);
   });
-  if (add.length) cfg.getRange(cfg.getLastRow() + 1, 1, add.length, 8).setValues(add);
+  if (add.length) cfg.getRange(cfg.getLastRow() + 1, 1, add.length, 9).setValues(add);
+  if (cfg.getRange(1, 9).getValue() !== 'code') cfg.getRange(1, 9).setValue('code');
   return touched + add.length;
 }
 
