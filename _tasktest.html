@@ -2188,18 +2188,26 @@ document.addEventListener("visibilitychange", () => {
 
 <pre id="diag" style="padding:12px;font:12px monospace;white-space:pre-wrap"></pre>
 <script>
-/* TEST PAGE - dummy data only. Reports, into the DOM, which names an inline onclick
-   attribute would actually be able to reach. */
-var out = [];
-function probe(n){
-  var viaWindow = (typeof window[n] !== "undefined");
-  var viaScope;
-  try { viaScope = (eval("typeof " + n) !== "undefined"); } catch(e){ viaScope = false; }
-  out.push(n + "  window:" + viaWindow + "  scope:" + viaScope);
-}
-["go","render","calPick","calStep","calToday","tkDone","tkSave","tkFold",
- "tkToggleAdd","toggleHidden","goBack","QC","TK","CAL"].forEach(probe);
-document.getElementById("diag").textContent = out.join("\n");
+var log=[];
+try{
+  QC.code = "test";
+  TK.state = "ready";
+  TK.done  = [{id:"d1",title:"Finished example",due:"2026-10-05",status:"Done",priority:"Low",notes:"notion.so/a"}];
+  TK.list  = [
+   {id:"t1",title:"Overdue example",   due:"2026-10-15",status:"To do",priority:"High",  section:"Operations",owner:"Ahmed",notes:"notion.so/a"},
+   {id:"t2",title:"Due today example", due:"2026-10-21",status:"To do",priority:"Medium",section:"Quality",   owner:"Gihan",notes:"notion.so/a"},
+   {id:"t3",title:"This week example", due:"2026-10-24",status:"To do",priority:"Low",   section:"HR",        owner:"Adnan",notes:"notion.so/a"},
+   {id:"t4",title:"No date example",   due:"",          status:"To do",priority:"Medium",section:"R&D",       owner:"",     notes:"notion.so/a"}
+  ];
+  log.push("state set, QC.code=" + QC.code + " TK.list=" + TK.list.length);
+  var html = viewTasks();
+  log.push("viewTasks returned " + html.length + " chars");
+  log.push("contains calgrid: " + (html.indexOf("calgrid") >= 0));
+  log.push("contains details.tkcol: " + (html.indexOf("<details class=\"tkcol\"") >= 0));
+  go("tasks");
+  log.push("go(tasks) ok; #main now " + document.getElementById("main").innerHTML.length + " chars");
+}catch(e){ log.push("EXCEPTION: " + (e && e.stack ? e.stack : e)); }
+document.getElementById("diag").textContent = log.join("\n");
 </script>
 </body>
 </html>
