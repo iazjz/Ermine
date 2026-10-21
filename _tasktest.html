@@ -2186,18 +2186,20 @@ document.addEventListener("visibilitychange", () => {
 });
 </script>
 
+<pre id="diag" style="padding:12px;font:12px monospace;white-space:pre-wrap"></pre>
 <script>
-/* TEST PAGE - dummy data only, removed as soon as the screenshot is taken. */
-QC.code = "test";
-TK.state = "ready";
-TK.done  = [{id:"d1",title:"An old finished thing",due:"2026-10-05",status:"Done",priority:"Low",notes:"notion.so/abc"}];
-TK.list  = [
- {id:"t1",title:"Overdue example",         due:"2026-10-15",status:"To do",priority:"High",  section:"Operations",owner:"Ahmed",notes:"notion.so/abc"},
- {id:"t2",title:"Due today example",       due:"2026-10-21",status:"To do",priority:"Medium",section:"Quality",   owner:"Gihan",notes:"notion.so/abc"},
- {id:"t3",title:"Later this week example", due:"2026-10-24",status:"To do",priority:"Low",   section:"HR",        owner:"Adnan",notes:"notion.so/abc"},
- {id:"t4",title:"No date example",         due:"",          status:"To do",priority:"Medium",section:"R&D",       owner:"",     notes:"notion.so/abc"}
-];
-go("tasks");
+/* TEST PAGE - dummy data only. Reports, into the DOM, which names an inline onclick
+   attribute would actually be able to reach. */
+var out = [];
+function probe(n){
+  var viaWindow = (typeof window[n] !== "undefined");
+  var viaScope;
+  try { viaScope = (eval("typeof " + n) !== "undefined"); } catch(e){ viaScope = false; }
+  out.push(n + "  window:" + viaWindow + "  scope:" + viaScope);
+}
+["go","render","calPick","calStep","calToday","tkDone","tkSave","tkFold",
+ "tkToggleAdd","toggleHidden","goBack","QC","TK","CAL"].forEach(probe);
+document.getElementById("diag").textContent = out.join("\n");
 </script>
 </body>
 </html>
