@@ -69,6 +69,9 @@ function route_(req) {
        * code, and never which checklist anyone fills. A name on a factory door is not a
        * secret; the code beside it is. */
       return { ok: true, people: whoList_() };
+    case 'doneToday':
+      requireEmployee_(req.employee, req.code);
+      return { ok: true, done: doneToday_() };
     case 'submit':
       requireEmployee_(req.report && req.report.employeeId, req.code);
       return submit_(req.report);
@@ -145,6 +148,38 @@ function signIn_(id, code) {
     me: { id: p.id, ar: p.ar, en: p.en, title: p.title, role: p.role },
     config: readConfig_()
   };
+}
+
+/* Who has already handed in a checklist today, by role.
+ *
+ * A checklist belongs to a job, not to a person: two CDPs on the same shift share one
+ * list. Without this they either both fill it - two records of one round, and no way to
+ * know which is true - or each assumes the other did and nobody does. So the app tells
+ * you, before you start, whether your role is already covered for this shift. It does
+ * not stop you: a second opinion is sometimes exactly what is wanted. It only removes
+ * the excuse of not knowing.
+ */
+function doneToday_() {
+  var ss = ensureSheets_();
+  var rep = ss.getSheetByName('Reports');
+  var last = rep.getLastRow();
+  if (last < 2) return [];
+  var today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  var rows = rep.getRange(2, 1, last - 1, REPORT_HEADERS.length).getValues();
+  var people = {};
+  (readConfig_().employees || []).forEach(function (e) {
+    people[String(e.ar).trim()] = e; people[String(e.en).trim()] = e;
+  });
+  var out = [];
+  rows.forEach(function (r) {
+    if (String(r[2]).slice(0, 10) !== today) return;
+    var who = String(r[4] || '').trim();
+    var p = people[who];
+    out.push({ employee: who, shift: String(r[3] || ''),
+               role: p ? p.role : '', title: p ? p.title : '',
+               at: String(r[1] || '').slice(11, 16) });
+  });
+  return out;
 }
 
 function whoList_() {

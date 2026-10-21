@@ -173,6 +173,11 @@ button { cursor: pointer; }
 .whoNow b { font-size: 16px; }
 .whoNow small { color: var(--dim); font-size: 13px; }
 .whoNow .btn { margin-inline-start: auto; width: auto; }
+.whobar{display:flex;align-items:center;gap:9px;padding:9px 14px;flex-wrap:wrap}
+.whobar[hidden]{display:none}
+.whobar .wname{font-weight:700;font-size:15px}
+.whobar .wrole{color:var(--dim);font-size:12.5px}
+.whobar .btn{margin-inline-start:auto;width:auto}
 </style>
 </head>
 <body>
@@ -182,6 +187,7 @@ button { cursor: pointer; }
     <span class="sp"></span>
     <button class="lang" id="langBtn" data-act="lang" type="button"></button>
   </div>
+  <div class="whobar" id="whobar" hidden></div>
   <nav class="tabs" id="tabs" hidden></nav>
 </header>
 <main class="wrap" id="view"></main>
@@ -212,6 +218,8 @@ button { cursor: pointer; }
       pinTitle: 'رمزك الخاص', pinHelp: 'رمز خاص بك وحدك. اطلبه من مدير الجودة إن لم يكن لديك.',
       notMe: 'لست أنا', noCodeYet: 'لم يُحدَّد رمز لك بعد. راجع مدير الجودة.',
       signedAs: 'مسجَّل الدخول', signOut: 'خروج',
+      roleDone: 'قائمة دورك سلّمها اليوم {who} ({at}). تستطيع المتابعة، لكن تأكّد أنك لا تكرّر الجولة نفسها.',
+      roleDoneShift: 'لوردية {shift}',
       employee: 'الموظف', chooseEmp: 'اختر اسمك', shift: 'الوردية', morning: 'صباحية', evening: 'مسائية',
       role: 'الدور', chooseRole: 'اختر دورك', needRole: 'اختر التاريخ والوردية أولًا',
       lockedSub: 'لن تظهر بنود الفحص قبل تحديد اليوم والوردية.',
@@ -255,6 +263,8 @@ button { cursor: pointer; }
       pinTitle: 'Your own code', pinHelp: 'This code is yours alone. Ask the quality manager if you do not have one.',
       notMe: 'Not me', noCodeYet: 'You have no code set yet. Ask the quality manager.',
       signedAs: 'Signed in', signOut: 'Sign out',
+      roleDone: 'Your role\u2019s checklist was already handed in today by {who} ({at}). You can carry on, but make sure you are not repeating the same round.',
+      roleDoneShift: 'for the {shift} shift',
       employee: 'Employee', chooseEmp: 'Choose your name', shift: 'Shift', morning: 'Morning', evening: 'Evening',
       role: 'Role', chooseRole: 'Choose your role', needRole: 'Choose the date and shift first',
       lockedSub: 'The checklist stays hidden until the day and shift are set.',
@@ -384,6 +394,7 @@ button { cursor: pointer; }
     apiOn: !!CFG.apiUrl,
     code: sget(KEY.code) || '',
     me: jget(KEY.me, null),
+    doneToday: null,
     who: { list: null, loading: false, err: '', pick: null },
     config: normConfig(jget(KEY.cfg, null)),
     form: null,
@@ -763,8 +774,7 @@ button { cursor: pointer; }
     var f = S.form;
     if (!S.apiOn) return '<input id="emp" class="txt" data-meta="employee" value="' + esc(f.employee) + '" autocomplete="name" maxlength="80">';
     return '<p class="whoNow"><b>' + esc(f.employee || '-') + '</b>' +
-      (S.me && S.me.title ? '<small>' + esc(S.me.title) + '</small>' : '') +
-      '<button class="btn sm alt" data-act="signout">' + t('signOut') + '</button></p>';
+      (S.me && S.me.title ? '<small>' + esc(S.me.title) + '</small>' : '') + '</p>';
   }
 
   function unitRow(u) {
@@ -793,6 +803,7 @@ button { cursor: pointer; }
       '<div class="fields two"><div class="field"><label for="emp">' + t('signedAs') + '</label>' + empControl() + '</div>' +
       '<div class="field"><label for="shift">' + t('shift') + '</label><select id="shift" data-meta="shift"><option value="morning"' + (f.shift === 'morning' ? ' selected' : '') + '>' + t('morning') + '</option>' +
       '<option value="evening"' + (f.shift === 'evening' ? ' selected' : '') + '>' + t('evening') + '</option></select></div></div>' +
+      (roleNotice() ? '<div style="margin:0 14px 14px">' + roleNotice() + '</div>' : '') +
       (S.err ? '<p class="note bad" role="alert" style="margin:0 14px 14px">' + esc(S.err === 'needEmp' ? t('needEmp') : S.err === 'needRole' ? t('needRole') : errText(S.err)) + '</p>' : '') + '</section>';
 
     /* Nothing below this line exists until the role, the day and the shift are known.
@@ -845,7 +856,11 @@ button { cursor: pointer; }
     if (l.pdfLang !== S.lang) { l.file = null; l.preparing = false; l.pdfErr = false; }
     if (l.file || l.preparing) { updateDoneButtons(); return; }
     l.preparing = true; l.pdfLang = S.lang; updateDoneButtons();
-    makePdf(l.rep, S.lang).then(function (f) { l.file = f; l.preparing = false; if (S.last === l && S.view === 'done') updateDoneButtons(); },
+    // The language the report was FILLED IN, not the language of whoever is exporting
+    // it now. The app opens in Arabic by default, so a report the chef wrote in English
+    // came out of a fresh session as an Arabic PDF - the same facts in a language its
+    // author had not chosen.
+    makePdf(l.rep, l.rep.lang || S.lang).then(function (f) { l.file = f; l.preparing = false; if (S.last === l && S.view === 'done') updateDoneButtons(); },
       function () { l.preparing = false; l.pdfErr = true; if (S.last === l && S.view === 'done') updateDoneButtons(); });
   }
 
@@ -927,6 +942,18 @@ button { cursor: pointer; }
         return '<button data-act="tab" data-v="' + x[0] + '"' + (on ? ' aria-current="page"' : '') + '>' + t(x[1]) + '</button>';
       }).join('');
     }
+    /* Who is signed in, and the way out, on every screen. It used to live inside the
+       checklist form, so from the history or the reports there was no way back to the
+       list of names at all - you had to close the app. */
+    var wb = $('#whobar');
+    if (wb) {
+      wb.hidden = gate || !S.me;
+      if (!wb.hidden) {
+        wb.innerHTML = '<span class="wname">' + esc(nm(S.me)) + '</span>'
+          + (S.me.title ? '<span class="wrole">' + esc(S.me.title) + '</span>' : '')
+          + '<button class="btn sm alt" data-act="signout">' + t('signOut') + '</button>';
+      }
+    }
     if (gate) v.innerHTML = gateView();
     else if (S.view === 'history' && S.apiOn) v.innerHTML = historyView();
     else if (S.view === 'actions' && S.apiOn) v.innerHTML = actionsView();
@@ -1007,7 +1034,26 @@ button { cursor: pointer; }
     flush();
   }
 
-  function loadConfig() {
+    /* Who has already covered this role today. Asked once after signing in; a notice,
+     never a block. */
+  function loadDoneToday() {
+    if (!S.apiOn || !S.code || !S.me) return;
+    api({ action: 'doneToday', employee: S.me.id, code: S.code }, 12000).then(function (res) {
+      if (res && res.ok) { S.doneToday = res.done || []; render(); }
+    }).catch(function () {});
+  }
+
+  function roleNotice() {
+    if (!S.me || !Array.isArray(S.doneToday)) return '';
+    var mine = S.doneToday.filter(function (r) {
+      return r.role && r.role === S.me.role && r.employee !== (S.me.ar || S.me.en);
+    });
+    if (!mine.length) return '';
+    var first = mine[0];
+    return '<p class="note warn">' + esc(t('roleDone', { who: first.employee, at: first.at })) + '</p>';
+  }
+
+function loadConfig() {
     if (!S.apiOn || !S.code || !S.me) return Promise.resolve();
     return api({ action: 'config', code: S.code, employee: S.me.id }, 12000).then(function (res) {
       if (res && res.ok && res.config) { var nc = normConfig(res.config), changed = JSON.stringify(nc) !== JSON.stringify(S.config); S.config = nc; sset(KEY.cfg, JSON.stringify(nc)); if (changed && S.view === 'check') render(); }
@@ -1043,7 +1089,7 @@ button { cursor: pointer; }
         /* A new person must not inherit the last person's half-ticked sheet. */
         sdel(KEY.draft); S.form = emptyForm(); saveDraft();
         S.who.pick = null; S.gateErr = ''; S.view = 'check';
-        render(); flush();
+        render(); flush(); loadDoneToday();
       } else { S.gateErr = (res && res.error) || 'error'; render(); }
     }).catch(function () { S.gateBusy = false; S.gateErr = 'net'; render(); });
   }
@@ -1401,7 +1447,7 @@ button { cursor: pointer; }
     if (act === 'hist-pdf') {
       var hr = (S.hist.reports || []).filter(function (x) { return x.id === b.dataset.id; })[0]; if (!hr || b.disabled) return;
       b.disabled = true;
-      makePdf({ date: hr.date, time: String(hr.submittedAt || '').slice(11, 16), shift: hr.shift, employee: hr.employee, workers: hr.workers, notes: hr.notes, items: hr.items || {} }, S.lang)
+      makePdf({ date: hr.date, time: String(hr.submittedAt || '').slice(11, 16), shift: hr.shift, employee: hr.employee, workers: hr.workers, notes: hr.notes, items: hr.items || {} }, hr.lang || S.lang)
         .then(function (f) { saveFile(f); b.disabled = false; }, function () { b.disabled = false; });
       return;
     }
@@ -1454,7 +1500,7 @@ button { cursor: pointer; }
 
   /* ---------- start ---------- */
   render();
-  if (S.apiOn && S.me && S.code) { loadConfig(); flush(); }
+  if (S.apiOn && S.me && S.code) { loadConfig(); flush(); loadDoneToday(); }
   else if (S.apiOn) loadWho(true);
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
 })();
