@@ -78,6 +78,12 @@ function route_(req) {
     case 'list':
       requireCode_(req.managerCode, MANAGER_CODE);
       return list_(req);
+    case 'otGet':
+      requireCode_(req.managerCode, MANAGER_CODE);
+      return { ok: true, record: otGet_(req.date) };
+    case 'otDecide':
+      requireCode_(req.managerCode, MANAGER_CODE);
+      return otDecide_(req);
     case 'tasksList':
       requireCode_(req.managerCode, MANAGER_CODE);
       return { ok: true, tasks: tasksList_(req) };
@@ -414,6 +420,78 @@ function list_(req) {
  * one store and one code rather than two of each. Ticking a task archives it;
  * a repeating task rolls to its next date instead.
  */
+
+/* ---------- overtime, asked for and answered ----------------------------------
+ * The plan is built in the morning and some days it does not fit a standard shift.
+ * Until now that simply happened: the hours were worked and the cost turned up at the
+ * end of the month. This makes it a question with a name on it - one row per day, what
+ * was decided, and when.
+ *
+ * The REQUEST itself is not stored. It is read from the workbook each time, because
+ * the plan changes during the morning and a stored copy would go stale the moment the
+ * chef edits a line. Only the DECISION is kept, because a decision is a fact about a
+ * person and has to survive.
+ */
+var OT_HEADERS = ['date', 'extra_staff_hours', 'extra_cost', 'status',
+                  'decided_at', 'note'];
+
+function otSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Overtime');
+  if (!sh) {
+    sh = ss.insertSheet('Overtime');
+    sh.appendRow(OT_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, OT_HEADERS.length).setFontWeight('bold');
+    sh.getRange('A:A').setNumberFormat('@');
+    sh.getRange('E:E').setNumberFormat('@');
+    sh.setColumnWidth(6, 320);
+  }
+  return sh;
+}
+
+function otRow_(date) {
+  var sh = otSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return { sh: sh, row: 0, values: null };
+  var vals = sh.getRange(2, 1, last - 1, OT_HEADERS.length).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][0]).slice(0, 10) === date) {
+      return { sh: sh, row: i + 2, values: vals[i] };
+    }
+  }
+  return { sh: sh, row: 0, values: null };
+}
+
+function otGet_(date) {
+  date = String(date || '').slice(0, 10);
+  if (!date) return null;
+  var r = otRow_(date);
+  if (!r.row) return null;
+  return { date: date, hours: r.values[1], cost: r.values[2],
+           status: String(r.values[3] || ''), at: String(r.values[4] || ''),
+           note: String(r.values[5] || '') };
+}
+
+function otDecide_(req) {
+  var date = String(req.date || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('bad_date');
+  var status = String(req.status || '');
+  if (['approved', 'declined'].indexOf(status) < 0) throw new Error('bad_status');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    var r = otRow_(date);
+    var now = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm:ss");
+    var row = [date, Number(req.hours) || 0, Number(req.cost) || 0,
+               status, now, clip_(req.note, 300)];
+    if (r.row) r.sh.getRange(r.row, 1, 1, OT_HEADERS.length).setValues([row]);
+    else r.sh.appendRow(row);
+    return { ok: true, record: otGet_(date) };
+  } finally {
+    lock.releaseLock();
+  }
+}
 
 var TASK_HEADERS = ['id', 'created_at', 'title', 'owner', 'section', 'due_date',
                     'due_time', 'priority', 'status', 'repeat', 'notes',
