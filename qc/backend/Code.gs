@@ -178,7 +178,7 @@ function doneToday_() {
   });
   var out = [];
   rows.forEach(function (r) {
-    if (String(r[2]).slice(0, 10) !== today) return;
+    if (dstr_(r[2]) !== today) return;
     var who = String(r[4] || '').trim();
     var p = people[who];
     out.push({ employee: who, shift: String(r[3] || ''),
@@ -223,8 +223,10 @@ function ensureSheets_() {
     rep.appendRow(REPORT_HEADERS);
     rep.setFrozenRows(1);
     rep.getRange(1, 1, 1, REPORT_HEADERS.length).setFontWeight('bold');
-    rep.getRange('C:D').setNumberFormat('@');
   }
+  // Asserted every time, not only at creation. Applying it once left any sheet that
+  // predates the rule - or that somebody reformatted - storing real dates again.
+  rep.getRange('C:D').setNumberFormat('@');
   var items = ss.getSheetByName('Items');
   if (!items) {
     items = ss.insertSheet('Items'); made = true;
@@ -391,6 +393,22 @@ function submit_(rep) {
 
 /* ---------- history ---------- */
 
+/* A date column that is sometimes text and sometimes a real date.
+ *
+ * Dates are written as TEXT on purpose - a sheet that reads 10-11 as 10 November in one
+ * locale and 11 October in another is a sheet that moves your deadlines. But the format
+ * was only applied when the sheet was first created, so a row written before that rule,
+ * or after somebody reformatted the column, comes back as a Date object. String() then
+ * gives "Wed Oct 21 2026 00:00:00 GMT+0300", which falls outside every yyyy-mm-dd range
+ * it is compared against - and the row vanishes from its own history.
+ *
+ * Read the value; do not assume its type.
+ */
+function dstr_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
+  return String(v == null ? '' : v).slice(0, 10);
+}
+
 function list_(req) {
   var from = /^\d{4}-\d{2}-\d{2}$/.test(req.from) ? req.from : '0000-00-00';
   var to = /^\d{4}-\d{2}-\d{2}$/.test(req.to) ? req.to : '9999-99-99';
@@ -401,7 +419,7 @@ function list_(req) {
   if (last > 1) {
     var rows = rs.getRange(2, 1, last - 1, REPORT_HEADERS.length).getValues();
     rows.forEach(function (r) {
-      var d = String(r[2]);
+      var d = dstr_(r[2]);
       if (d < from || d > to) return;
       var items = {};
       try { items = JSON.parse(r[11]); } catch (e) { items = {}; }
