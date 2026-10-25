@@ -286,7 +286,7 @@ button { cursor: pointer; }
       from: 'From', to: 'To', empAll: 'All employees', onlyIssues: 'Reports with issues only', refresh: 'Refresh',
       expItems: 'Export items CSV', expReps: 'Export summary CSV', openSheet: 'Open Google Sheets',
       loading: 'Loading…', none: 'No reports in this period', noIssues: 'No issues', histSum: '{r} reports, {i}',
-      e_bad_code: 'Wrong code', e_net: 'Could not connect. Try again.', e_setup_incomplete: 'Backend setup is not finished', e_error: 'Something went wrong. Try again.',
+      e_bad_code: 'Wrong code', e_net: 'Could not connect. Try again.', e_setup_incomplete: 'Backend setup is not finished', e_invalid_action: 'The action data is not valid', e_not_found: 'That action does not exist', e_error: 'Something went wrong. Try again.',
       noteWait: 'The server rejected a report. Check the data and retry',
       tabAct: 'Actions', tabWk: 'Weekly',
       actOpen: 'Open', actLate: 'Overdue', actDoneL: 'Closed', actAll: 'All', actTitle: 'Corrective actions',
@@ -388,8 +388,17 @@ button { cursor: pointer; }
     if (d.day !== today()) { f.employee = d.employee || f.employee; f.shift = d.shift || f.shift; return f; }
     return Object.assign(f, d);
   }
+  function startLang_() {
+    // The dashboard and this page are the same site to the person using them, and they
+    // were remembering the language in two different places. Read whichever was set,
+    // this page's key first so an existing choice here is not overridden.
+    var mine = sget(KEY.lang);
+    if (mine === 'en' || mine === 'ar') return mine;
+    try { if (localStorage.getItem('erm-lang') === 'en') return 'en'; } catch (e) {}
+    return 'ar';
+  }
   var S = {
-    lang: sget(KEY.lang) === 'en' ? 'en' : 'ar',
+    lang: startLang_(),
     view: 'check',
     apiOn: !!CFG.apiUrl,
     code: sget(KEY.code) || '',
@@ -1393,7 +1402,12 @@ function loadConfig() {
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (!b) return;
     var act = b.dataset.act, row = b.closest('.row'), kind = row && row.dataset.kind, id = row && row.dataset.id;
-    if (act === 'lang') { S.lang = S.lang === 'ar' ? 'en' : 'ar'; sset(KEY.lang, S.lang); render(); return; }
+    if (act === 'lang') {
+      S.lang = S.lang === 'ar' ? 'en' : 'ar';
+      sset(KEY.lang, S.lang);
+      try { localStorage.setItem('erm-lang', S.lang); } catch (e) {}  // and the dashboard
+      render(); return;
+    }
     if (act === 'tab') {
       S.view = b.dataset.v; render();
       if (S.mgr) {
