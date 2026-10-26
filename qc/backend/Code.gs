@@ -13,12 +13,24 @@ var REPORT_HEADERS = ['id', 'submitted_at', 'date', 'shift', 'employee', 'worker
 var ITEM_HEADERS = ['report_id', 'date', 'time', 'shift', 'employee', 'section', 'item_ar', 'item_en', 'value', 'limit', 'status', 'note'];
 var CONFIG_HEADERS = ['kind', 'id', 'ar', 'en', 'type', 'limit', 'hide'];
 
+/* The temperature numbers are a SAFETY CEILING, not a target.
+ *
+ * They were the textbook settings - 5 for a fridge, -18 for a freezer - and every
+ * reading above them came back as a fault. The maintenance technician has since
+ * checked the units: this freezer holds about -11 and these fridges run 5 to 8, and
+ * both are fine for what is stored in them. A checklist that calls a working freezer
+ * broken every single day teaches the person filling it in to ignore it, which costs
+ * more than the thing it was watching.
+ *
+ * So the bound is wide enough that normal running never trips it, and tight enough
+ * that something actually wrong - a freezer sitting above zero - still does.
+ */
 var DEFAULT_CONFIG = [
-  ['unit', 'u1', 'ثلاجة التحضير', 'Prep fridge', 'fridge', 5],
-  ['unit', 'u2', 'ثلاجة الألبان والكريمة', 'Dairy & cream fridge', 'fridge', 5],
-  ['unit', 'u3', 'ثلاجة المنتج النهائي', 'Finished product fridge', 'fridge', 5],
-  ['unit', 'u4', 'مجمد 1', 'Freezer 1', 'freezer', -18],
-  ['unit', 'u5', 'مجمد المخزن', 'Storage freezer', 'freezer', -18],
+  ['unit', 'u1', 'ثلاجة التحضير', 'Prep fridge', 'fridge', 10],
+  ['unit', 'u2', 'ثلاجة الألبان والكريمة', 'Dairy & cream fridge', 'fridge', 10],
+  ['unit', 'u3', 'ثلاجة المنتج النهائي', 'Finished product fridge', 'fridge', 10],
+  ['unit', 'u4', 'مجمد 1', 'Freezer 1', 'freezer', -5],
+  ['unit', 'u5', 'مجمد المخزن', 'Storage freezer', 'freezer', -5],
   ['zone', 'z1', 'منطقة الاستلام', 'Receiving area', '', ''],
   ['zone', 'z2', 'منطقة التحضير', 'Prep area', '', ''],
   ['zone', 'z3', 'منطقة الأفران والخبز', 'Oven & baking area', '', ''],
@@ -37,6 +49,43 @@ var DEFAULT_CONFIG = [
 /** Run once from the editor: creates the tabs and asks for permission. */
 function setup() {
   ensureSheets_();
+}
+
+/* Run once after the limits above change.
+ *
+ * ensureSheets_ only writes DEFAULT_CONFIG when the Config sheet is being created, so
+ * editing the constant does nothing to a sheet that already exists - the numbers the
+ * app checks against would stay as they were and the change would look like it had
+ * silently failed. This walks the existing rows and moves only the temperature
+ * ceilings, leaving every other column, and every row anyone has added by hand,
+ * exactly where it is.
+ */
+function widenTemperatureLimits() {
+  var ss = SpreadsheetApp.getActive();
+  var sh = ss.getSheetByName('Config');
+  if (!sh) { ensureSheets_(); return 'Config created with the new limits.'; }
+
+  var want = {};
+  DEFAULT_CONFIG.forEach(function (r) {
+    if (r[0] === 'unit') want[r[1]] = r[5];
+  });
+
+  var last = sh.getLastRow();
+  if (last < 2) return 'Config is empty.';
+  var vals = sh.getRange(2, 1, last - 1, CONFIG_HEADERS.length).getValues();
+  var changed = [];
+  for (var i = 0; i < vals.length; i++) {
+    var kind = String(vals[i][0] || '').trim();
+    var id = String(vals[i][1] || '').trim();
+    if (kind !== 'unit' || !(id in want)) continue;
+    if (vals[i][5] !== want[id]) {
+      changed.push(id + ': ' + vals[i][5] + ' -> ' + want[id]);
+      vals[i][5] = want[id];
+    }
+  }
+  if (!changed.length) return 'Nothing to change - the limits already match.';
+  sh.getRange(2, 1, vals.length, CONFIG_HEADERS.length).setValues(vals);
+  return 'Updated ' + changed.length + ' unit(s): ' + changed.join(', ');
 }
 
 function doGet() {

@@ -228,7 +228,7 @@ button { cursor: pointer; }
       sZones: 'نظافة المناطق والمعدات', sZonesSub: 'نظيف أو يحتاج معالجة، ولو احتاج اكتب السبب',
       sHyg: 'النظافة الشخصية للعمال', sHygSub: 'فحص العمال عند بداية الوردية',
       zOk: 'نظيف', zBad: 'يحتاج معالجة', hOk: 'مطابق', hBad: 'مخالفة',
-      chipOk: 'مطابق', chipBad: 'خارج الحد', chipNone: 'لم يُسجّل', limit: 'الحد',
+      chipOk: 'مطابق', chipBad: 'خارج الحد الآمن', chipNone: 'لم يُسجّل', limit: 'الحد الأعلى الآمن',
       action: 'الإجراء التصحيحي', actionPh: 'مثال: نقل المنتج وبلاغ للصيانة', issue: 'ما الملاحظة؟', issuePh: 'اكتب السبب ومن يعالجه',
       workers: 'عدد العمال المفحوصين', notes: 'ملاحظات عامة', notesSub: 'اختياري، تظهر في آخر التقرير',
       checked: 'تم فحص {d} من {t}', stepDown: 'أنقص درجة', stepUp: 'زد درجة', degC: '°م',
@@ -273,7 +273,7 @@ button { cursor: pointer; }
       sZones: 'Area & equipment cleanliness', sZonesSub: 'Clean or needs action; add the reason if it does',
       sHyg: 'Personal hygiene of workers', sHygSub: 'Check workers at the start of the shift',
       zOk: 'Clean', zBad: 'Needs action', hOk: 'Compliant', hBad: 'Violation',
-      chipOk: 'OK', chipBad: 'Out of range', chipNone: 'Not recorded', limit: 'Limit',
+      chipOk: 'OK', chipBad: 'Above the safe ceiling', chipNone: 'Not recorded', limit: 'Safe ceiling',
       action: 'Corrective action', actionPh: 'e.g. move product, notify maintenance', issue: 'What is the issue?', issuePh: 'Write the cause and who will fix it',
       workers: 'Workers checked', notes: 'General notes', notesSub: 'Optional, added at the end of the report',
       checked: '{d} of {t} checked', stepDown: 'Decrease by one degree', stepUp: 'Increase by one degree', degC: '°C',
@@ -321,8 +321,8 @@ button { cursor: pointer; }
   var DEFAULTS = {
     employees: [],
     units: [
-      { id: 'u1', ar: 'ثلاجة', en: 'Fridge', type: 'fridge', limit: 5 },
-      { id: 'u4', ar: 'فريزر', en: 'Freezer', type: 'freezer', limit: -18 }
+      { id: 'u1', ar: 'ثلاجة', en: 'Fridge', type: 'fridge', limit: 10 },
+      { id: 'u4', ar: 'فريزر', en: 'Freezer', type: 'freezer', limit: -5 }
     ],
     zones: [
       { id: 'z1', ar: 'منطقة الاستلام', en: 'Receiving area' },
