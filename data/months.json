@@ -198,9 +198,198 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-05T17:47",
+  "at": "2026-11-05T18:07",
   "days_total": 26,
   "packed_box": 3063,
+  "pieces": [
+   {
+    "made": 9051,
+    "need": 43250,
+    "product": "Classic"
+   },
+   {
+    "made": 1581,
+    "need": 4710,
+    "product": "Kingdom"
+   },
+   {
+    "made": 7978,
+    "need": 35080,
+    "product": "Mini"
+   },
+   {
+    "made": 690,
+    "need": 5323,
+    "product": "Cake"
+   },
+   {
+    "made": 13830,
+    "need": 128163,
+    "product": "Coins"
+   },
+   {
+    "made": 0,
+    "need": 5310,
+    "product": "Fingers"
+   },
+   {
+    "made": 5908,
+    "need": 20430,
+    "product": "Half"
+   },
+   {
+    "made": 938,
+    "need": 22000,
+    "product": "Origin"
+   },
+   {
+    "made": 0,
+    "need": 12540,
+    "product": "Winter"
+   },
+   {
+    "made": 0,
+    "need": 0,
+    "product": "Ice Cream"
+   }
+  ],
+  "rows": [
+   {
+    "box": "Big 30",
+    "packed": 239,
+    "pcs": 30,
+    "price": 129.565,
+    "target": 845,
+    "value": 30966.035,
+    "value_target": 109482.425
+   },
+   {
+    "box": "Big 24",
+    "packed": 30,
+    "pcs": 24,
+    "price": 102.609,
+    "target": 196,
+    "value": 3078.27,
+    "value_target": 20111.363999999998
+   },
+   {
+    "box": "Big 12",
+    "packed": 714,
+    "pcs": 12,
+    "price": 68.696,
+    "target": 1249,
+    "value": 49048.943999999996,
+    "value_target": 85801.304
+   },
+   {
+    "box": "Big 6",
+    "packed": 0,
+    "pcs": 6,
+    "price": 39.13,
+    "target": 0,
+    "value": 0.0,
+    "value_target": 0.0
+   },
+   {
+    "box": "Large Bites",
+    "packed": 0,
+    "pcs": 45,
+    "price": 135,
+    "target": 0,
+    "value": 0,
+    "value_target": 0
+   },
+   {
+    "box": "Mini",
+    "packed": 344,
+    "pcs": 30,
+    "price": 112.174,
+    "target": 1136,
+    "value": 38587.856,
+    "value_target": 127429.664
+   },
+   {
+    "box": "Coins",
+    "packed": 455,
+    "pcs": 30,
+    "price": 120.87,
+    "target": 3842,
+    "value": 54995.85,
+    "value_target": 464382.54000000004
+   },
+   {
+    "box": "Half",
+    "packed": 123,
+    "pcs": 30,
+    "price": 150,
+    "target": 681,
+    "value": 18450,
+    "value_target": 102150
+   },
+   {
+    "box": "Origin",
+    "packed": 1002,
+    "pcs": 2,
+    "price": 10,
+    "target": 11000,
+    "value": 10020,
+    "value_target": 110000
+   },
+   {
+    "box": "Fingers",
+    "packed": 106,
+    "pcs": 30,
+    "price": 104.34,
+    "target": 177,
+    "value": 11060.04,
+    "value_target": 18468.18
+   },
+   {
+    "box": "Ice Cream",
+    "packed": 0,
+    "pcs": 16,
+    "price": 93.043,
+    "target": 0,
+    "value": 0.0,
+    "value_target": 0.0
+   },
+   {
+    "box": "Cake",
+    "packed": 50,
+    "pcs": 14,
+    "price": 109.564,
+    "target": 380,
+    "value": 5478.2,
+    "value_target": 41634.32
+   },
+   {
+    "box": "Classic pcs loose",
+    "packed": 0,
+    "pcs": 1,
+    "price": 3,
+    "target": 0,
+    "value": 0,
+    "value_target": 0
+   },
+   {
+    "box": "Kingdom pcs loose",
+    "packed": 0,
+    "pcs": 1,
+    "price": 3,
+    "target": 0,
+    "value": 0,
+    "value_target": 0
+   },
+   {
+    "box": "Mini Raspberry loose",
+    "packed": 0,
+    "pcs": 30,
+    "price": 90,
+    "target": 33,
+    "value": 0,
+    "value_target": 2970
+   }
+  ],
   "target_box": 19539,
   "value": 221685.195,
   "value_target": 1082429.797
