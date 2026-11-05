@@ -1,4 +1,13 @@
 {
+ "2026-10": {
+  "at": "2026-11-02T00:00",
+  "days_total": 26,
+  "packed_box": 18957.5,
+  "src": "live-backups/Production Plan - LIVE 2026-11-02 before-nov-targets.xlsx (Monthly Targets, close of October)",
+  "target_box": 16128,
+  "value": 1014189.2,
+  "value_target": 823165.7
+ },
  "2026-11": {
   "at": "2026-11-05T17:34",
   "days_total": 26,
