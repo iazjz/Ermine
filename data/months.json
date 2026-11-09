@@ -198,17 +198,17 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-09T13:02",
+  "at": "2026-11-09T18:29",
   "days_total": 26,
   "packed_box": 5397,
   "pieces": [
    {
-    "made": 17251,
+    "made": 21040,
     "need": 43250,
     "product": "Classic"
    },
    {
-    "made": 3038,
+    "made": 3713,
     "need": 4710,
     "product": "Kingdom"
    },
