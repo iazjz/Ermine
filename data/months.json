@@ -198,9 +198,9 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-09T18:29",
+  "at": "2026-11-10T12:27",
   "days_total": 26,
-  "packed_box": 5397,
+  "packed_box": 5571,
   "pieces": [
    {
     "made": 21040,
@@ -213,7 +213,7 @@
     "product": "Kingdom"
    },
    {
-    "made": 29554,
+    "made": 36589,
     "need": 35080,
     "product": "Mini"
    },
@@ -223,7 +223,7 @@
     "product": "Cake"
    },
    {
-    "made": 21810,
+    "made": 25110,
     "need": 128163,
     "product": "Coins"
    },
@@ -265,11 +265,11 @@
    },
    {
     "box": "Big 24",
-    "packed": 90,
+    "packed": 120,
     "pcs": 24,
     "price": 102.609,
     "target": 196,
-    "value": 9234.81,
+    "value": 12313.08,
     "value_target": 20111.363999999998
    },
    {
@@ -292,11 +292,11 @@
    },
    {
     "box": "Large Bites",
-    "packed": 13,
+    "packed": 23,
     "pcs": 45,
     "price": 135,
     "target": 0,
-    "value": 1755,
+    "value": 3105,
     "value_target": 0
    },
    {
@@ -319,11 +319,11 @@
    },
    {
     "box": "Half",
-    "packed": 193,
+    "packed": 327,
     "pcs": 30,
     "price": 150,
     "target": 681,
-    "value": 28950,
+    "value": 49050,
     "value_target": 102150
    },
    {
@@ -391,7 +391,7 @@
    }
   ],
   "target_box": 19539,
-  "value": 316978.56499999994,
+  "value": 341506.83499999996,
   "value_target": 1082429.797
  }
 }
