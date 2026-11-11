@@ -1360,37 +1360,9 @@ def read(path):
             if (today - dt.timedelta(days=i)) not in have:
                 missing += 1
     # ---- 8. the task list ---------------------------------------------
-    # A separate file, read straight. It is Aziz's own and nobody else writes to it, so
-    # there is no sync to do here - the dashboard is a window on it, the way it is a
-    # window on everything else.
-    tasks = []
-    tp = tasks_path()
-    if tp:
-        try:
-            tw = openpyxl.load_workbook(tp, data_only=True)["Tasks"]
-            for r in range(4, tw.max_row + 1):
-                title = tw.cell(r, 2).value
-                if not isinstance(title, str) or not title.strip():
-                    continue
-                due = tw.cell(r, 5).value
-                due = due.date() if isinstance(due, dt.datetime) else due
-                st = str(tw.cell(r, 7).value or "").strip()
-                tasks.append({
-                    "id": str(tw.cell(r, 1).value or ""),
-                    "title": title.strip(),
-                    "project": str(tw.cell(r, 3).value or "").strip(),
-                    "owner": str(tw.cell(r, 4).value or "").strip(),
-                    "due": due if isinstance(due, dt.date) else None,
-                    "priority": str(tw.cell(r, 6).value or "").strip(),
-                    "status": st,
-                    "repeat": str(tw.cell(r, 8).value or "").strip(),
-                    "notes": str(tw.cell(r, 9).value or "").strip(),
-                    "overdue": bool(isinstance(due, dt.date) and st != "Done"
-                                    and isinstance(today, dt.date) and due < today),
-                })
-        except Exception:
-            pass
-    d["tasks"] = tasks
+    # Removed from the dashboard on 11 Nov 2026 (Aziz: not useful). The Tasks file is
+    # no longer read, and no task text reaches the public page.
+    d["tasks"] = []
 
     # ---- 9. raw materials, consumables, packaging -----------------------
     # Ali's own daily report, read straight. Only the lines that need an answer are

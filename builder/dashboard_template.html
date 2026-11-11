@@ -577,7 +577,7 @@ const T = {
    pUncoated:"Not coated", pCoated:"Coated", pTotal:"Total",
    pSrc:"From the chef\u2019s Stock sheet (STOCK NOW and COATED stock now), in pieces. They are two separate pools, so they add up.",
    pAsOf:"As the chef\u2019s file stood at {t}", pNone:"The chef\u2019s sheet holds no pieces.",
-   otNeedCode:"Open the tasks or quality page once and enter your manager code; the decision is recorded against it.",
+   otNeedCode:"Open the quality page once and enter your manager code; the decision is recorded against it.",
    otCutNeeded:"To fit a standard day, {n} staff-hours have to come out. Where they are:",
    otStep:"step", otShare:"share of the day",
    otCutNote:"Labour hours by step, largest first. Cutting a passive step \u2014 chilling, freezing \u2014 saves nothing: that time passes whether anyone is standing in it or not. The hours worth removing are the ones with people in them.",
@@ -940,7 +940,7 @@ const T = {
    pUncoated:"غير مغطّى", pCoated:"مغطّى", pTotal:"المجموع",
    pSrc:"من شيت Stock عند الشيف (عمودا STOCK NOW وCOATED stock now)، بالحبة. مخزونان منفصلان، فيُجمعان.",
    pAsOf:"كما كان ملف الشيف عند {t}", pNone:"لا حبات في شيت الشيف.",
-   otNeedCode:"افتح صفحة المهام أو الجودة مرة وأدخل رمز المدير؛ القرار يُسجَّل باسمه.",
+   otNeedCode:"افتح صفحة الجودة مرة وأدخل رمز المدير؛ القرار يُسجَّل باسمه.",
    otCutNeeded:"ليسع اليوم المعتاد، يجب أن تخرج {n} ساعة عمالة. وهذه مواضعها:",
    otStep:"المرحلة", otShare:"حصّتها من اليوم",
    otCutNote:"ساعات العمالة بحسب المرحلة، الأكبر أولًا. وقطع مرحلة خاملة — تبريد أو تجميد — لا يوفّر شيئًا: الوقت يمضي سواء وقف فيه أحد أو لا. والساعات التي يُجدي حذفها هي التي يقف فيها الناس.",
@@ -1739,7 +1739,7 @@ function overall(){
 /* The order Aziz reads them in: what happened, what is planned, what is left.
    Planning ideas is no longer a page of its own - the three plans are a block at the
    foot of Today's plan, which is where the question they answer is actually asked. */
-const PAGES=["home","plan","shift","days","late","store","pcs","mat","month","rep","try","qc","tasks"];
+const PAGES=["home","plan","shift","days","late","store","pcs","mat","month","rep","try","qc"];
 let VIEW="home";
 /* Where you came from, and where you were on that page.
 
@@ -1874,7 +1874,7 @@ function render(){
   const TITLES={home:["hHome","hHomeSub"],plan:["vPlan","vPlanSub"],days:["vDays","vDaysSub"],late:["vLate","vLateSub"],rep:["vRep","vRepSub"],
                 shift:["vShift","vShiftSub"],store:["vStore","vStoreSub"],pcs:["vPcs","vPcsSub"],try:["vTry","vTrySub"],
                 month:["vMonth","vMonthSub"],qc:["vQc","vQcSub"],
-                tasks:["vTasks","vTasksSub"],mat:["vMat","vMatSub"],
+                mat:["vMat","vMatSub"],
                 ideas:["vIdeas","vIdeasSub"]};
   $("#ptitle").textContent=t(TITLES[VIEW][0]);
   $("#psub").textContent=t(TITLES[VIEW][1]);
@@ -1882,7 +1882,7 @@ function render(){
   $(".pagehead").style.animation="";
 
   const VIEWS={plan:viewPlan, days:viewDays, late:viewLate, rep:viewRep, shift:viewShift,
-               store:viewStore, pcs:viewPcs, month:viewMonth, try:viewTry, qc:viewQc, tasks:viewTasks, mat:viewMat};
+               store:viewStore, pcs:viewPcs, month:viewMonth, try:viewTry, qc:viewQc, mat:viewMat};
   if(VIEW!=="home"){
     $("#main").className="detail";
     /* A view that throws used to leave the page blank with nothing said - the tasks page
@@ -3230,67 +3230,6 @@ function qcPost(body, ms){
     .finally(()=>{ if(tm) clearTimeout(tm); });
 }
 
-/* ---- tasks, live ----------------------------------------------------------
-   The task list used to be a photograph: built into the page once a day from the
-   spreadsheet, so ticking something on a phone changed a picture and nothing else.
-   It now talks to the same Apps Script that holds quality, behind the same code, so
-   a task added at the factory floor is a task, not a note that has to be retyped on
-   a laptop later. The snapshot is kept only as a fallback for when the backend is
-   unreachable, and is labelled as such rather than quietly standing in for the truth. */
-const TK = { state:"idle", list:null, done:null, err:"", busy:false,
-             showDone:false, adding:false };
-
-function tkLoad(force){
-  if(!QC_API || !QC.code) return;
-  if(TK.state==="loading" || (TK.list && !force)) return;
-  TK.state="loading"; TK.err=""; render();
-  Promise.all([
-    qcPost({action:"tasksList", managerCode:QC.code}),
-    qcPost({action:"tasksList", managerCode:QC.code, archived:true})
-  ]).then(([open,done])=>{
-    if(open && open.ok){
-      TK.list=open.tasks||[]; TK.done=(done&&done.ok&&done.tasks)||[]; TK.state="ready";
-    } else {
-      TK.state="error";
-      TK.err=(open&&open.error==="bad_code")?t("qcBad"):t("tkFail");
-      if(open&&open.error==="bad_code"){ QC.code=null; try{localStorage.removeItem("erm-qccode");}catch(e){} }
-    }
-    render();
-  }).catch(e=>{ TK.state="error"; TK.err=t("tkFail")+" — "+e.message; render(); });
-}
-
-function tkDone(id, done){
-  if(TK.busy) return;
-  TK.busy=true; render();
-  qcPost({action:"tasksDone", managerCode:QC.code, id:id, done:done})
-    .then(res=>{
-      TK.busy=false;
-      /* The old version ignored the reply and reloaded regardless. A refused tick then
-         looked exactly like a successful one that had not moved - the card sat where it
-         was and said nothing. Now a refusal says so. */
-      if(res && res.ok){ tkLoad(true); return; }
-      TK.err=(res && res.error==="bad_code") ? t("qcBad") : ((res && res.error) || t("tkFail"));
-      render();
-    })
-    .catch(e=>{ TK.busy=false; TK.err=t("tkFail")+" \u2014 "+e.message; render(); });
-}
-
-function tkSave(){
-  const g=id=>{const el=document.getElementById(id); return el?el.value.trim():"";};
-  const title=g("tk-title");
-  if(!title){ TK.err=t("tkNeedTitle"); render(); const el=document.getElementById("tk-title"); if(el) el.focus(); return; }
-  if(TK.busy) return;
-  TK.busy=true; TK.err=""; render();
-  qcPost({action:"tasksSave", managerCode:QC.code, task:{
-    title:title, owner:g("tk-owner"), section:g("tk-section"), due:g("tk-due"),
-    time:g("tk-time"), priority:g("tk-prio")||"Medium", status:"To do",
-    repeat:g("tk-repeat"), notes:g("tk-notes")}})
-    .then(res=>{ TK.busy=false;
-      if(res&&res.ok){ TK.adding=false; tkLoad(true); }
-      else { TK.err=(res&&res.error)||t("tkFail"); render(); } })
-    .catch(e=>{ TK.busy=false; TK.err=t("tkFail")+" — "+e.message; render(); });
-}
-
 function qcLoad(){
   if(!QC_API){ QC.state="noapi"; render(); return; }
   QC.state="loading"; QC.err="";
@@ -3311,10 +3250,7 @@ window.qcSubmitCode=function(){
   const v=(document.querySelector("#qccode")||{}).value||"";
   if(!v.trim()) return;
   QC.code=v.trim(); try{localStorage.setItem("erm-qccode",QC.code);}catch(e){}
-  // On the tasks page there is nothing to fetch - the tasks are already in the page -
-  // so unlock and redraw. On the quality page the code still has to be proved against
-  // the backend, and a wrong one is cleared again there.
-  if(VIEW==="tasks") render(); else qcLoad();
+  qcLoad();
 };
 window.qcSetDays=function(d){ QC.days=d; render(); };
 window.qcSetEmp=function(e){ QC.emp=e||""; render(); };
@@ -3487,216 +3423,6 @@ function viewMat(){
         <div style="margin-top:8px">${rows(P)}</div></details></div>`;
   }
   h+=`<div class="card"><div class="src">${t("matNote")}</div></div>`;
-  return h;
-}
-
-/* A month grid, because a list answers "what is late" and a calendar answers "what is
-   this week actually going to feel like" - and those are different questions. Sunday
-   first, which is how a Saudi working week reads. */
-const CAL = { ym:null, day:null, mode:"list" };
-
-function monthName(y,m){
-  return new Date(y,m,1).toLocaleDateString(loc(),{month:"long",year:"numeric"});
-}
-function ymKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
-function isoDay(y,m,d){
-  return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
-}
-
-function calView(tasks){
-  const today=new Date().toISOString().slice(0,10);
-  if(!CAL.ym) CAL.ym=today.slice(0,7);
-  const [Y,M]=CAL.ym.split("-").map(Number), y=Y, m=M-1;
-  const first=new Date(y,m,1), lead=first.getDay();          /* 0 = Sunday */
-  const days=new Date(y,m+1,0).getDate();
-
-  const byDay={};
-  tasks.forEach(t=>{ if(t.due){ (byDay[t.due]=byDay[t.due]||[]).push(t); } });
-
-  const dow=(L==="ar"?["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"]
-                     :["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]);
-  let h=`<div class="card calcard">
-    <div class="calbar">
-      <button class="calnav" onclick="calStep(-1)" aria-label="prev">‹</button>
-      <b>${esc(monthName(y,m))}</b>
-      <button class="calnav" onclick="calStep(1)" aria-label="next">›</button>
-      <button class="go sm" onclick="calToday()">${t("tkToday")}</button>
-    </div>
-    <div class="calgrid calhead">${dow.map(d=>`<div>${d}</div>`).join("")}</div>
-    <div class="calgrid">`;
-  for(let i=0;i<lead;i++) h+=`<div class="celloff"></div>`;
-  for(let d=1;d<=days;d++){
-    const iso=isoDay(y,m,d), list=byDay[iso]||[];
-    const open=list.filter(x=>x.status!=="Done");
-    const late=open.filter(x=>iso<today).length;
-    h+=`<button class="cell${iso===today?" is-today":""}${CAL.day===iso?" is-sel":""}"
-         onclick="calPick('${iso}')">
-      <span class="dnum">${d}</span>
-      ${list.length?`<span class="dots">${open.slice(0,3).map(x=>
-         `<i class="${x.priority==="High"?"p1":x.priority==="Low"?"p3":"p2"}${late?" late":""}"></i>`).join("")}${
-         open.length>3?`<span class="more">+${open.length-3}</span>`:""}</span>`:""}
-    </button>`;
-  }
-  h+=`</div></div>`;
-
-  if(CAL.day){
-    const list=(byDay[CAL.day]||[]);
-    h+=`<h3>${esc(dmy(CAL.day))} <span class="n">${list.length}</span></h3>`;
-    h+= list.length ? `<div class="tkcol">${list.map(tkCard).join("")}</div>`
-                    : `<div class="card"><div class="muted">${t("tkNoDay")}</div></div>`;
-  }
-  return h;
-}
-function calStep(n){
-  const [y,m]=CAL.ym.split("-").map(Number);
-  const d=new Date(y,m-1+n,1); CAL.ym=ymKey(d); CAL.day=null; render();
-}
-function calToday(){ const t=new Date(); CAL.ym=ymKey(t); CAL.day=t.toISOString().slice(0,10); render(); }
-function calPick(iso){ CAL.day = CAL.day===iso?null:iso; render(); }
-let tkCard = x => "";
-
-/* Remembering a fold is slightly awkward because "closed" has to mean different things
-   for the archive and for everything else: the archive defaults to shut and the rest
-   default to open, so the stored list records departures from each default rather than a
-   plain list of closed sections. */
-function tkToggleAdd(){ TK.adding = !TK.adding; TK.err = ""; render(); }
-
-function tkFold(key, open){
-  let shut=[];
-  try{ shut = JSON.parse(localStorage.getItem("erm-tkshut")||"[]"); }catch(e){}
-  const mark = key==="tkDone" ? "!"+key : key;
-  const want = key==="tkDone" ? open : !open;
-  const i = shut.indexOf(mark);
-  if(want && i===-1) shut.push(mark);
-  if(!want && i!==-1) shut.splice(i,1);
-  try{ localStorage.setItem("erm-tkshut", JSON.stringify(shut)); }catch(e){}
-}
-
-function viewTasks(){
-  // Behind the same code as quality. The page is public, so a task list sitting on it
-  // unguarded is a list of what the factory is worried about, readable by anyone with
-  // the address. Same code, same storage, same single place to revoke it.
-  if(!QC.code){
-    return codeGate(t("tkGate"));
-  }
-  if(TK.state==="idle" || (TK.state==="ready" && !TK.list)) tkLoad();
-  if(TK.state==="loading") return `<div class="card"><div class="muted">${t("tkLoading")}</div></div>`;
-
-  /* Live when the backend answers; the build-time snapshot only as a fallback, and
-     said out loud, because a stale list that looks live is worse than no list. */
-  const live = TK.state==="ready" && Array.isArray(TK.list);
-  /* If the rows carry Notion links, this list is a mirror and the page is a window, not
-     a form. Showing an add button that writes somewhere Notion will overwrite within the
-     hour would be worse than showing nothing. */
-  const fromNotion = live && (TK.list||[]).concat(TK.done||[])
-      .some(x => String(x.notes||"").indexOf("notion.so/") !== -1);
-  const T2 = live ? TK.list.concat(TK.done||[])
-                  : (D.tasks||[]).map(x=>({...x, id:x.id||"", notes:x.notes||""}));
-
-  let head=`<div class="card"><div class="row" style="align-items:center">
-      <div><span class="pill ${live?"p-ok":"p-warn"}">${live?t("tkLive"):t("tkSnap")}</span></div>
-      ${fromNotion?`<div><span class="pill p-ok">${t("tkFromNotion")}</span></div>`:""}
-      ${live&&!fromNotion?`<div style="margin-inline-start:auto"><button class="go"
-         onclick="tkToggleAdd()">${TK.adding?t("tkCancel"):"+ "+t("tkAdd")}</button></div>`:""}
-    </div>
-    ${TK.err?`<div class="warnbox" style="margin-top:9px">${esc(TK.err)}</div>`:""}</div>`;
-
-  if(fromNotion){
-    head+=`<div class="card"><div class="src">${t("tkReadOnly")}
-      <br><a href="https://www.notion.so/${"3d3dbbef516880919469cc5d8e30760e"}"
-        target="_blank" rel="noopener">${t("tkOpenNotion")}</a></div></div>`;
-  }
-
-  if(live && !fromNotion && TK.adding){
-    const opt=(v,l,sel)=>`<option value="${v}"${sel?" selected":""}>${l}</option>`;
-    head+=`<div class="card tkform">
-      <label>${t("tkTitle")}</label>
-      <input id="tk-title" autocomplete="off" enterkeyhint="done">
-      <div class="tkgrid">
-        <div><label>${t("tkOwner")}</label><input id="tk-owner" autocomplete="off"></div>
-        <div><label>${t("tkDue")}</label><input id="tk-due" type="date"></div>
-        <div><label>${t("tkTime")}</label><input id="tk-time" type="time"></div>
-        <div><label>${t("tkPrio")}</label><select id="tk-prio">
-          ${opt("High",t("prHigh"))}${opt("Medium",t("prMed"),true)}${opt("Low",t("prLow"))}</select></div>
-        <div><label>${t("tkRepeat")}</label><select id="tk-repeat">
-          ${opt("",t("rpNone"),true)}${opt("Daily",t("rpDaily"))}${opt("Weekly",t("rpWeekly"))}
-          ${opt("Every 2 weeks",t("rpFort"))}${opt("Monthly",t("rpMonthly"))}${opt("Quarterly",t("rpQuarterly"))}</select></div>
-        <div><label>${t("tkNotes")}</label><input id="tk-notes" autocomplete="off"></div>
-      </div>
-      <div class="dlgrow"><button class="go" onclick="tkSave()"${TK.busy?" disabled":""}>
-        ${TK.busy?t("tkSaving"):t("tkSaveBtn")}</button></div></div>`;
-  }
-
-  if(!T2.length) return head+`<div class="card"><div class="muted">${t("tkNone")}</div>
-    <div class="src">${t("tkNote")}</div></div>`;
-
-  const today=new Date().toISOString().slice(0,10);
-  const wk=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
-  const open=T2.filter(x=>x.status!=="Done");
-  const buckets=[
-    ["tkOverdue", open.filter(x=>x.due&&x.due<today),            "var(--bad)"],
-    ["tkToday",   open.filter(x=>x.due===today),                 "var(--warn)"],
-    ["tkWeek",    open.filter(x=>x.due&&x.due>today&&x.due<=wk), "var(--teal)"],
-    ["tkLater",   open.filter(x=>x.due&&x.due>wk),               "var(--green)"],
-    ["tkNoDate",  open.filter(x=>!x.due),                        "var(--dim)"],
-    ["tkDone",    T2.filter(x=>x.status==="Done"),               "var(--dim)"]];
-
-  /* the three numbers worth a glance before any list */
-  let h=head+`<div class="card"><div class="row">`
-    + buckets.slice(0,3).map(([k,list,col])=>`<div><div class="lbl">${t(k)}</div>
-        <div class="big" style="color:${list.length?col:"var(--dim)"}">${n0(list.length)}</div></div>`).join("")
-    + `</div></div>`;
-
-  tkCard = x => {
-    const late = x.due && x.due < today && x.status !== "Done";
-    const now  = x.due === today && x.status !== "Done";
-    const pr   = x.priority==="High" ? "p-high" : x.priority==="Medium" ? "p-med" : "";
-    const box = live && !fromNotion && x.id
-      ? `<button class="tkbox${x.status==="Done"?" on":""}" ${TK.busy?"disabled":""}
-           aria-label="${x.status==="Done"?t("tkUndo"):t("tkTick")}"
-           onclick="tkDone('${esc(x.id)}',${x.status!=="Done"})">${x.status==="Done"?"\u2713":""}</button>`
-      : "";
-    return `<div class="tkcard ${pr} ${x.status==="Done"?"is-done":""}">
-      <div class="tktitle">${box}<span>${esc(x.title)}</span></div>
-      <div class="tkmeta">
-        ${x.due?`<span class="tag due ${late?"late":now?"now":""}">${esc(dmy(x.due))}</span>`:""}
-        ${(x.project||x.section)?`<span class="tag">${esc(x.project||x.section)}</span>`:""}
-        ${x.owner?`<span class="tag">${esc(x.owner)}</span>`:""}
-        ${x.repeat?`<span class="tag">↻ ${esc(x.repeat)}</span>`:""}
-        ${x.status&&x.status!=="To do"?`<span class="tag">${esc(x.status)}</span>`:""}
-      </div>
-      ${x.notes?`<div class="tknote">${esc(x.notes)}</div>`:""}
-    </div>`;
-  };
-
-  /* The month grid is always here, above the list - the way Notion shows it. The
-     list/calendar switch is gone: it was reported broken three times, and a control
-     that keeps needing explaining is already the wrong control. Nothing to press is
-     nothing to fail. */
-  h+=`<h3>${t("tkCal")}</h3>` + calView(T2);
-
-  /* Each bucket folds. The archive holds fifty-seven finished tasks and unfolded it
-     buries the eight that are still open under a page and a half of work already done -
-     so it starts shut, and the open buckets start open. Which ones you left open is
-     remembered on this device, because a list you have to re-open every visit is a list
-     you stop opening. */
-  const shut = (()=>{ try{ return JSON.parse(localStorage.getItem("erm-tkshut")||"[]"); }
-                      catch(e){ return []; } })();
-  const isShut = k => k==="tkDone" ? shut.indexOf(k)!==-1 || shut.indexOf("!"+k)===-1
-                                   : shut.indexOf(k)!==-1;
-
-  h+=`<div class="tkwrap">`
-    + buckets.filter(([,list])=>list.length).map(([k,list,col])=>`<details class="tkcol"
-        ${isShut(k)?"":"open"} ontoggle="tkFold('${k}',this.open)">
-        <summary class="tkhead"><span class="caret">\u276F</span>
-          <span class="dot" style="background:${col}"></span>
-          <span style="flex:1">${t(k)}</span> <span class="cnt">${list.length}</span></summary>
-        <div class="tkbody">${list.map(tkCard).join("")}</div></details>`).join("")
-    + `</div>`;
-
-  h+=`<div class="card" style="margin-top:12px"><div class="src">${
-      live?t("tkLiveNote")+"<br>":""}${t("tkNote")}<br>
-      <a href="#" onclick="qcForget();return false;">${t("qcForget")}</a></div></div>`;
   return h;
 }
 
