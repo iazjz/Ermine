@@ -1,0 +1,20 @@
+{
+ "note": "Selling price per box (SAR), kept out of the shared workbook so the chef does not see money. Moved from Monthly Targets column I on 3 Nov 2026. Edit here to change a price.",
+ "box": {
+  "Big 30": 129.565,
+  "Big 24": 102.609,
+  "Big 12": 68.696,
+  "Big 6": 39.13,
+  "Large Bites": 135,
+  "Mini": 112.174,
+  "Coins": 120.87,
+  "Half": 150,
+  "Origin": 10,
+  "Fingers": 104.34,
+  "Ice Cream": 93.043,
+  "Cake": 109.564,
+  "Classic pcs loose": 3,
+  "Kingdom pcs loose": 3,
+  "Mini Raspberry loose": 90
+ }
+}

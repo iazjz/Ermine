@@ -1,0 +1,141 @@
+{
+ "note": "Sales 10-day requests, by filling, for the boxes the Order Book keeps only as a box total (Half, Fingers, Large Bites). Boxes over the whole window. Kept beside the builder, not in anyone's workbook.",
+ "requests": [
+  {
+   "sent": "2026-11-02",
+   "from": "2026-11-01",
+   "to": "2026-11-10",
+   "source": "Sales Request - 10 days (8).xlsx",
+   "lines": [
+    {
+     "box": "Half",
+     "flavour": "Half Peanut",
+     "boxes": 400
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Salted Caramel Pecan",
+     "boxes": 200
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Dates",
+     "boxes": 50
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Coconut",
+     "boxes": 50
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Peanut Fingers",
+     "boxes": 30
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Caramel Fingers",
+     "boxes": 150
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Coconut Fingers",
+     "boxes": 11
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Pistachio Fingers",
+     "boxes": 10
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Praline Fingers",
+     "boxes": 10
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Dark Chocolate",
+     "boxes": 11
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Salted Caramel",
+     "boxes": 33
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Coffee",
+     "boxes": 15
+    }
+   ]
+  },
+  {
+   "sent": "2026-11-10",
+   "from": "2026-11-11",
+   "to": "2026-11-20",
+   "source": "Sales Request - 10 days.xlsx (10 Nov)",
+   "lines": [
+    {
+     "box": "Half",
+     "flavour": "Half Peanut",
+     "boxes": 400
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Salted Caramel Pecan",
+     "boxes": 200
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Dates",
+     "boxes": 50
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Coconut",
+     "boxes": 50
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Peanut Fingers",
+     "boxes": 30
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Caramel Fingers",
+     "boxes": 150
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Coconut Fingers",
+     "boxes": 11
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Pistachio Fingers",
+     "boxes": 10
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Praline Fingers",
+     "boxes": 10
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Dark Chocolate",
+     "boxes": 11
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Salted Caramel",
+     "boxes": 33
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Coffee",
+     "boxes": 15
+    }
+   ]
+  }
+ ]
+}

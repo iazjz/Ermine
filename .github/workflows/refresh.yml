@@ -1,0 +1,98 @@
+# Cloud refresh of the Ermine dashboard - no Mac needed (set up 11 Nov 2026).
+#
+# Reads the four Work Centre workbooks from Aziz's OneDrive with a READ-ONLY rclone
+# sign-in (secret RCLONE_CONF), builds with the code in builder/ (kept in step by every
+# Mac publish), and publishes exactly like publish_dashboard.py does on the Mac.
+#
+# Runs: hourly 09:05-19:05 Riyadh, and on demand (GitHub app -> Actions -> Run workflow).
+# Never writes to OneDrive. The scopes it holds cannot.
+
+name: Refresh dashboard
+
+on:
+  schedule:
+    - cron: "5 6-16 * * *"        # 09:05 ... 19:05 Riyadh (UTC+3)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build only, do not publish"
+        type: boolean
+        default: false
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      TZ: Asia/Riyadh
+      RCLONE_VERSION: v1.76.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Tools (LibreOffice, Python libs, rclone)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libreoffice-calc >/dev/null
+          python3 -m pip install --quiet --break-system-packages openpyxl==3.1.5 pillow
+          cd "$RUNNER_TEMP"
+          curl -sSLO "https://downloads.rclone.org/$RCLONE_VERSION/rclone-$RCLONE_VERSION-linux-amd64.zip"
+          curl -sSL -o SUMS "https://downloads.rclone.org/$RCLONE_VERSION/SHA256SUMS"
+          grep " rclone-$RCLONE_VERSION-linux-amd64.zip" SUMS | sha256sum -c -
+          unzip -q "rclone-$RCLONE_VERSION-linux-amd64.zip"
+          sudo install "rclone-$RCLONE_VERSION-linux-amd64/rclone" /usr/local/bin/rclone
+
+      - name: Download the workbooks (read-only)
+        env:
+          RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
+        run: |
+          umask 077
+          printf '%s\n' "$RCLONE_CONF" > "$RUNNER_TEMP/rclone.conf"
+          cp "$RUNNER_TEMP/rclone.conf" "$RUNNER_TEMP/rclone.conf.before"
+          mkdir -p "$RUNNER_TEMP/od/Work Centre"
+          for f in "Production Plan - LIVE.xlsx" "Warehouse - Ali Nawaz.xlsx" \
+                   "Raw Materials - Ali Nawaz.xlsx" "Tasks - Aziz.xlsx"; do
+            rclone --config "$RUNNER_TEMP/rclone.conf" copyto \
+              "ermine:Work Centre/$f" "$RUNNER_TEMP/od/Work Centre/$f"
+          done
+          ls -la "$RUNNER_TEMP/od/Work Centre"
+
+      - name: Keep the OneDrive sign-in fresh
+        # Microsoft hands out a new refresh token when rclone uses the old one. Saving it
+        # back means nobody has to sign in again every 90 days. Skipped if unchanged.
+        env:
+          GH_TOKEN: ${{ secrets.GH_SECRETS_TOKEN }}
+        run: |
+          if ! cmp -s "$RUNNER_TEMP/rclone.conf" "$RUNNER_TEMP/rclone.conf.before"; then
+            gh secret set RCLONE_CONF --repo "$GITHUB_REPOSITORY" < "$RUNNER_TEMP/rclone.conf"
+            echo "sign-in renewed"
+          else
+            echo "sign-in unchanged"
+          fi
+          rm -f "$RUNNER_TEMP/rclone.conf.before"
+
+      - name: Build and publish
+        env:
+          ERMINE_ONEDRIVE: ${{ runner.temp }}/od
+          ERMINE_WORK: ${{ runner.temp }}/work
+          ERMINE_GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ERMINE_GH_REPO: ${{ github.repository }}
+        run: |
+          cd builder
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python3 publish_dashboard.py --dry-run
+          else
+            python3 publish_dashboard.py
+          fi
+
+      - name: Clean up
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/od" "$RUNNER_TEMP/rclone.conf" "$RUNNER_TEMP/work"
