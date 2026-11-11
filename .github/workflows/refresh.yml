@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 20
     env:
       TZ: Asia/Riyadh
-      RCLONE_VERSION: v1.76.0
+      RC_VER: v1.76.0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,11 +44,11 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends libreoffice-calc >/dev/null
           python3 -m pip install --quiet --break-system-packages openpyxl==3.1.5 pillow
           cd "$RUNNER_TEMP"
-          curl -sSLO "https://downloads.rclone.org/$RCLONE_VERSION/rclone-$RCLONE_VERSION-linux-amd64.zip"
-          curl -sSL -o SUMS "https://downloads.rclone.org/$RCLONE_VERSION/SHA256SUMS"
-          grep " rclone-$RCLONE_VERSION-linux-amd64.zip" SUMS | sha256sum -c -
-          unzip -q "rclone-$RCLONE_VERSION-linux-amd64.zip"
-          sudo install "rclone-$RCLONE_VERSION-linux-amd64/rclone" /usr/local/bin/rclone
+          curl -sSLO "https://downloads.rclone.org/$RC_VER/rclone-$RC_VER-linux-amd64.zip"
+          curl -sSL -o SUMS "https://downloads.rclone.org/$RC_VER/SHA256SUMS"
+          grep " rclone-$RC_VER-linux-amd64.zip" SUMS | sha256sum -c -
+          unzip -q "rclone-$RC_VER-linux-amd64.zip"
+          sudo install "rclone-$RC_VER-linux-amd64/rclone" /usr/local/bin/rclone
 
       - name: Download the workbooks (read-only)
         env:
