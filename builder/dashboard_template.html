@@ -567,6 +567,21 @@ const T = {
    fillTitle:"What sales asked for, by filling", fillUntil:"booked from today to {d}",
    fillSub:"The Order Book keeps these boxes as one total; the fillings come from the sales request forms ({r}).",
    fillNeed:"Filling information needed", fillNone:"No sales request by filling is on record.",
+   tryNp:"Count registered orders only, without the month target\u2019s pace (use when this order is part of the target)",
+   tryFull:"The month target alone fills {p}% of the floor\u2019s hours over the next 4 weeks, so a new order has almost no free time. If this order is part of the target, tick the box above.",
+   tryNever:"not within the next six months",
+   tryOptA:"A · The whole quantity in one delivery — earliest ready",
+   tryReady:"Ready by the end of", tryNoOt:"Without overtime",
+   tryWithOt:"With overtime ({p} h per person per day)",
+   tryOptB:"B · Staged delivery — when each batch is ready",
+   tryBs:"Batch size ({u})", tryBn:"or number of batches",
+   tryBatch:"Batch", tryBatchQty:"Quantity", tryCum:"Total so far",
+   tryBatchHint:"Enter a batch size or a number of batches to see each batch’s date.",
+   tryOptC:"C · Steady weekly supply without overtime (average of the next 4 weeks)",
+   tryPerWeek:"a week",
+   tryAssumed:"Past the end of this month the target is not known yet: next month is ASSUMED to run at this month’s pace.",
+   tryNote2:"An estimate, worked out here. {p}: {h} staff-hours per 1,000 pieces from the file’s own calibrated times (making + packing). Every working day carries the Order Book (incl. the 10-day sales plans) or the month target’s pace, whichever is larger, product by product; stock is used first; an order is made on the working day before its delivery. Overtime figures are ±43%: for deciding, not budgeting.",
+   tryNoteFb:"An estimate, worked out here. {p} has no time in the file, so the measured average of {h} staff-hours per 1,000 pieces is used. Every working day carries the Order Book (incl. the 10-day sales plans) or the month target’s pace, whichever is larger; stock is used first. Overtime figures are ±43%: for deciding, not budgeting.",
    tryModeBox:"Boxes", tryModePcs:"Pieces only, no packing", tryProd:"Product", tryQtyPcs:"How many pieces",
    tryPcsShare:"Packing left out: about {s}% of this product\u2019s time is packing in the file\u2019s model, so the pieces are priced at {h} staff-hours per 1,000.",
    tryPcsTarget:"{p}: pieces the month needs {t} \u00b7 made so far {k}.",
@@ -931,6 +946,21 @@ const T = {
    fillTitle:"طلب المبيعات بالحشوة", fillUntil:"المحجوز من اليوم حتى {d}",
    fillSub:"دفتر الطلبات يحفظ هذه البوكسات مجموعًا واحدًا؛ والحشوات من نماذج طلب المبيعات ({r}).",
    fillNeed:"مطلوب معلومات الحشوة", fillNone:"لا يوجد طلب مبيعات بالحشوة مسجّل.",
+   tryNp:"احسب على الطلبات المسجّلة فقط، بدون وتيرة مستهدف الشهر (إذا كان هذا الطلب جزءًا من المستهدف)",
+   tryFull:"مستهدف الشهر وحده يملأ {p}٪ من ساعات المصنع في الأسابيع الأربعة القادمة، فلا يبقى للطلب الجديد وقت تقريبًا. إذا كان هذا الطلب جزءًا من المستهدف، فعّل الخيار أعلاه.",
+   tryNever:"ليس خلال الأشهر الستة القادمة",
+   tryOptA:"أ · الكمية كاملة دفعة واحدة — أقرب جاهزية",
+   tryReady:"جاهزة بنهاية", tryNoOt:"بلا أوفرتايم",
+   tryWithOt:"مع أوفرتايم ({p} ساعة لكل فرد يوميًا)",
+   tryOptB:"ب · توريد على دفعات — متى تجهز كل دفعة",
+   tryBs:"حجم الدفعة ({u})", tryBn:"أو عدد الدفعات",
+   tryBatch:"الدفعة", tryBatchQty:"الكمية", tryCum:"المجموع حتى الآن",
+   tryBatchHint:"اكتب حجم الدفعة أو عدد الدفعات لترى تاريخ كل دفعة.",
+   tryOptC:"ج · توريد أسبوعي ثابت بلا أوفرتايم (متوسط الأسابيع الأربعة القادمة)",
+   tryPerWeek:"أسبوعيًا",
+   tryAssumed:"بعد نهاية هذا الشهر مستهدفه غير معروف بعد: الشهر القادم مفترَض بنفس وتيرة هذا الشهر.",
+   tryNote2:"تقدير محسوب هنا. {p}: {h} ساعة عمل لكل ١٠٠٠ حبة من أوقات الملف المعايَرة (صنع + تعبئة). كل يوم عمل يحمل دفتر الطلبات (ومنه خطط المبيعات العشرية) أو وتيرة مستهدف الشهر، أيهما أكبر، لكل منتج؛ والمخزون يُستهلك أولًا؛ والطلب يُصنع في يوم العمل الذي قبل تسليمه. أرقام الأوفرتايم ±٤٣٪: للقرار لا للميزانية.",
+   tryNoteFb:"تقدير محسوب هنا. {p} ليس له وقت في الملف، فاستُخدم المتوسط المقيس {h} ساعة عمل لكل ١٠٠٠ حبة. كل يوم عمل يحمل دفتر الطلبات (ومنه خطط المبيعات العشرية) أو وتيرة مستهدف الشهر، أيهما أكبر؛ والمخزون يُستهلك أولًا. أرقام الأوفرتايم ±٤٣٪: للقرار لا للميزانية.",
    tryModeBox:"بوكسات", tryModePcs:"حبات فقط بلا تعبئة", tryProd:"المنتج", tryQtyPcs:"كم حبة",
    tryPcsShare:"التعبئة مستبعدة: نحو {s}٪ من وقت هذا المنتج تعبئة في نموذج الملف، فتُحسب الحبات بـ{h} ساعة عمل لكل ١٠٠٠.",
    tryPcsTarget:"{p}: حبات يحتاجها الشهر {t} · المصنوع حتى الآن {k}.",
@@ -2935,7 +2965,7 @@ function fillBlock(){
 /* What if: a special order weighed before it is accepted - against the month's target,
    what sales have already booked, the stock on hand, and the hours the floor has.
    Everything is the page's own arithmetic on figures from the files, and says so. */
-const TRY={box:null, n:"", date:"", mode:"box", prod:null};
+const TRY={box:null, n:"", date:"", mode:"box", prod:null, bs:"", bn:"", np:false};
 const WINTER_BOX=12;           // Winter Box: marshmallow macarons, 12 to a box
 const MAIN_UNIT={Classic:"Big 30",Kingdom:"Big 24",Mini:"Mini",Coins:"Coins",Half:"Half",
   Origin:"Origin",Fingers:"Fingers",Cake:"Cake","Ice Cream":"Ice Cream"};
@@ -2949,80 +2979,183 @@ function isoPlus(iso,k){ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate(
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function isOff(iso){ const off=(D.dayoff||[]).map(x=>String(x||"").trim().toLowerCase()).filter(Boolean);
   return off.includes(WDAY[new Date(iso+"T00:00:00").getDay()]); }
-function tryCalc(){
-  const sz=trySizes(), pm=TRY.mode==="pcs", box=TRY.box, qty=Math.max(0,+TRY.n||0);
-  if((pm?!TRY.prod:!box)||!qty||!TRY.date) return null;
-  const pcs=pm ? qty : qty*(sz[box]||1), q=pm ? TRY.prod : prodOf(box);
-  const hpk0=(D.fc&&D.fc.hpk)||0;
-  /* pieces only: take out the share of this product's time the model spends packing */
-  let share=1;
-  if(pm){ const R=D.rates||{}, mk=(R.make||{})[q], u=MAIN_UNIT[q], pk=u?(R.pack||{})[u]:null, s=u?sz[u]:null;
-    if(mk && pk && s) share=mk/(mk+pk/s); }
-  const hpkNew=hpk0*share, hpk=hpk0, cap=(D.day&&D.day.capacity_h)||D.available_h||0;
-  const staff=(D.day&&D.day.staff_n)||(D.fc&&D.fc.crew)||1, rate=(D.fc&&D.fc.rate)||13.7;
-  const t0=todayIso(), days=[];
-  for(let k=1;k<150;k++){ const iso=isoPlus(t0,k); if(iso>=TRY.date) break; if(!isOff(iso)) days.push(iso); }
-  const n=days.length;
-  if(!n) return {n:0};
-  const first=isoPlus(t0,2), ord={};
-  ((D.ob&&D.ob.days)||[]).forEach(x=>{ if(x.date>=first && x.date<=TRY.date)
-    for(const b in x.by){ const p=prodOf(b); ord[p]=(ord[p]||0)+x.by[b]*(sz[b]||1); } });
-  const M=D.mtarget||{}, dl=M.days_left||((D.month||{}).days_left)||0;
+/* 12 Nov 2026 - rebuilt on a day-by-day model (Aziz):
+   - hours per product from the file's own calibrated times (Lists: make per piece,
+     pack per box), not one average rate for everything;
+   - every working day from tomorrow carries what is already booked: the Order Book
+     (incl. the 10-day sales plans) and the month target's pace - whichever is larger,
+     per product; stock is used up first;
+   - past month end the target is not known yet, so this month's pace is ASSUMED;
+   - the free hours left each day fill the new order, which gives: the verdict for the
+     chosen date, the earliest date for the whole quantity (with and without overtime),
+     the date of each batch for a staged delivery, and a weekly pace. */
+const TRY_OT_PP = 2;            // "reasonable" overtime: 2 extra hours per person per day
+function tryHpp(p, unit, sz){   // hours per piece, product p, packed in `unit` (null = pieces only)
+  const R=D.rates||{}, mk=(R.make||{})[p], pk=unit?(R.pack||{})[unit]:null, s=unit?(sz[unit]||1):1;
+  if(mk==null) return null;
+  return mk + (pk!=null ? pk/s : 0);
+}
+function tryModel(){
+  const sz=trySizes(), M=D.mtarget||{}, hpk0=(D.fc&&D.fc.hpk)||24;
+  const cap=(D.day&&D.day.capacity_h)||D.available_h||0;
+  const staff=(D.day&&D.day.staff_n)||(D.fc&&D.fc.crew)||1;
+  const t0=todayIso(), mon=String(M.month||t0).slice(0,7);
+  const dl=M.days_left||((D.month||{}).days_left)||0, dt=M.days_total||26;
+  const days=[];
+  for(let k=1;k<200 && days.length<130;k++){ const iso=isoPlus(t0,k); if(!isOff(iso)) days.push(iso); }
+  // the working day an order for `date` is made on: the last working day before it
+  const makeDay=date=>{ let j=-1; for(let i=0;i<days.length;i++){ if(days[i]<date) j=i; else break; } return j; };
+  const allIn=p=>{ const u=MAIN_UNIT[p]; const h=tryHpp(p,u,sz); return h!=null ? h : hpk0/1000; };
+  const prods=new Set((M.pieces||[]).map(r=>r.product));
+  const ordP={}, ordH={};       // per product: pieces per day index; hours per day index
+  ((D.ob&&D.ob.days)||[]).forEach(x=>{
+    const j=makeDay(x.date); if(j<0) return;
+    for(const b in x.by){ const p=prodOf(b), n=x.by[b]*(sz[b]||1); prods.add(p);
+      (ordP[p]=ordP[p]||{})[j]=(ordP[p][j]||0)+n;
+      const h=tryHpp(p,b,sz); (ordH[p]=ordH[p]||{})[j]=(ordH[p][j]||0)+x.by[b]*(sz[b]||1)*(h!=null?h:hpk0/1000); } });
   const stock={};
   ((D.plan||{}).flavours||[]).forEach(f=>{ const p=f.counts||f.product;
     stock[p]=(stock[p]||0)+(f.stock||0)+(f.cstock||0); });
-  const names=new Set([...(M.pieces||[]).map(r=>r.product), ...Object.keys(ord)]);
-  const rows=[...names].map(p=>{
+  let assumed=false;
+  const per=[...prods].map(p=>{
     const pr=(M.pieces||[]).find(r=>r.product===p)||{};
-    const pace=dl ? Math.max(0,pr.left||0)/dl*Math.min(n,dl) : 0;
-    const o=ord[p]||0, s=stock[p]||0;
-    return {p, pace, o, s, must:Math.max(0,Math.max(pace,o)-s)};
-  }).filter(r=>r.pace||r.o||r.s);
-  const booked=rows.reduce((a,r)=>a+r.must,0)*hpk/1000, capH=n*cap, free=capH-booked;
-  const qr=rows.find(r=>r.p===q)||{pace:0,o:0};
-  const spare=Math.max(0,(stock[q]||0)-Math.max(qr.pace,qr.o));
-  const make=Math.max(0,pcs-spare), needH=make*hpkNew/1000;
-  const over=Math.max(0, needH-Math.max(0,free)), perP=over/(n*staff);
-  // the box against its own month target: packed so far + booked to month end + this
+    const now=dl ? Math.max(0,pr.left||0)/dl : 0, nxt=dt ? Math.max(0,pr.need||0)/dt : 0;
+    let s=stock[p]||0; const pcs=[], hrs=[], sl=[];
+    days.forEach((iso,i)=>{
+      const pace = TRY.np ? 0 : (iso.slice(0,7)===mon ? now : nxt);
+      if(!TRY.np && iso.slice(0,7)!==mon && nxt>0) assumed=true;
+      const o=(ordP[p]||{})[i]||0;
+      let need=Math.max(pace,o);
+      const use=Math.min(s,need); s-=use; need-=use;
+      // hours: an order's own packing where the order drives the day, else the all-in rate
+      const h = o>=pace && o>0 ? ((ordH[p]||{})[i]||0)*(need/(o||1)) : need*allIn(p);
+      pcs.push(need); hrs.push(h); sl.push(s);
+    });
+    return {p, pcs, hrs, sl, left:s, stock:stock[p]||0};
+  });
+  const booked=days.map((_,i)=>per.reduce((a,r)=>a+r.hrs[i],0));
+  return {days, cap, staff, booked, per, assumed, mon, hpk0};
+}
+function tryCalc(){
+  const sz=trySizes(), pm=TRY.mode==="pcs", box=TRY.box, qty=Math.max(0,+TRY.n||0);
+  if((pm?!TRY.prod:!box)||!qty) return null;
+  const q=pm ? TRY.prod : prodOf(box), unitSz=pm?1:(sz[box]||1), pcs=qty*unitSz;
+  const Mo=tryModel(), M=D.mtarget||{};
+  let hpp = pm ? tryHpp(q,null,sz) : tryHpp(q, box==="Winter Box"?null:box, sz);
+  const fallback = hpp==null; if(fallback) hpp=Mo.hpk0/1000;
+  const rate=(D.fc&&D.fc.rate)||13.7;
+  const free=Mo.days.map((_,i)=>Math.max(0,Mo.cap-Mo.booked[i]));
+  const qr=Mo.per.find(r=>r.p===q)||{left:0,stock:0,sl:[]};
+  // window to the chosen delivery date (if any)
+  let n=0, capH=0, bookedW=0, freeW=0;
+  if(TRY.date)
+    Mo.days.forEach((iso,i)=>{ if(iso<TRY.date){ n++; capH+=Mo.cap; bookedW+=Mo.booked[i]; freeW+=free[i]; } });
+  // this product's stock still unused after what is booked up to the delivery date
+  // (or over the next 10 working days when no date is given) counts towards the order
+  const kS = TRY.date ? n : 10;
+  const spare=Math.min(pcs, Math.max(0, kS>0 ? (qr.sl[kS-1]!=null ? qr.sl[kS-1] : qr.stock||0) : (qr.stock||0)));
+  const make=Math.max(0,pcs-spare), needH=make*hpp;
+  // simulate: fill free hours (optionally with overtime) until each batch is done
+  const finish=(extraPerDay, target)=>{
+    let have=spare*1, i=0;
+    if(have>=target) return {i:-1};
+    for(;i<Mo.days.length;i++){ have += (free[i]+extraPerDay)/hpp; if(have>=target-1e-6) return {i}; }
+    return null; };
+  const ext=TRY_OT_PP*Mo.staff;
+  const doneNo=finish(0,pcs), doneOt=finish(ext,pcs);
+  const dayOf=r=>r==null?null:(r.i<0?todayIso():Mo.days[r.i]);
+  // batches
+  const bsz=Math.max(0,+TRY.bs||0), bn=Math.max(0,+TRY.bn||0);
+  const per=bsz ? bsz*unitSz : (bn ? Math.ceil(pcs/bn) : 0);
+  const batches=[];
+  if(per>0 && per<pcs){
+    for(let k=1, cum=0; cum<pcs && k<=60; k++){
+      cum=Math.min(pcs,k*per); const a=finish(0,cum), b=finish(ext,cum);
+      batches.push({k, qty:Math.round(cum/unitSz)-Math.round(Math.min(pcs,(k-1)*per)/unitSz),
+                    cum:Math.round(cum/unitSz), no:dayOf(a), ot:dayOf(b)}); }
+  }
+  // weekly pace without overtime: next 4 weeks of free hours
+  const w4=Mo.days.filter(iso=>iso<isoPlus(todayIso(),28));
+  const freeW4=w4.reduce((a,_,i)=>a+free[i],0);
+  const weekly=Math.floor(freeW4/4/hpp/unitSz);
+  const full = w4.length ? (w4.reduce((a,_,i)=>a+Mo.booked[i],0)/(w4.length*Mo.cap)) : 0;
+  // window verdict, same meaning as before
+  const over=Math.max(0, needH-freeW), perP=n?over/(n*Mo.staff):0;
   const mr=(M.rows||[]).find(r=>r.box===box)||{}, mon=String(M.month||"").slice(0,7);
   let rest=0; ((D.ob&&D.ob.days)||[]).forEach(x=>{ if(x.date.slice(0,7)===mon) rest+=(x.by[box]||0); });
   const pr=(M.pieces||[]).find(r=>r.product===q)||{};
-  return {n, pcs, q, hpk, hpkNew, share, pm, pr, capH, booked, free, spare:Math.min(spare,pcs), make, needH, over, perP,
-          cost:over*rate, rows, mr, rest, qty, base:Math.max(0,-free)};
+  const rows=Mo.per.map(r=>{ const k=TRY.date?Mo.days.filter(iso=>iso<TRY.date).length:0;
+      return {p:r.p, must:r.pcs.slice(0,k).reduce((a,x)=>a+x,0), h:r.hrs.slice(0,k).reduce((a,x)=>a+x,0), s:r.stock}; })
+    .filter(r=>r.must>=1);
+  return {n, pcs, q, pm, pr, capH, booked:bookedW, free:freeW, spare, make, needH, over, perP,
+          cost:over*rate, rows, mr, rest, qty, base:Math.max(0,bookedW-capH), hpp, fallback,
+          assumed:Mo.assumed, unitSz, noOt:dayOf(doneNo), withOt:dayOf(doneOt), otPP:TRY_OT_PP,
+          batches, weekly, dated:!!TRY.date, full};
 }
+function tryWhen(iso){ return iso ? new Date(iso+"T00:00:00").toLocaleDateString(loc(),
+  {weekday:"short", day:"numeric", month:"short"}) + (iso.slice(0,4)!==todayIso().slice(0,4)?" "+iso.slice(0,4):"") : t("tryNever"); }
 function tryResult(){
   const R=tryCalc();
   if(!R) return `<div class="muted">${t("tryPick")}</div>`;
-  if(!R.n) return `<div class="warnbox">${t("tryTooSoon")}</div>`;
-  const verdict = R.over<=0
-    ? `<span class="pill p-ok">${t("tryFits",{h:n0(R.free-R.needH)})}</span>`
-    : R.perP>3 ? `<span class="pill p-bad">${t("tryOut",{p:n1(R.perP)})}</span>`
-               : `<span class="pill p-warn">${t("tryOt",{h:n0(R.over),p:n1(R.perP),c:n0(R.cost),s:sar()})}</span>`;
-  let h=`<div class="row">
-      <div><div class="lbl">${t("tryDays")}</div><div class="mid">${n0(R.n)}</div></div>
-      <div><div class="lbl">${t("tryCap")}</div><div class="mid">${n0(R.capH)}<span class="unit">${t("hours")}</span></div></div>
-      <div><div class="lbl">${t("tryBooked")}</div><div class="mid">${n0(R.booked)}<span class="unit">${t("hours")}</span></div></div>
-      <div><div class="lbl">${t("tryNeed")}</div><div class="mid" style="color:var(--warn)">${n0(R.needH)}<span class="unit">${t("hours")}</span></div>
-        <div class="src" style="margin-top:2px">${n0(R.make)} ${t("pieces")}</div></div>
-    </div><div style="margin-top:12px">${verdict}</div>`;
-  if(R.base>0) h+=`<div class="src">${t("tryBase",{h:n0(R.base)})}</div>`;
+  const u=R.pm?t("pieces"):t("boxes");
+  let h=`<label class="src" style="display:flex;gap:8px;align-items:center;margin:0 0 10px;cursor:pointer">
+      <input type="checkbox" style="width:20px;height:20px;min-height:0;flex:none;margin:0;padding:0;accent-color:var(--teal)" ${TRY.np?"checked":""} onchange="trySet('np',this.checked)"> ${t("tryNp")}</label>`;
+  if(!TRY.np && R.full>=0.85)
+    h+=`<div class="warnbox">${t("tryFull",{p:n0(100*R.full)})}</div>`;
+  if(R.dated){
+    if(!R.n) h+=`<div class="warnbox">${t("tryTooSoon")}</div>`;
+    else {
+      const verdict = R.over<=0
+        ? `<span class="pill p-ok">${t("tryFits",{h:n0(R.free-R.needH)})}</span>`
+        : R.perP>3 ? `<span class="pill p-bad">${t("tryOut",{p:n1(R.perP)})}</span>`
+                   : `<span class="pill p-warn">${t("tryOt",{h:n0(R.over),p:n1(R.perP),c:n0(R.cost),s:sar()})}</span>`;
+      h+=`<div class="row">
+        <div><div class="lbl">${t("tryDays")}</div><div class="mid">${n0(R.n)}</div></div>
+        <div><div class="lbl">${t("tryCap")}</div><div class="mid">${n0(R.capH)}<span class="unit">${t("hours")}</span></div></div>
+        <div><div class="lbl">${t("tryBooked")}</div><div class="mid">${n0(R.booked)}<span class="unit">${t("hours")}</span></div></div>
+        <div><div class="lbl">${t("tryNeed")}</div><div class="mid" style="color:var(--warn)">${n0(R.needH)}<span class="unit">${t("hours")}</span></div>
+          <div class="src" style="margin-top:2px">${n0(R.make)} ${t("pieces")}</div></div>
+        </div><div style="margin-top:12px">${verdict}</div>`;
+      if(R.base>0) h+=`<div class="src">${t("tryBase",{h:n0(R.base)})}</div>`;
+    }
+  }
+  // option A - the whole quantity at once
+  h+=`<div class="lbl" style="margin-top:16px">${t("tryOptA")}</div>`+tbl(
+    [{h:""},{h:t("tryReady")}],
+    [[t("tryNoOt"), `<b>${esc(tryWhen(R.noOt))}</b>`],
+     [t("tryWithOt",{p:n0(R.otPP)}), esc(tryWhen(R.withOt))]]);
+  // option B - staged
+  h+=`<div class="lbl" style="margin-top:16px">${t("tryOptB")}</div>`;
+  h+=`<div class="tkgrid" style="margin-top:6px">
+      <div><label>${t("tryBs",{u})}</label><input type="number" min="0" inputmode="numeric" value="${esc(String(TRY.bs||""))}"
+        onchange="TRY.bn='';trySet('bs',this.value)"></div>
+      <div><label>${t("tryBn")}</label><input type="number" min="0" inputmode="numeric" value="${esc(String(TRY.bn||""))}"
+        onchange="TRY.bs='';trySet('bn',this.value)"></div></div>`;
+  if(R.batches.length)
+    h+=tbl([{h:t("tryBatch")},{h:t("tryBatchQty")+" · "+u},{h:t("tryCum")+" · "+u},{h:t("tryNoOt")},{h:t("tryWithOt",{p:n0(R.otPP)})}],
+      R.batches.map(b=>[n0(b.k), n0(b.qty), n0(b.cum), `<b>${esc(tryWhen(b.no))}</b>`, esc(tryWhen(b.ot))]));
+  else h+=`<div class="muted" style="margin-top:6px">${t("tryBatchHint")}</div>`;
+  // option C - weekly pace
+  h+=`<div class="lbl" style="margin-top:16px">${t("tryOptC")}</div>
+      <div class="mid">${n0(R.weekly)} <span class="unit">${u} ${t("tryPerWeek")}</span></div>`;
+  // notes
   if(R.spare>0) h+=`<div class="src">${t("tryStock",{s:n0(R.spare),p:esc(R.q)})}</div>`;
-  if(R.pm && R.share<1)
-    h+=`<div class="src">${t("tryPcsShare",{s:n0(100*(1-R.share)),h:n1(R.hpkNew)})}</div>`;
-  if((R.pm || TRY.box==="Winter Box") && R.pr.need!=null)
-    h+=`<div class="src">${t("tryPcsTarget",{p:esc(R.q),t:n0(R.pr.need),k:n0(R.pr.made||0)})}</div>`;
+  if(R.pm || TRY.box==="Winter Box"){ if(R.pr.need!=null)
+    h+=`<div class="src">${t("tryPcsTarget",{p:esc(R.q),t:n0(R.pr.need),k:n0(R.pr.made||0)})}</div>`; }
   if(!R.pm && TRY.box==="Winter Box") h+=`<div class="src">${t("tryWinter")}</div>`;
   if(!R.pm && R.mr.target!=null){
     const w=(R.mr.packed||0)+R.rest+R.qty;
     h+=`<div class="src">${t("tryTarget",{box:esc(TRY.box),t:n0(R.mr.target),k:n0(R.mr.packed||0),o:n0(R.rest),w:n0(w)})}</div>`;
     if(w>R.mr.target) h+=`<div class="src"><b>${t("tryOver",{box:esc(TRY.box),n:n0(w-R.mr.target)})}</b></div>`;
   }
-  h+=`<div class="lbl" style="margin-top:14px">${t("tryBreak")}</div>`+tbl(
-    [{h:t("product")},{h:t("tryPace")},{h:t("tryOrders")},{h:t("tryStockCol")},{h:t("tryMust")}],
-    R.rows.map(r=>[esc(r.p), n0(r.pace), r.o?n0(r.o):dash(null), r.s?n0(r.s):dash(null), `<b>${n0(r.must)}</b>`]),
-    [t("totalRow"), n0(R.rows.reduce((a,r)=>a+r.pace,0)), n0(R.rows.reduce((a,r)=>a+r.o,0)),
-     n0(R.rows.reduce((a,r)=>a+r.s,0)), n0(R.rows.reduce((a,r)=>a+r.must,0))]);
-  h+=`<div class="src">${t("tryNote",{h:n1(R.hpk)})}</div>`;
+  if(R.assumed) h+=`<div class="src"><b>${t("tryAssumed")}</b></div>`;
+  if(R.dated && R.rows.length){
+    h+=`<div class="lbl" style="margin-top:14px">${t("tryBreak")}</div>`+tbl(
+      [{h:t("product")},{h:t("tryMust")},{h:t("hours")},{h:t("tryStockCol")}],
+      R.rows.map(r=>[esc(r.p), `<b>${n0(r.must)}</b>`, n0(r.h), r.s?n0(r.s):dash(null)]),
+      [t("totalRow"), n0(R.rows.reduce((a,r)=>a+r.must,0)), n0(R.rows.reduce((a,r)=>a+r.h,0)), n0(R.rows.reduce((a,r)=>a+r.s,0))]);
+  }
+  h+=`<div class="src">${t(R.fallback?"tryNoteFb":"tryNote2",{h:n1(R.hpp*1000), p:esc(R.q)})}</div>`;
   return h;
 }
 function tryUpdate(){ const o=document.getElementById("tryout"); if(o) o.innerHTML=tryResult(); }
