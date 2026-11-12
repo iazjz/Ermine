@@ -797,6 +797,7 @@ const T = {
    noTargetNote:"These are planned in full, exactly as asked. With no target there is nothing they can exceed, and holding them back would punish sales for a gap in finance\u2019s sheet. They are listed only so the gap gets closed \u2014 ask finance to set a monthly target for them.",
    healthShort:"last line written", healthOk:"today",
    mMat:"Raw materials", vMat:"Materials and packaging", vMatSub:"what has run out, and what is about to",
+   idleShort:"Not planned today and still short of the month target \u00b7 {n}",
    matWeekly:"weekly count", pdfMaking:"Making the PDF\u2026", pdfFail:"Could not make the PDF - check the connection and try again", gTitle:"Month guide for the chef", gHead:"Month target against what is done so far \u00b7 {d} \u00b7 {n} working days left", gStop:"DONE \u2014 stop making / packing these (amount over target)", gProd:"PIECES STILL TO MAKE", gPack:"BOXES STILL TO PACK", gLeft:"Left", gItem:"Flavour or box", gOver:"Over target", gPerDay:"Per day", gHow:"How", gReady:"pieces are ready \u2014 pack only", gCoat:"pieces made \u2014 coat, then pack {n}", gMake:"needs new pieces (see list above)", gNone:"nothing", gSendEn:"Send to chef (English)", gSendAr:"Send (Arabic)", gNote:"Left = month target minus made (pieces) or packed (boxes) so far. Per day = left / working days left. How = from today\u2019s Stock sheet: ready to pack, coat then pack, or new pieces to make (the flavours that run short). Approximate.", tgtAfter:"To month target after plan", splitReady:"pack from ready stock {n}", splitCoat:"coat, then pack {n}", splitMake:"new production {n} boxes (\u2248{p} pcs)", splitNone:"stock not readable", splitNote:"Under each red box figure: how the shortfall gets done. Ready = boxes the Stock sheet says can be packed now, after today\u2019s packing; coat then pack = Mini and Large Bites pieces already made but not coated; new production = the rest. Approximate, from today\u2019s stock. That is why a box can be short while its pieces are over target: the pieces are made, the remaining work is coating and packing.", noTgt:"no target", tgtDone:"met", tgtStop:"stop", tgtStopBox:"Month target met, or met once today\u2019s plan is done \u2014 make no more of: {l}", tgtPlanned:"planned today {n}", tgtNote:"Worked out: month target \u2212 made (or packed) this month \u2212 what is left of today's plan. Red = still short if today's plan is done 100%; green = target met.", matPackAt:"Ali\u2019s last packaging count: {d}. Not updated daily.", matPackNone:"Counted weekly by Ali - not updated daily. No count date yet.", matShow:"show", matNeg:"Below zero", matLow:"At or under the request level", matOk:"nothing needs ordering today",
    matItem:"item", matLeft:"in stock", matNeed:"request at", matAct:"flag", matUnit:"unit",
    matNote:"From Ali\u2019s daily stock report on OneDrive. \u201cIn stock\u201d is what is left: a negative number means more was issued than the file says was received, so the count is short by that much and something is unrecorded. Only negative, at-request-level or flagged lines are listed \u2014 the file holds 175 items.",
@@ -1160,6 +1161,7 @@ const T = {
    noTargetNote:"هذه تُخطَّط كاملةً كما طُلبت. فبلا مستهدف لا يوجد ما تتجاوزه، وحجزها عقابٌ للمبيعات على نقصٍ في ورقة المالية. وهي مذكورة هنا لسدّ ذلك النقص فقط — اطلب من المالية وضع مستهدف شهري لها.",
    healthShort:"آخر سطر كُتب", healthOk:"اليوم",
    mMat:"المواد الخام", vMat:"المواد والتغليف", vMatSub:"ما نفد، وما أوشك",
+   idleShort:"لم تُخطَّط اليوم وما زالت ناقصة عن تارقت الشهر · {n}",
    matWeekly:"جرد أسبوعي", pdfMaking:"جارٍ تجهيز ملف PDF\u2026", pdfFail:"تعذّر تجهيز ملف PDF، تأكد من الاتصال وحاول مرة ثانية", gTitle:"توجيهات الشهر للشيف", gHead:"تارقت الشهر مقابل المنجز حتى الآن \u00b7 {d} \u00b7 باقي {n} يوم عمل", gStop:"اكتمل \u2014 أوقف إنتاجه أو تعبئته (الزيادة فوق التارقت)", gProd:"حبات باقية للإنتاج", gPack:"بوكسات باقية للتعبئة", gLeft:"الباقي", gItem:"النكهة أو البوكس", gOver:"فوق التارقت", gPerDay:"يوميًا", gHow:"كيف", gReady:"الحبات جاهزة \u2014 تعبئة فقط", gCoat:"الحبات مصنوعة \u2014 تغطيس ثم تعبئة {n}", gMake:"يحتاج حبات جديدة (انظر القائمة أعلاه)", gNone:"لا شيء", gSendEn:"أرسلها للشيف (إنجليزي)", gSendAr:"أرسلها (عربي)", gNote:"الباقي = تارقت الشهر ناقص المصنوع (للحبات) أو المعبّأ (للبوكسات) حتى الآن. يوميًا = الباقي ÷ أيام العمل الباقية. كيف = من شيت Stock اليوم: جاهز للتعبئة، أو تغطيس ثم تعبئة، أو حبات جديدة تُنتَج (النكهات الناقصة). تقريبي.", tgtAfter:"على تارقت الشهر بعد الخطة", splitReady:"تعبئة من الجاهز {n}", splitCoat:"تغطيس ثم تعبئة {n}", splitMake:"إنتاج جديد {n} بوكس (\u2248{p} حبة)", splitNone:"المخزون غير مقروء", splitNote:"تحت كل رقم أحمر في البوكسات: كيف يُكمَّل الناقص. «تعبئة من الجاهز» = بوكسات يقول شيت Stock إنها تُعبّأ الآن بعد تعبئة اليوم؛ «تغطيس ثم تعبئة» = حبات ميني وLarge Bites مصنوعة لكنها غير مغطّسة؛ «إنتاج جديد» = الباقي. تقريبي، من مخزون اليوم. ولهذا قد يكون البوكس ناقصًا والحبات فوق التارقت: الحبات مصنوعة، والباقي تغطيس وتعبئة.", noTgt:"لا تارقت", tgtDone:"مكتمل", tgtStop:"أوقف", tgtStopBox:"تارقت الشهر مكتمل، أو يكتمل بخطة اليوم \u2014 أوقف أي إنتاج إضافي من: {l}", tgtPlanned:"مخطط اليوم {n}", tgtNote:"محسوب: تارقت الشهر \u2212 ما صُنع (أو عُبّئ) هذا الشهر \u2212 ما تبقّى من خطة اليوم. الأحمر = الناقص لو اكتملت خطة اليوم ١٠٠٪، والأخضر = التارقت مكتمل.", matPackAt:"آخر جرد تغليف من علي: {d}. لا يُحدَّث يوميًا.", matPackNone:"يجرده علي أسبوعيًا ولا يُحدَّث يوميًا. لا يوجد تاريخ جرد بعد.", matShow:"عرض", matNeg:"تحت الصفر", matLow:"عند حد الطلب أو دونه", matOk:"لا شيء يحتاج طلبًا اليوم",
    matItem:"الصنف", matLeft:"المتوفر", matNeed:"حد الطلب", matAct:"الحالة", matUnit:"الوحدة",
    matNote:"من تقرير المخزون اليومي عند علي على ون درايف. و«المتوفر» هو الباقي: والرقم السالب يعني أن المصروف أكثر مما يقول الملف إنه استُلم، أي أن العدّ ناقص بهذا المقدار وهناك حركة غير مسجّلة. ولا تُعرَض إلا الأسطر السالبة أو التي بلغت حد الطلب أو المؤشَّر عليها — الملف فيه ١٧٥ صنفًا.",
@@ -2604,8 +2606,15 @@ function viewPlan(){
   // asks for sits in "Counts as". Grouping on Product produced one giant "Big" heading
   // and no way to see Classic apart from Kingdom, which is the exact split being asked
   // for. "Counts as" also matches the names the Actual Log uses, so the two agree.
+  /* 12 Nov 2026 (Aziz): a flavour with no plan, no suggestion and nothing made is not
+     part of today - it only made the cards long. It leaves the table; if it is still
+     short of the month target it is listed once, folded, under the totals. */
+  const fAct = f => (f.plan||0) || (f.sugg||0) || (f.actual||0);
+  const flA = fl.filter(fAct);
+  const flIdle = fl.filter(f=>!fAct(f)).map(f=>({f, v:fAfter(f)}))
+                   .filter(x=>x.v!=null && x.v<0).sort((a,b)=>a.v-b.v);
   const byProd = {};
-  fl.forEach(f => { const k = f.counts || f.product || "—";
+  flA.forEach(f => { const k = f.counts || f.product || "—";
                     (byProd[k] = byProd[k] || []).push(f); });
   h+=`<h3>${t("inPieces")}</h3>`;
   const fcols=[{h:t("flavour"),wrap:true},{h:t("stockNow")},{h:t("suggested2")},
@@ -2622,13 +2631,20 @@ function viewPlan(){
   h+=`<div class="card"><b>${t("totalRow")}</b> &nbsp; ${
       n0(fl.reduce((s,f)=>s+(f.plan||0),0))} <span class="unit">${t("pieces")}</span>
       <div class="src">${t("suggNote")}</div><div class="src">${t("tgtNote")}</div></div>`;
+  if(flIdle.length)
+    h+=`<details class="card idle"><summary class="src" style="margin:0;cursor:pointer">${
+        t("idleShort",{n:n0(flIdle.length)})}</summary><div style="margin-top:8px">${
+        tbl([{h:t("flavour"),wrap:true},{h:t("stockNow")},{h:t("tgtAfter")+" \u00b7 "+t("pieces")}],
+            flIdle.map(x=>[esc(x.f.flavour), dash(n0(x.f.stock)), tgtCell(x.v)]))}</div></details>`;
 
   // and each box opens on the flavours that feed it
   h+=`<h3>${t("inBoxes")}</h3>`;
   /* Planned against actual, the same way the pieces section does it. The boxes section
      only ever showed the plan, so there was no way to see on this page whether the
      packing had happened. */
-  const bp = bAll.filter(b=>(b.plan||0)||(b.actual||0)||BT[b.box]);
+  const bp = bAll.filter(b=>(b.plan||0)||(b.actual||0));
+  const bIdle = bAll.filter(b=>!(b.plan||0) && !(b.actual||0)).map(b=>({b, v:bAfter(b)}))
+                    .filter(x=>x.v!=null && x.v<0).sort((a,b)=>a.v-b.v);
   if(bp.length){
     h+=`<div class="card" data-focus="packed">`+tbl(
       [{h:t("box")},{h:t("planned")+" \u00b7 "+t("packedHead")},
@@ -2644,7 +2660,14 @@ function viewPlan(){
       [t("totalRow"), n0(bp.reduce((a,b)=>a+(b.plan||0),0)),
        n0(bp.reduce((a,b)=>a+(b.actual||0),0)), "", ""])
       +`<div class="src">${t("packedNote")}</div><div class="src">${t("tgtNote")}</div><div class="src">${t("splitNote")}</div></div>`;
+  } else {
+    h+=`<div class="card"><div class="muted">${t("nothingPlanned")}</div></div>`;
   }
+  if(bIdle.length)
+    h+=`<details class="card idle"><summary class="src" style="margin:0;cursor:pointer">${
+        t("idleShort",{n:n0(bIdle.length)})}</summary><div style="margin-top:8px">${
+        tbl([{h:t("box")},{h:t("tgtAfter")+" \u00b7 "+t("boxes")}],
+            bIdle.map(x=>[esc(x.b.box), tgtCell(x.v)+splitLine(boxSplit(x.b,-x.v,P))]))}</div></details>`;
   h+=stationsBlock();
   h+=ideasBlock();
   return h;
@@ -3755,7 +3778,8 @@ const stStrip=x=>String(x).replace(/\s*\[also[^\]]*\]/,"").trim();
 function stationsBlock(){
   const S=D.stations||[]; if(!S.length) return "";
   let h=`<h3>${t("stTitle")}</h3>`;
-  h+=S.map(s=>{
+  /* 12 Nov 2026: a station with no load, no tasks and nobody on it is not part of today. */
+  h+=S.filter(s=>(s.load||0)>0 || s.tasks.length || s.am.length || s.pm.length).map(s=>{
     const ppl=[...new Set([...s.am,...s.pm].map(stStrip))];
     const lab=s.tasks.reduce((a,x)=>a+(x.h||0)*(x.crew||0),0);
     const per=ppl.length?lab/ppl.length:null;
