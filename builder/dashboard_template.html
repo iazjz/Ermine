@@ -434,6 +434,7 @@ html[dir=rtl] tr.tap .caret.on{transform:rotate(90deg)}
    selector list blurred whole sentences because they happened to live in a .sub or a
    td, which hid the reasoning along with the number. */
 .numblur{ filter: blur(7px); }
+span.nb.numblur{ display:inline-block; }
 .blurred .lbl, .blurred th, .blurred .src, .blurred h2 { filter: none; }
 /* .backbtn sets display, which beats the browser's own [hidden]{display:none} - so the
    button stayed on screen on the home page, offering to go back from the beginning. */
@@ -1396,11 +1397,18 @@ function checkFresh(){
    things you will not show the board is the same set every time.
 
    It is privacy from the room, not security: whoever holds the phone can tap the eye. */
-let HIDDEN = (() => { try { return new Set(JSON.parse(localStorage.getItem("erm-hidden")||"[]")); }
-                      catch(e){ return new Set(); } })();
+/* 12 Nov 2026: the per-section memory in localStorage left sections hidden on the next
+   visit with no one remembering why - cards looked broken. Now: the top button hides
+   every number on EVERY page until tapped again (kept only for this browser session),
+   and a section's own eye is a one-off exception that is forgotten on reload. */
+try { localStorage.removeItem("erm-hidden"); } catch(e){}
+let HIDE_ALL = (() => { try { return sessionStorage.getItem("erm-hideall")==="1"; } catch(e){ return false; } })();
+let HIDDEN = new Set();     // sections hidden one by one while HIDE_ALL is off
+let REVEAL = new Set();     // sections shown one by one while HIDE_ALL is on
 function saveHidden(){
-  try { localStorage.setItem("erm-hidden", JSON.stringify([...HIDDEN])); } catch(e){}
+  try { sessionStorage.setItem("erm-hideall", HIDE_ALL ? "1" : "0"); } catch(e){}
 }
+function isHid(k){ return HIDE_ALL ? !REVEAL.has(k) : HIDDEN.has(k); }
 /* Rather than marking up every section by hand across eight views, the eye is added
    after the fact: each heading gets one, and the blur is applied to the siblings that
    follow it up to the next heading. That is a precise definition of "this section",
@@ -1625,51 +1633,73 @@ function hideKeys(){
  * whole, because a bar chart with no numbers on it is still a number.
  */
 const NUMRE = /[0-9٠-٩]/;
+/* 12 Nov 2026: the blur used to land on the ELEMENT holding a digit, so a card with one
+   figure in a sentence went entirely. Now each number token is wrapped in its own span
+   and only that span blurs - the words, product names and reasons stay readable.
+   "Big 30" / "Big 12" are box names, not figures, and are left alone. */
+const NUMTOK = /[+\-−]?[0-9٠-٩][0-9٠-٩,،٬.٫:%٪\/\u00A0\u202F]*[0-9٠-٩%٪]|[+\-−]?[0-9٠-٩]/g;
+function wrapNums(tn){
+  const s = tn.nodeValue || "";
+  let m, last = 0, frag = null;
+  NUMTOK.lastIndex = 0;
+  while((m = NUMTOK.exec(s))){
+    if(/Big\s*$/i.test(s.slice(Math.max(0, m.index-5), m.index))) continue;
+    frag = frag || document.createDocumentFragment();
+    frag.appendChild(document.createTextNode(s.slice(last, m.index)));
+    const sp = document.createElement("span");
+    sp.className = "nb numblur"; sp.textContent = m[0];
+    frag.appendChild(sp);
+    last = m.index + m[0].length;
+  }
+  if(!frag) return;
+  frag.appendChild(document.createTextNode(s.slice(last)));
+  tn.parentNode.replaceChild(frag, tn);
+}
 function blurNums(root, on){
   root.querySelectorAll(".numblur").forEach(e=>e.classList.remove("numblur"));
   if(!on) return;
   root.querySelectorAll("canvas,.bar,.minibar,.dots").forEach(e=>e.classList.add("numblur"));
-  if(NUMRE.test(root.textContent||"") && !root.children.length) root.classList.add("numblur");
+  root.querySelectorAll("span.nb").forEach(e=>e.classList.add("numblur"));
   const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let n;
+  const todo=[]; let n;
   while((n=w.nextNode())){
     if(!NUMRE.test(n.nodeValue||"")) continue;
     const el=n.parentElement;
     /* Never the column headings or the source notes - a date in a footnote is part of
        the sentence, not a figure anyone is hiding. */
-    if(!el || el.closest(".src") || el.tagName==="TH" || el.classList.contains("lbl")) continue;
-    el.classList.add("numblur");
+    if(!el || el.closest(".src") || el.closest("span.nb") || el.tagName==="TH"
+       || el.classList.contains("lbl") || el.closest("button")) continue;
+    todo.push(n);
   }
+  todo.forEach(wrapNums);
 }
 
 function applyHidden(){
   decorateSections();
   const head=document.querySelector(".pagehead[data-sec]");
   if(head){
-    const on=HIDDEN.has(head.dataset.sec);
+    const on=isHid(head.dataset.sec);
     leadBlock().forEach(el=>{ el.classList.toggle("blurred", on); blurNums(el, on); });
     const b=head.querySelector("[data-eye]");
     if(b){ b.innerHTML = eyeIcon(on); b.title = on ? t("showNums") : t("hideNums"); }
   }
   document.querySelectorAll("#main h3[data-sec]").forEach(h=>{
-    const on = HIDDEN.has(h.dataset.sec);
+    const on = isHid(h.dataset.sec);
     sectionBody(h).forEach(el=>{ el.classList.toggle("blurred", on); blurNums(el, on); });
     const b = h.querySelector("[data-eye]");
     if(b){ b.innerHTML = eyeIcon(on); b.title = on ? t("showNums") : t("hideNums"); }
   });
   const all = hideKeys();
-  const every = all.length && all.every(k=>HIDDEN.has(k));
   const b = document.getElementById("hide");
-  if(b){ b.innerHTML = eyeIcon(every); b.title = every ? t("showNums") : t("hideNums"); }
+  if(b){ b.innerHTML = eyeIcon(HIDE_ALL); b.title = HIDE_ALL ? t("showNums") : t("hideNums"); }
 }
 function toggleSec(key){
-  if(HIDDEN.has(key)) HIDDEN.delete(key); else HIDDEN.add(key);
-  saveHidden(); applyHidden();
+  const set = HIDE_ALL ? REVEAL : HIDDEN;
+  if(set.has(key)) set.delete(key); else set.add(key);
+  applyHidden();
 }
 function toggleHidden(){
-  const all = hideKeys();
-  const every = all.length && all.every(k=>HIDDEN.has(k));
-  if(every) all.forEach(k=>HIDDEN.delete(k)); else all.forEach(k=>HIDDEN.add(k));
+  HIDE_ALL = !HIDE_ALL; HIDDEN.clear(); REVEAL.clear();
   saveHidden(); applyHidden();
 }
 
