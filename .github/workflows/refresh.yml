@@ -4,14 +4,13 @@
 # sign-in (secret RCLONE_CONF), builds with the code in builder/ (kept in step by every
 # Mac publish), and publishes exactly like publish_dashboard.py does on the Mac.
 #
-# Runs: hourly 09:05-19:05 Riyadh, and on demand (GitHub app -> Actions -> Run workflow).
+# Runs: ON DEMAND only - the dashboard's refresh button (via the QC Apps Script) or the
+# GitHub app (Actions -> Run workflow). Hourly schedule removed 14 Nov 2026 (Aziz).
 # Never writes to OneDrive. The scopes it holds cannot.
 
 name: Refresh dashboard
 
 on:
-  schedule:
-    - cron: "5 6-16 * * *"        # 09:05 ... 19:05 Riyadh (UTC+3)
   workflow_dispatch:
     inputs:
       dry_run:
@@ -59,7 +58,7 @@ jobs:
           cp "$RUNNER_TEMP/rclone.conf" "$RUNNER_TEMP/rclone.conf.before"
           mkdir -p "$RUNNER_TEMP/od/Work Centre"
           for f in "Production Plan - LIVE.xlsx" "Warehouse - Ali Nawaz.xlsx" \
-                   "Raw Materials - Ali Nawaz.xlsx" "Tasks - Aziz.xlsx"; do
+                   "Raw Materials - Ali Nawaz.xlsx"; do
             rclone --config "$RUNNER_TEMP/rclone.conf" copyto \
               "ermine:Work Centre/$f" "$RUNNER_TEMP/od/Work Centre/$f"
           done
