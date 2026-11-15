@@ -768,6 +768,7 @@ const T = {
    flavTargetNone:"No flavour target has been set yet. Add a block headed MONTHLY TARGET - FLAVOUR to the Monthly Targets sheet, with a Flavour column and a TARGET pcs column, and it will be scored here like the boxes.",
    inferred:"worked out from the product total",
    ambiguous:"{p} had more than one flavour planned, so the day\u2019s total cannot be split between them",
+   flavLineNote:"One filling of {b}. Ali records {b} by filling; the target and the order book count {b} as one line.",
    byFlavourNote:"Which filling the boxes on the shelf actually are. The rest of the system counts Half and Fingers as one line, because the target and the order book do; the shelf does not.",
    gapSince:"Packed and received are both counted from the stocktake on {d}, so the two sides cover the same days. A negative gap is the store recording something the chef logged before that date.",
    fcOpenNote:"Frozen on {d} and never recalculated, so the payroll line can be held against it at the close.",
@@ -1147,6 +1148,7 @@ const T = {
    flavTargetNone:"لم يُضبَط مستهدف بالنكهة بعد. أضف كتلة عنوانها MONTHLY TARGET - FLAVOUR في شيت Monthly Targets، بعمود Flavour وعمود TARGET pcs، وستُحتسَب هنا كالبوكسات.",
    inferred:"مستنتَج من إجمالي المنتج",
    ambiguous:"{p} خُطِّط له أكثر من نكهة، فلا يمكن تقسيم إجمالي اليوم بينها",
+   flavLineNote:"حشوة واحدة من {b}. علي يسجّل {b} حسب الحشوة، والمستهدف ودفتر الطلبات يعدّان {b} سطرًا واحدًا.",
    byFlavourNote:"أي حشوة هي البوكسات الموجودة على الرف فعلًا. بقية النظام تعدّ Half وFingers سطرًا واحدًا لأن المستهدف ودفتر الطلبات كذلك؛ أمّا الرف فلا.",
    gapSince:"المعبّأ والمستلَم كلاهما محسوب من جرد {d}، فالطرفان يغطّيان نفس الأيام. والفجوة السالبة تعني أن المخزن سجّل شيئًا دوّنه الشيف قبل ذلك التاريخ.",
    fcOpenNote:"جُمِّد في {d} ولا يُعاد حسابه، حتى يُقارَن به مسيَّر الرواتب عند الإقفال.",
@@ -2429,8 +2431,7 @@ function feedBlock(){
   const dest=f=> (f.who==="ali") ? "store" : (f.unit==="pcs" ? "shift" : "plan");
   /* Ali writes Half and Fingers by filling ("Half Salted Caramel Pecan"); the store
      folds them under their box, so the line opens the box that holds that filling. */
-  const boxOf=nm=>{ const sb=(D.store||[]).find(b=>b.box===nm ||
-                      (b.by_flavour||[]).some(x=>x.name===nm)); return sb ? sb.box : nm; };
+  const boxOf=nm=>nm;   // fillings have their own line on the store page now
   const focus=f=> (f.who==="ali") ? (f.box ? "box:"+boxOf(f.box) : "")
                                   : (f.unit==="pcs" ? "made" : "packed");
   const ea=s=>esc(s).replace(/"/g,"&quot;");
@@ -2838,11 +2839,33 @@ function viewStore(){
   // page for - what is on the shelf right now - sat at the far end, past six columns of
   // working, and had to be scrolled to. Now it is the second thing on each line and the
   // working is folded underneath, one box at a time.
-  const bmax = Math.max(1, ...S.map(b=>b.in_store_now||0));
+  /* Half and Fingers are a box with several fillings. A shared store list that says
+     "Half 369" only brings the question back: which filling? So a box Ali keeps by
+     filling is listed as one line per filling, and its total line is left out. */
+  const L=[];
+  S.forEach(b=>{ const fl=b.by_flavour||[];
+    if(fl.length) fl.forEach(f=>L.push({flav:true,box:f.name,now:f.now||0,f,b}));
+    else L.push({flav:false,box:b.box,now:b.in_store_now||0,b}); });
+  const bmax = Math.max(1, ...L.map(x=>x.now));
   h+=`<h3>${t("shelfTitle")}</h3>`;
-  h+= S.map(b=>{
-    const now = b.in_store_now||0;
-    const inner = tbl(
+  h+= L.map(x=>{
+    const b=x.b, now=x.now;
+    const inner = x.flav ? tbl(
+      [{h:t("aliGot")},{h:t("salesTook")},{h:t("waste")},{h:t("pcsBox")},{h:t("asPieces")}],
+      [[dash(x.f.in?n0(x.f.in):null), dash(x.f.out?n0(x.f.out):null),
+        dash(x.f.waste?n0(x.f.waste):null), dash(n0(b.pcs)), n0(now*(b.pcs||0))]])
+      + `<div class="src">${t("flavLineNote",{b:esc(b.box)})}</div>` : tblBox(b,now);
+    return `<details class="grp" data-focus="box:${esc(x.box).replace(/"/g,"&quot;")}">
+      <summary><span class="caret">\u276F</span>
+        <span class="gname">${esc(x.box)}</span>
+        <span class="gnum" style="color:${now?"var(--ok)":"var(--dim)"}">${n0(now)}</span>
+        <span class="unit">${t("boxes")}</span>
+        <span class="minibar" style="flex:0 0 70px"><i style="width:${
+          Math.round(100*now/bmax)}%;background:var(--teal)"></i></span>
+      </summary><div class="inner">${inner}</div></details>`;
+  }).join("");
+  function tblBox(b,now){
+    return tbl(
       [{h:t("stocktake")},{h:t("chefPacked")},{h:t("aliGot")},{h:t("gap")},
        {h:t("salesTook")},{h:t("waste")},{h:t("pcsBox")},{h:t("asPieces")}],
       [[dash(n0(b.stocktake)),
@@ -2851,30 +2874,7 @@ function viewStore(){
         (b.gap?`<span class="ou ${b.gap<0?"dn":"up"}">${n0(b.gap)}</span>`:dash(null)),
         dash(n0(b.sales_took)),dash(b.waste?n0(b.waste):null),
         dash(n0(b.pcs)),n0(now*(b.pcs||0))]]);
-
-    /* A box that is really several fillings gets them listed under it. Not a fold:
-       this is the thing Aziz sends to sales, and a fold exports closed. */
-    const fl = b.by_flavour || [];
-    const flav = fl.length ? `<div style="margin-top:10px">
-        <div class="lbl">${t("byFlavour")}</div>` + tbl(
-        [{h:t("flavour"),wrap:true},{h:t("flavOnShelf")},{h:t("aliGot")},{h:t("salesTook")},
-         {h:t("asPieces")}],
-        fl.map(f=>[esc(f.name), `<b>${n0(f.now)}</b>`, dash(f.in?n0(f.in):null),
-                   dash(f.out?n0(f.out):null), n0(f.now*(b.pcs||0))]),
-        [t("totalRow"), n0(fl.reduce((a,f)=>a+f.now,0)),
-         n0(fl.reduce((a,f)=>a+f.in,0)), n0(fl.reduce((a,f)=>a+f.out,0)),
-         n0(fl.reduce((a,f)=>a+f.now,0)*(b.pcs||0))])
-      + `<div class="src">${t("byFlavourNote")}</div></div>` : "";
-
-    return `<details class="grp" data-focus="box:${esc(b.box).replace(/"/g,"&quot;")}">
-      <summary><span class="caret">\u276F</span>
-        <span class="gname">${esc(b.box)}</span>
-        <span class="gnum" style="color:${now?"var(--ok)":"var(--dim)"}">${n0(now)}</span>
-        <span class="unit">${t("boxes")}</span>
-        <span class="minibar" style="flex:0 0 70px"><i style="width:${
-          Math.round(100*now/bmax)}%;background:var(--teal)"></i></span>
-      </summary><div class="inner">${inner}${flav}</div></details>`;
-  }).join("");
+  }
   h+=`<div class="card"><b>${t("totalRow")}</b> &nbsp;
       <span class="ou up">${n0(sum("in_store_now"))}</span>
       <span class="unit">${t("boxes")}</span> &nbsp;·&nbsp;
