@@ -1300,22 +1300,49 @@ def read(path):
     d["fill"] = {"boxes": fill, "until": horizon.isoformat() if horizon else None,
                  "requests": [{"from": r.get("from"), "to": r.get("to")} for r in reqs]}
 
-    # ---- 6. what changed today ---------------------------------------
-    # Two people touch the system and neither sees the other's work. This is the day in
-    # one list: what the chef recorded, and every line Ali wrote, newest first.
+    # ---- 6. what changed, day by day ---------------------------------
+    # Two people touch the system and neither sees the other's work. Neither file
+    # records WHEN a line was typed - only the day it is about. A line typed on the 16th
+    # about the 15th is a different fact from one typed on the 15th, and decisions get
+    # made on the difference. So every refresh notes the first time it saw each line
+    # (data/seen.json). That is the entry date, accurate to the refresh that found it.
+    # Lines that were already there when tracking began have no entry date, and say so.
+    seen_path = (os.path.join(os.path.dirname(HISTORY_PATH), "seen.json")
+                 if HISTORY_PATH else None)
+    seen, first_run = {}, True
+    if seen_path and os.path.exists(seen_path):
+        try:
+            with open(seen_path, encoding="utf-8") as f:
+                seen = json.load(f) or {}
+            first_run = False
+        except Exception:
+            seen = {}
+    stamp = now_local().strftime("%Y-%m-%dT%H:%M")
+    run_day = now_local().date()
+
+    def first_seen(key):
+        if key not in seen:
+            seen[key] = "baseline" if first_run else stamp
+        v = seen[key]
+        return None if v == "baseline" else v
+
     feed = []
-    if log:
-        lastd = log[-1]["date"]
-        lastd = lastd.date() if isinstance(lastd, dt.datetime) else lastd
-        if lastd and (today - lastd).days <= 1:
-            feed.append({"who": "chef", "date": lastd, "what": "made",
-                         "n": log[-1]["made"], "unit": "pcs"})
-            feed.append({"who": "chef", "date": lastd, "what": "packed",
-                         "n": log[-1]["packed"], "unit": "boxes"})
+    for e in log[-30:]:
+        dd = e["date"].date() if isinstance(e["date"], dt.datetime) else e["date"]
+        if not isinstance(dd, dt.date) or (run_day - dd).days > 30:
+            continue
+        for what, unit in (("made", "pcs"), ("packed", "boxes")):
+            n = e.get(what)
+            if not n:
+                continue
+            at = first_seen(f"chef|{dd}|{what}|{n:g}")
+            feed.append({"who": "chef", "date": dd, "what": what, "n": n,
+                         "unit": unit, "at": at})
     wh = warehouse_path()
     if wh:
         try:
             aw = openpyxl.load_workbook(wh, data_only=True)["Warehouse"]
+            occ = {}
             for r in range(11, 311):
                 dd = aw.cell(r, 1).value
                 dd = dd.date() if isinstance(dd, dt.datetime) else dd
@@ -1323,16 +1350,36 @@ def read(path):
                 qty = num(aw.cell(r, 4).value)
                 if not (isinstance(dd, dt.date) and isinstance(kind, str) and qty):
                     continue
-                if isinstance(today, dt.date) and (today - dd).days > 2:
+                what = ("in" if kind.upper().startswith("IN")
+                        else "out" if kind.upper().startswith("OUT") else "waste")
+                box = str(box or "").strip()
+                base = f"ali|{dd}|{what}|{box}|{qty:g}"
+                occ[base] = occ.get(base, 0) + 1     # the same line twice is two lines
+                at = first_seen(f"{base}|{occ[base]}")
+                if (run_day - dd).days > 30:
                     continue
-                feed.append({"who": "ali", "date": dd,
-                             "what": ("in" if kind.upper().startswith("IN")
-                                      else "out" if kind.upper().startswith("OUT") else "waste"),
-                             "box": str(box or "").strip(), "n": qty, "unit": "boxes"})
+                feed.append({"who": "ali", "date": dd, "what": what, "box": box,
+                             "n": qty, "unit": "boxes", "at": at})
         except Exception:
             pass
-    feed.sort(key=lambda x: (x["date"], x["who"]), reverse=True)
-    d["feed"] = feed[:14]
+    # the last three calendar days, by the day the line was entered; a line from
+    # before tracking falls under the day it is about, marked as such
+    days = [(run_day - dt.timedelta(days=i)) for i in range(3)]
+    keep = {x.isoformat() for x in days}
+    for f in feed:
+        f["day"] = (f["at"][:10] if f["at"] else f["date"].isoformat())
+    feed = [f for f in feed if f["day"] in keep]
+    feed.sort(key=lambda x: (x["day"], x["at"] or "", x["date"], x["who"]), reverse=True)
+    d["feed"] = feed
+    d["feed_days"] = [x.isoformat() for x in days]
+    if seen_path:
+        cut = (run_day - dt.timedelta(days=90)).isoformat()
+        seen = {k: v for k, v in seen.items() if k.split("|")[1] >= cut}
+        try:
+            with open(seen_path, "w", encoding="utf-8") as f:
+                json.dump(seen, f, ensure_ascii=False, indent=0, sort_keys=True)
+        except Exception:
+            pass
 
     # ---- 7. is the data itself trustworthy? --------------------------
     # Every figure above rests on two people remembering to write things down. When one

@@ -158,6 +158,9 @@ def main():
     runs = os.path.join(os.path.dirname(history), "runs.json")
     if os.path.exists(runs):
         changed.append("data/runs.json")
+    # when each store / chef line was first seen - the entry dates on the home card
+    if os.path.exists(os.path.join(os.path.dirname(history), "seen.json")):
+        changed.append("data/seen.json")
     # Subdirectories used to be skipped outright, which silently left data/build.txt -
     # the file the page reads to notice it is stale - sitting in the build folder and
     # never reaching the site. One level down is enough; the site has no deeper tree.

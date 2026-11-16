@@ -859,9 +859,13 @@ const T = {
    keptTitle:"Planned against made, day by day", keptAvg:"made ÷ planned, average",
    keptDays:"days shown (the last 14)", plannedLine:"planned", madeLine:"made",
    keptNote:"The plan is copied into the Actual Log on every update, so it survives the next morning's roll. Days before that started are not shown — they are unknown, not zero.",
-   feedTitle:"What changed today", feedChef:"chef", feedAli:"Ali",
+   feedTitle:"What changed — last 3 days", feedChef:"chef", feedAli:"Ali",
    feedMade:"made", feedPacked:"packed", feedIn:"in from production",
    feedOut:"out to sales", feedWaste:"waste", feedNone:"nothing recorded yet today",
+   fdToday:"Today", fdYest:"Yesterday", fdNothing:"nothing entered", fdLines:"{n} lines",
+   fdFor:"data for {d}", fdLate:"entered late", fdLateN:"{n} entered late (data for an earlier day)",
+   fdNoEntry:"entry date unknown",
+   fdNote:"Each day lists what was ENTERED that day. \u201cData for\u201d is the day the figure is about. The entry date is the first refresh that saw the line, so it is as exact as the refreshes; lines that were there before tracking began (16 Nov 2026) show \u201centry date unknown\u201d under the day they are about.",
    coverTitle:"Days of cover on the shelf", coverCol:"cover",
    coverOrdered:"ordered, 30 days", coverToday:"today", coverDays:"days",
    coverSafe:"covered", coverNone:"nothing ordered",
@@ -1239,9 +1243,13 @@ const T = {
    keptTitle:"المخطَّط مقابل المصنوع، يومًا بيوم", keptAvg:"المصنوع ÷ المخطَّط، متوسطًا",
    keptDays:"الأيام المعروضة (آخر ١٤)", plannedLine:"المخطَّط", madeLine:"المصنوع",
    keptNote:"تُنسَخ الخطة إلى سجل الفعلي مع كل تحديث، فتبقى بعد ترحيل صباح الغد. والأيام السابقة لبدء الحفظ لا تُعرَض — فهي مجهولة، لا صفر.",
-   feedTitle:"ما تغيّر اليوم", feedChef:"الشيف", feedAli:"علي",
+   feedTitle:"ما تغيّر — آخر ٣ أيام", feedChef:"الشيف", feedAli:"علي",
    feedMade:"صنع", feedPacked:"عبّأ", feedIn:"وارد من الإنتاج",
    feedOut:"صادر للمبيعات", feedWaste:"هدر", feedNone:"لم يُسجَّل شيء اليوم بعد",
+   fdToday:"اليوم", fdYest:"أمس", fdNothing:"لا إدخالات", fdLines:"عدد الأسطر {n}",
+   fdFor:"بيانات يوم {d}", fdLate:"أُدخل متأخرًا", fdLateN:"{n} أُدخلت متأخرة (بيانات يوم سابق)",
+   fdNoEntry:"تاريخ الإدخال غير معروف",
+   fdNote:"كل يوم يعرض ما أُدخل في ذلك اليوم. «بيانات يوم» هو اليوم الذي يخصّه الرقم. وتاريخ الإدخال هو أول تحديث رأى السطر، فدقّته بدقّة التحديثات. والأسطر الموجودة قبل بدء التتبّع (١٦ نوفمبر ٢٠٢٦) تظهر «تاريخ الإدخال غير معروف» تحت اليوم الذي تخصّه.",
    coverTitle:"أيام التغطية من الرفّ", coverCol:"التغطية",
    coverOrdered:"مطلوب خلال ٣٠ يومًا", coverToday:"اليوم",
    coverDays:"يوم", coverSafe:"مُغطّى", coverNone:"لا طلب",
@@ -2418,33 +2426,56 @@ function overBlock(){
 }
 
 function feedBlock(){
-  const F=D.feed||[];
+  const F=D.feed||[], DAYS=D.feed_days||[];
   let h=`<h3>${t("feedTitle")}</h3><div class="card">`;
-  if(!F.length){ h+=`<div class="muted">${t("feedNone")}</div></div>`; return h; }
-  /* An empty store half is a fact about the writing-down, not about the boxes, and the
-     page should not let the two be confused. */
-  const hasAli = F.some(f=>f.who==="ali");
   const word={made:"feedMade",packed:"feedPacked",in:"feedIn",out:"feedOut",waste:"feedWaste"};
   /* A line here summarises something that has a page of its own: the chef's pieces
-     open the shift, his boxes open the plan, Ali's movements open the store. A number
-     you cannot follow is a number you have to take on trust. */
+     open the shift, his boxes open the plan, Ali's movements open the store. */
   const dest=f=> (f.who==="ali") ? "store" : (f.unit==="pcs" ? "shift" : "plan");
-  /* Ali writes Half and Fingers by filling ("Half Salted Caramel Pecan"); the store
-     folds them under their box, so the line opens the box that holds that filling. */
-  const boxOf=nm=>nm;   // fillings have their own line on the store page now
-  const focus=f=> (f.who==="ali") ? (f.box ? "box:"+boxOf(f.box) : "")
+  const focus=f=> (f.who==="ali") ? (f.box ? "box:"+f.box : "")
                                   : (f.unit==="pcs" ? "made" : "packed");
   const ea=s=>esc(s).replace(/"/g,"&quot;");
-  h+=F.map(f=>`<div class="fo tap" data-v="${dest(f)}" data-f="${ea(focus(f))}"
-      onclick="goFocus(this.dataset.v,this.dataset.f)">
+  const iso=d=>typeof d==="string"?d.slice(0,10):d;
+  /* Two dates on every line, because they answer different questions: the day the
+     figure is about, and the day it was written in. A line written today about
+     yesterday is late news, and says so. */
+  const line=f=>{
+    const late = f.at && iso(f.date)!==f.day;
+    const when = !f.at ? `<span class="muted">${t("fdNoEntry")}</span>`
+               : late ? `<span class="pill p-warn">${t("fdLate")}</span>` : "";
+    return `<div class="fo tap" data-v="${dest(f)}" data-f="${ea(focus(f))}"
+      onclick="goFocus(this.dataset.v,this.dataset.f)" style="flex-wrap:wrap">
       <span class="pill ${f.who==="ali"?"p-ok":"p-warn"}" style="min-width:42px;text-align:center">${
         f.who==="ali"?t("feedAli"):t("feedChef")}</span>
-      <span style="flex:1">${t(word[f.what]||"feedMade")}${f.box?" · "+esc(f.box):""}</span>
+      <span style="flex:1;min-width:120px">${t(word[f.what]||"feedMade")}${f.box?" · "+esc(f.box):""}</span>
       <b>${n0(f.n)}</b><span class="unit">${f.unit==="pcs"?t("pieces"):t("boxes")}</span>
-      <span class="muted">${esc(dmy(f.date))}</span>
-      <span class="chev">\u203A</span></div>`).join("");
-  h+=`<div class="src">${t("feedTapNote")}</div>`;
-  if(!hasAli) h+=`<div class="src">${t("feedNoneAli")}</div>`;
+      <span class="muted">${t("fdFor",{d:esc(dmy(iso(f.date)))})}</span>${when}
+      <span class="chev">›</span></div>`;
+  };
+  const sumOf=(L,who,what)=>L.filter(f=>f.who===who&&f.what===what).reduce((a,f)=>a+(f.n||0),0);
+  const part=(v,k,u)=>v?`${t(k)} <b>${n0(v)}</b> <span class="unit">${u}</span>`:"";
+  h+=DAYS.map((day,i)=>{
+    const L=F.filter(f=>f.day===day);
+    const nm = i===0?t("fdToday"):i===1?t("fdYest"):"";
+    const chef=[part(sumOf(L,"chef","made"),"feedMade",t("pieces")),
+                part(sumOf(L,"chef","packed"),"feedPacked",t("boxes"))].filter(Boolean).join(" · ");
+    const ali=[part(sumOf(L,"ali","in"),"feedIn",t("boxes")),
+               part(sumOf(L,"ali","out"),"feedOut",t("boxes")),
+               part(sumOf(L,"ali","waste"),"feedWaste",t("boxes"))].filter(Boolean).join(" · ");
+    const nLate=L.filter(f=>f.at&&iso(f.date)!==f.day).length;
+    const sum = L.length ? `<div style="font-size:13px;margin-top:4px;line-height:1.6">
+        <div><span class="pill p-warn">${t("feedChef")}</span> ${chef||`<span class="muted">${t("fdNothing")}</span>`}</div>
+        <div><span class="pill p-ok">${t("feedAli")}</span> ${ali||`<span class="muted">${t("fdNothing")}</span>`}</div>
+        ${nLate?`<div class="muted">${t("fdLateN",{n:nLate})}</div>`:""}</div>`
+      : `<div class="muted" style="font-size:13px">${t("fdNothing")}</div>`;
+    return `<details class="grp"><summary style="flex-wrap:wrap">
+        <span class="caret">❯</span>
+        <span class="gname">${nm?nm+" · ":""}${esc(dmy(day))}</span>
+        <span class="muted" style="margin-inline-start:auto">${t("fdLines",{n:L.length})}</span>
+        <div style="flex-basis:100%">${sum}</div>
+      </summary><div class="inner">${L.map(line).join("")||`<div class="muted">${t("fdNothing")}</div>`}</div></details>`;
+  }).join("");
+  h+=`<div class="src">${t("fdNote")}<br>${t("feedTapNote")}</div>`;
   return h+`</div>`;
 }
 
