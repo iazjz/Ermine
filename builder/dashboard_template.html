@@ -41,9 +41,10 @@ body{margin:0;background:var(--bg);color:var(--ink);
 html[dir=rtl] body{font-family:var(--sans)}
 
 /* ---------- header: the green band, the wordmark, the menu ---------- */
-header{position:sticky;top:0;z-index:40;background:var(--green);color:#fff;
+header{position:sticky;top:0;z-index:40;background:var(--green);color:#fff;transition:transform .25s ease;
   padding:calc(10px + env(safe-area-inset-top)) 16px 0;
   box-shadow:0 6px 22px -14px rgba(1,72,51,.7)}
+header.hid{transform:translateY(-100%)}
 .hrow{display:flex;align-items:center;gap:10px;min-height:38px}
 .mark{height:19px;width:auto;display:block;flex:none}
 .markfall{font-family:var(--serif);font-size:19px;letter-spacing:.16em;font-weight:600}
@@ -759,7 +760,15 @@ const T = {
    shiftNoBoxPlan:"No box plan was kept for this day, so only what was packed is shown. Box plans are kept from 27 October on.",
    byFlavour:"by filling", flavOnShelf:"on the shelf",
    shelfTitle:"What is on the shelf, box by box",
-   dTapDay:"Tap a day to see its flavours.",
+   flTap:"Tap a product to see which fillings are still short.", flShort:"pieces short on fillings",
+   flNet:"{p}: fillings still short add up to {s} pieces; fillings made over their target add {o}. The product line ({l} left) nets the two, so an over-made filling hides part of another\u2019s shortfall.",
+   dReasons:"The chef\u2019s reasons for this day", dCat:"category", dReason:"reason", dWhat:"what happened",
+   dNoReason:"This day is off the model and no reason was written for it.",
+   tryAdd:"Add another product", tryRemove:"remove", tryLinesT:"The order, line by line",
+   tryFromStock:"from stock", tryToMake:"to make",
+   tryMultiNote:"Worked out here. The lines are made one after another in the order listed: each line\u2019s date includes the hours of the lines above it. Stock of the same product is counted once. Change the order of the lines to see another priority.",
+   tryMultiNoB:"Staged delivery and the weekly pace are worked out for one product at a time. Free hours over the next 4 weeks, after what is already booked: about {h} a week.",
+   dTapDay:"Tap a day to see its flavours and the chef\u2019s reasons.",
    pcsTargetTitle:"The month in pieces", pcsNeed:"pieces needed", pcsMade:"made so far",
    pcsStill:"still to make", pcsPerDay:"per day needed", pcsSafety:"safety stock",
    pcsTargetNote:"What the box target needs the floor to make. Boxes are what sales receive; pieces are what the floor works to. Both come from the same target.",
@@ -1143,7 +1152,15 @@ const T = {
    shiftNoBoxPlan:"لم تُحفَظ خطة بوكسات لهذا اليوم، فيظهر المعبّأ وحده. وخطط البوكسات تُحفَظ من ٢٧ أكتوبر فصاعدًا.",
    byFlavour:"حسب الحشوة", flavOnShelf:"على الرف",
    shelfTitle:"ما على الرف، بوكسًا بوكسًا",
-   dTapDay:"اضغط على اليوم لترى نكهاته.",
+   flTap:"اضغط على المنتج لترى الحشوات الناقصة.", flShort:"حبة ناقصة في الحشوات",
+   flNet:"{p}: مجموع الناقص في الحشوات {s} حبة، والزائد عن المستهدف في حشوات أخرى {o}. سطر المنتج (الباقي {l}) يجمع الاثنين، فالحشوة الزائدة تُخفي جزءًا من نقص حشوة أخرى.",
+   dReasons:"تبرير الشيف لهذا اليوم", dCat:"الفئة", dReason:"السبب", dWhat:"ماذا حدث",
+   dNoReason:"هذا اليوم بعيد عن توقع الموديل ولم يُكتب له سبب.",
+   tryAdd:"أضف منتجًا آخر", tryRemove:"حذف", tryLinesT:"الطلب سطرًا سطرًا",
+   tryFromStock:"من المخزون", tryToMake:"للتصنيع",
+   tryMultiNote:"محسوب هنا. تُصنع الأسطر واحدًا بعد الآخر بالترتيب المكتوب: تاريخ كل سطر يشمل ساعات الأسطر التي فوقه. ومخزون المنتج الواحد يُحسب مرة واحدة. غيّر ترتيب الأسطر لترى أولوية أخرى.",
+   tryMultiNoB:"التسليم على دفعات والوتيرة الأسبوعية تُحسب لمنتج واحد فقط. الساعات الحرة في الأسابيع الأربعة القادمة بعد المحجوز: نحو {h} ساعة أسبوعيًا.",
+   dTapDay:"اضغط على اليوم لترى نكهاته وتبرير الشيف.",
    pcsTargetTitle:"الشهر بالحبة", pcsNeed:"الحبات المطلوبة", pcsMade:"المصنوع حتى الآن",
    pcsStill:"المتبقّي صنعه", pcsPerDay:"المطلوب يوميًا", pcsSafety:"مخزون الأمان",
    pcsTargetNote:"ما يتطلّبه مستهدف البوكسات من الخط صنعُه. البوكسات ما تستلمه المبيعات، والحبات ما يشتغل عليه الخط. وكلاهما من المستهدف نفسه.",
@@ -2996,7 +3013,7 @@ function fillBlock(){
 /* What if: a special order weighed before it is accepted - against the month's target,
    what sales have already booked, the stock on hand, and the hours the floor has.
    Everything is the page's own arithmetic on figures from the files, and says so. */
-const TRY={box:null, n:"", date:"", mode:"box", prod:null, bs:"", bn:"", np:false};
+const TRY={box:null, n:"", date:"", mode:"box", prod:null, bs:"", bn:"", np:false, more:[]};
 const WINTER_BOX=12;           // Winter Box: marshmallow macarons, 12 to a box
 const MAIN_UNIT={Classic:"Big 30",Kingdom:"Big 24",Mini:"Mini",Coins:"Coins",Half:"Half",
   Origin:"Origin",Fingers:"Fingers",Cake:"Cake","Ice Cream":"Ice Cream"};
@@ -3067,61 +3084,77 @@ function tryModel(){
   const booked=days.map((_,i)=>per.reduce((a,r)=>a+r.hrs[i],0));
   return {days, cap, staff, booked, per, assumed, mon, hpk0};
 }
+/* 17 Nov 2026 - several products in one order (Aziz). Each line keeps its own hours per
+   piece; stock of a product is used once even when two lines draw on it; the lines are
+   made one after another in the order listed, so each line's ready date carries the
+   hours of the lines above it. One product behaves exactly as before. */
+function tryLines(){
+  const pm=TRY.mode==="pcs";
+  return [{box:TRY.box,prod:TRY.prod,n:TRY.n}].concat(TRY.more||[])
+    .map((x,i)=>({i, key:pm?x.prod:x.box, qty:Math.max(0,+x.n||0)}))
+    .filter(x=>x.key&&x.qty);
+}
 function tryCalc(){
-  const sz=trySizes(), pm=TRY.mode==="pcs", box=TRY.box, qty=Math.max(0,+TRY.n||0);
-  if((pm?!TRY.prod:!box)||!qty) return null;
-  const q=pm ? TRY.prod : prodOf(box), unitSz=pm?1:(sz[box]||1), pcs=qty*unitSz;
+  const sz=trySizes(), pm=TRY.mode==="pcs", L=tryLines();
+  if(!L.length) return null;
   const Mo=tryModel(), M=D.mtarget||{};
-  let hpp = pm ? tryHpp(q,null,sz) : tryHpp(q, box==="Winter Box"?null:box, sz);
-  const fallback = hpp==null; if(fallback) hpp=Mo.hpk0/1000;
   const rate=(D.fc&&D.fc.rate)||13.7;
   const free=Mo.days.map((_,i)=>Math.max(0,Mo.cap-Mo.booked[i]));
-  const qr=Mo.per.find(r=>r.p===q)||{left:0,stock:0,sl:[]};
-  // window to the chosen delivery date (if any)
   let n=0, capH=0, bookedW=0, freeW=0;
   if(TRY.date)
     Mo.days.forEach((iso,i)=>{ if(iso<TRY.date){ n++; capH+=Mo.cap; bookedW+=Mo.booked[i]; freeW+=free[i]; } });
-  // this product's stock still unused after what is booked up to the delivery date
-  // (or over the next 10 working days when no date is given) counts towards the order
   const kS = TRY.date ? n : 10;
-  const spare=Math.min(pcs, Math.max(0, kS>0 ? (qr.sl[kS-1]!=null ? qr.sl[kS-1] : qr.stock||0) : (qr.stock||0)));
-  const make=Math.max(0,pcs-spare), needH=make*hpp;
-  // simulate: fill free hours (optionally with overtime) until each batch is done
-  const finish=(extraPerDay, target)=>{
-    let have=spare*1, i=0;
-    if(have>=target) return {i:-1};
-    for(;i<Mo.days.length;i++){ have += (free[i]+extraPerDay)/hpp; if(have>=target-1e-6) return {i}; }
+  const avail={};
+  const mon=String(M.month||"").slice(0,7);
+  const lines=L.map(x=>{
+    const q=pm ? x.key : prodOf(x.key), unitSz=pm?1:(sz[x.key]||1), pcs=x.qty*unitSz;
+    let hpp = pm ? tryHpp(q,null,sz) : tryHpp(q, x.key==="Winter Box"?null:x.key, sz);
+    const fallback = hpp==null; if(fallback) hpp=Mo.hpk0/1000;
+    if(avail[q]==null){ const qr=Mo.per.find(r=>r.p===q)||{stock:0,sl:[]};
+      avail[q]=Math.max(0, kS>0 ? (qr.sl[kS-1]!=null ? qr.sl[kS-1] : qr.stock||0) : (qr.stock||0)); }
+    const spare=Math.min(pcs, avail[q]); avail[q]-=spare;
+    const make=Math.max(0,pcs-spare);
+    const mr=(M.rows||[]).find(r=>r.box===x.key)||{};
+    let rest=0; if(!pm) ((D.ob&&D.ob.days)||[]).forEach(d=>{ if(d.date.slice(0,7)===mon) rest+=(d.by[x.key]||0); });
+    return {key:x.key, q, qty:x.qty, unitSz, pcs, hpp, fallback, spare, make, needH:make*hpp, mr, rest,
+            pr:(M.pieces||[]).find(r=>r.product===q)||{}};
+  });
+  const needH=lines.reduce((a,x)=>a+x.needH,0);
+  const finishH=(extra, target)=>{
+    if(target<=1e-6) return {i:-1};
+    let have=0;
+    for(let i=0;i<Mo.days.length;i++){ have+=free[i]+extra; if(have>=target-1e-6) return {i}; }
     return null; };
   const ext=TRY_OT_PP*Mo.staff;
-  const doneNo=finish(0,pcs), doneOt=finish(ext,pcs);
   const dayOf=r=>r==null?null:(r.i<0?todayIso():Mo.days[r.i]);
-  // batches
-  const bsz=Math.max(0,+TRY.bs||0), bn=Math.max(0,+TRY.bn||0);
-  const per=bsz ? bsz*unitSz : (bn ? Math.ceil(pcs/bn) : 0);
+  let cum=0;
+  lines.forEach(x=>{ cum+=x.needH; x.no=dayOf(finishH(0,cum)); x.ot=dayOf(finishH(ext,cum)); });
+  const single=lines.length===1, L0=lines[0];
   const batches=[];
-  if(per>0 && per<pcs){
-    for(let k=1, cum=0; cum<pcs && k<=60; k++){
-      cum=Math.min(pcs,k*per); const a=finish(0,cum), b=finish(ext,cum);
-      batches.push({k, qty:Math.round(cum/unitSz)-Math.round(Math.min(pcs,(k-1)*per)/unitSz),
-                    cum:Math.round(cum/unitSz), no:dayOf(a), ot:dayOf(b)}); }
+  if(single){
+    const bsz=Math.max(0,+TRY.bs||0), bn=Math.max(0,+TRY.bn||0);
+    const per=bsz ? bsz*L0.unitSz : (bn ? Math.ceil(L0.pcs/bn) : 0);
+    if(per>0 && per<L0.pcs)
+      for(let k=1, c=0; c<L0.pcs && k<=60; k++){
+        c=Math.min(L0.pcs,k*per); const h=Math.max(0,c-L0.spare)*L0.hpp;
+        batches.push({k, qty:Math.round(c/L0.unitSz)-Math.round(Math.min(L0.pcs,(k-1)*per)/L0.unitSz),
+                      cum:Math.round(c/L0.unitSz), no:dayOf(finishH(0,h)), ot:dayOf(finishH(ext,h))}); }
   }
-  // weekly pace without overtime: next 4 weeks of free hours
   const w4=Mo.days.filter(iso=>iso<isoPlus(todayIso(),28));
   const freeW4=w4.reduce((a,_,i)=>a+free[i],0);
-  const weekly=Math.floor(freeW4/4/hpp/unitSz);
+  const weekly=single ? Math.floor(freeW4/4/L0.hpp/L0.unitSz) : null;
   const full = w4.length ? (w4.reduce((a,_,i)=>a+Mo.booked[i],0)/(w4.length*Mo.cap)) : 0;
-  // window verdict, same meaning as before
   const over=Math.max(0, needH-freeW), perP=n?over/(n*Mo.staff):0;
-  const mr=(M.rows||[]).find(r=>r.box===box)||{}, mon=String(M.month||"").slice(0,7);
-  let rest=0; ((D.ob&&D.ob.days)||[]).forEach(x=>{ if(x.date.slice(0,7)===mon) rest+=(x.by[box]||0); });
-  const pr=(M.pieces||[]).find(r=>r.product===q)||{};
   const rows=Mo.per.map(r=>{ const k=TRY.date?Mo.days.filter(iso=>iso<TRY.date).length:0;
       return {p:r.p, must:r.pcs.slice(0,k).reduce((a,x)=>a+x,0), h:r.hrs.slice(0,k).reduce((a,x)=>a+x,0), s:r.stock}; })
     .filter(r=>r.must>=1);
-  return {n, pcs, q, pm, pr, capH, booked:bookedW, free:freeW, spare, make, needH, over, perP,
-          cost:over*rate, rows, mr, rest, qty, base:Math.max(0,bookedW-capH), hpp, fallback,
-          assumed:Mo.assumed, unitSz, noOt:dayOf(doneNo), withOt:dayOf(doneOt), otPP:TRY_OT_PP,
-          batches, weekly, dated:!!TRY.date, full};
+  return {n, pm, lines, single, capH, booked:bookedW, free:freeW,
+          spare:lines.reduce((a,x)=>a+x.spare,0), make:lines.reduce((a,x)=>a+x.make,0),
+          needH, over, perP, cost:over*rate, rows, base:Math.max(0,bookedW-capH),
+          assumed:Mo.assumed, noOt:lines[lines.length-1].no, withOt:lines[lines.length-1].ot,
+          otPP:TRY_OT_PP, batches, weekly, freeWeek:freeW4/4, dated:!!TRY.date, full,
+          // single-product fields, as before
+          q:L0.q, pr:L0.pr, mr:L0.mr, rest:L0.rest, qty:L0.qty, hpp:L0.hpp, fallback:L0.fallback, unitSz:L0.unitSz};
 }
 function tryWhen(iso){ return iso ? new Date(iso+"T00:00:00").toLocaleDateString(loc(),
   {weekday:"short", day:"numeric", month:"short"}) + (iso.slice(0,4)!==todayIso().slice(0,4)?" "+iso.slice(0,4):"") : t("tryNever"); }
@@ -3150,11 +3183,37 @@ function tryResult(){
       if(R.base>0) h+=`<div class="src">${t("tryBase",{h:n0(R.base)})}</div>`;
     }
   }
+  if(!R.single){
+    h+=`<div class="lbl" style="margin-top:16px">${t("tryLinesT")}</div>`+tbl(
+      [{h:R.pm?t("product"):t("box")},{h:u},{h:t("tryFromStock")+" \u00b7 "+t("pieces")},
+       {h:t("tryToMake")+" \u00b7 "+t("pieces")},{h:t("hours")},{h:t("tryNoOt")},{h:t("tryWithOt",{p:n0(R.otPP)})}],
+      R.lines.map(x=>[esc(x.key), n0(x.qty), x.spare?n0(x.spare):dash(null), n0(x.make),
+        n0(x.needH), `<b>${esc(tryWhen(x.no))}</b>`, esc(tryWhen(x.ot))]),
+      [t("totalRow"), "", n0(R.spare), n0(R.make), n0(R.needH), "", ""])
+      +`<div class="src">${t("tryMultiNote")}</div>`;
+  }
   // option A - the whole quantity at once
   h+=`<div class="lbl" style="margin-top:16px">${t("tryOptA")}</div>`+tbl(
     [{h:""},{h:t("tryReady")}],
     [[t("tryNoOt"), `<b>${esc(tryWhen(R.noOt))}</b>`],
      [t("tryWithOt",{p:n0(R.otPP)}), esc(tryWhen(R.withOt))]]);
+  if(!R.single){
+    h+=`<div class="src" style="margin-top:12px">${t("tryMultiNoB",{h:n0(R.freeWeek)})}</div>`;
+    R.lines.forEach(x=>{
+      if(!R.pm && x.mr.target!=null){ const w=(x.mr.packed||0)+x.rest+x.qty;
+        h+=`<div class="src">${t("tryTarget",{box:esc(x.key),t:n0(x.mr.target),k:n0(x.mr.packed||0),o:n0(x.rest),w:n0(w)})}</div>`;
+        if(w>x.mr.target) h+=`<div class="src"><b>${t("tryOver",{box:esc(x.key),n:n0(w-x.mr.target)})}</b></div>`; }
+      if(R.pm && x.pr.need!=null)
+        h+=`<div class="src">${t("tryPcsTarget",{p:esc(x.q),t:n0(x.pr.need),k:n0(x.pr.made||0)})}</div>`;
+    });
+    if(R.assumed) h+=`<div class="src"><b>${t("tryAssumed")}</b></div>`;
+    if(R.dated && R.rows.length)
+      h+=`<div class="lbl" style="margin-top:14px">${t("tryBreak")}</div>`+tbl(
+        [{h:t("product")},{h:t("tryMust")},{h:t("hours")},{h:t("tryStockCol")}],
+        R.rows.map(r=>[esc(r.p), `<b>${n0(r.must)}</b>`, n0(r.h), r.s?n0(r.s):dash(null)]),
+        [t("totalRow"), n0(R.rows.reduce((a,r)=>a+r.must,0)), n0(R.rows.reduce((a,r)=>a+r.h,0)), n0(R.rows.reduce((a,r)=>a+r.s,0))]);
+    return h;
+  }
   // option B - staged
   h+=`<div class="lbl" style="margin-top:16px">${t("tryOptB")}</div>`;
   h+=`<div class="tkgrid" style="margin-top:6px">
@@ -3205,14 +3264,24 @@ function viewTry(){
     : `<div><label>${t("tryBox")}</label><select onchange="trySet('box',this.value)">${
         boxes.map(b=>`<option value="${ea(b)}"${b===TRY.box?" selected":""}>${esc(b)} \u00b7 ${n0(sz[b])} ${t("pieces")}</option>`).join("")}</select></div>`;
   return `<div class="card tkform">
-    <div class="segsw"><button class="${pm?"":"on"}" onclick="TRY.mode='box';TRY.n='';render()">${t("tryModeBox")}</button><button class="${pm?"on":""}" onclick="TRY.mode='pcs';TRY.n='';render()">${t("tryModePcs")}</button></div>
+    <div class="segsw"><button class="${pm?"":"on"}" onclick="TRY.mode='box';TRY.n='';TRY.more=[];render()">${t("tryModeBox")}</button><button class="${pm?"on":""}" onclick="TRY.mode='pcs';TRY.n='';TRY.more=[];render()">${t("tryModePcs")}</button></div>
     <div class="tkgrid">${pick}
       <div><label>${pm?t("tryQtyPcs"):t("tryQty")}</label><input type="number" min="0" inputmode="numeric" value="${ea(TRY.n)}"
         oninput="trySet('n',this.value)"></div>
       <div><label>${t("tryDate")}</label><input type="date" value="${ea(TRY.date)}" min="${isoPlus(todayIso(),1)}"
         onchange="trySet('date',this.value)"></div>
-    </div><div id="tryout">${tryResult()}</div></div>`;
+    </div>${(TRY.more||[]).map((x,i)=>`<div class="tkgrid" style="margin-top:8px;align-items:end">
+      <div><label>${pm?t("tryProd"):t("tryBox")} ${i+2}</label><select onchange="tryMore(${i},'${pm?"prod":"box"}',this.value)">${
+        (pm?prods:boxes).map(o=>`<option value="${ea(o)}"${o===(pm?x.prod:x.box)?" selected":""}>${esc(o)}${pm?"":" \u00b7 "+n0(sz[o])+" "+t("pieces")}</option>`).join("")}</select></div>
+      <div><label>${pm?t("tryQtyPcs"):t("tryQty")}</label><input type="number" min="0" inputmode="numeric" value="${ea(x.n)}"
+        oninput="tryMore(${i},'n',this.value)"></div>
+      <div><button class="pill" style="border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font:inherit;padding:9px 14px"
+        onclick="TRY.more.splice(${i},1);render()">\u2715 ${t("tryRemove")}</button></div></div>`).join("")}
+    <button class="pill p-ok" style="border:0;cursor:pointer;font:inherit;font-weight:700;padding:9px 14px;margin-top:10px"
+      onclick="TRY.more.push({box:'${ea(boxes[0]||"")}',prod:'${ea(prods[0]||"")}',n:''});render()">+ ${t("tryAdd")}</button>
+    <div id="tryout">${tryResult()}</div></div>`;
 }
+window.tryMore=function(i,k,v){ TRY.more[i][k]=v; tryUpdate(); };
 
 function pcsValue(M){
   const rows=(M.rows||[]), price=b=>{ const r=rows.find(x=>x.box===b); return r&&r.price&&r.pcs ? r.price/r.pcs : null; };
@@ -3279,6 +3348,10 @@ window.shareGuide=function(lg){
   const k=hs.findIndex(h=>h.textContent.trim().startsWith(t("gTitle")));
   if(k<0) return;
   doExport(lg, "page", new Set([k+1]), T[lg].gTitle);
+};
+window.openFl=function(p){
+  const el=document.getElementById("fl-"+p.replace(/\W/g,"_"));
+  if(!el) return; el.open=true; el.scrollIntoView({behavior:"smooth",block:"start"});
 };
 function viewMonth(){
   const M=D.mtarget||{rows:[]};
@@ -3348,7 +3421,9 @@ function viewMonth(){
         const bar=pct==null?"":`<div class="minibar"><i style="width:${
           Math.min(100,Math.max(0,pct*100))}%;background:${
           pct>=1?"var(--teal)":pct>=.9?"var(--orange)":"var(--red)"}"></i></div>`;
-        return [esc(r.product),
+        const has=(M.flavours||[]).some(f=>f.counts===r.product);
+        return [has?`<a href="javascript:void 0" onclick="openFl('${esc(r.product).replace(/'/g,"")}')"
+                    style="color:var(--teal);font-weight:700">${esc(r.product)} \u203A</a>`:esc(r.product),
           dash(r.need?n0(r.need):null),
           `<b>${n0(r.made)}</b>`,
           r.left?`<b style="color:var(--warn)">${n0(r.left)}</b>`:dash(null),
@@ -3359,7 +3434,7 @@ function viewMonth(){
       [t("totalRow"), n0(PR.reduce((a,r)=>a+(r.need||0),0)),
        n0(PR.reduce((a,r)=>a+(r.made||0),0)),
        n0(PR.reduce((a,r)=>a+(r.left||0),0)), "", "", ""])
-      +`<div class="src">${t("pcsTargetNote")}</div></div>`;
+      +`<div class="src">${t("pcsTargetNote")}<br>${t("flTap")}</div></div>`;
   }
 
   /* Per flavour - the question sales actually ask, because they order a filling and
@@ -3370,21 +3445,37 @@ function viewMonth(){
   if(!FT.length){
     h+=`<div class="src">${t("flavTargetNone")}</div></div>`;
   } else {
-    h+=tbl([{h:t("flavour"),wrap:true},{h:t("product")},{h:t("target")},
+    /* Grouped by product and folded, so a product's "2,305 pieces left" opens on the
+       fillings behind it. The product figure nets every filling together - a filling
+       made over its target hides part of another's shortfall - so both are shown. */
+    const prods=[...new Set(FT.map(r=>r.counts||""))];
+    h+=prods.map(pn=>{
+      const rows=FT.filter(r=>(r.counts||"")===pn).sort((a,b)=>(b.left||0)-(a.left||0));
+      const short=rows.reduce((a,r)=>a+(r.left||0),0);
+      const over=rows.reduce((a,r)=>a+Math.max(0,(r.made||0)-(r.target||0)),0);
+      const pr=(M.pieces||[]).find(x=>x.product===pn)||{};
+      return `<details class="grp" id="fl-${esc(pn).replace(/\W/g,"_")}">
+        <summary><span class="caret">\u276F</span>
+          <span class="gname">${esc(pn)||"\u2014"}</span>
+          <span class="gnum" style="color:${short?"var(--warn)":"var(--ok)"}">${n0(short)}</span>
+          <span class="unit">${t("flShort")}</span></summary>
+        <div class="inner">`+tbl([{h:t("flavour"),wrap:true},{h:t("target")},
             {h:t("pcsMade")},{h:t("pcsStill")},{h:t("pctDone")}],
-      FT.map(r=>{
-        const pct=r.pct;
-        const bar=pct==null?"":`<div class="minibar"><i style="width:${
-          Math.min(100,Math.max(0,pct*100))}%;background:${
-          pct>=1?"var(--teal)":pct>=.9?"var(--orange)":"var(--red)"}"></i></div>`;
-        return [esc(r.flavour), esc(r.counts||""), n0(r.target),
-          `<b>${n0(r.made)}</b>`,
-          r.left?`<b style="color:var(--warn)">${n0(r.left)}</b>`:dash(null),
-          (pct==null?dash(null):pc(pct))+bar];
-      }),
-      [t("totalRow"), "", n0(FT.reduce((a,r)=>a+(r.target||0),0)),
-       n0(FT.reduce((a,r)=>a+(r.made||0),0)),
-       n0(FT.reduce((a,r)=>a+(r.left||0),0)), ""]);
+          rows.map(r=>{
+            const pct=r.pct;
+            const bar=pct==null?"":`<div class="minibar"><i style="width:${
+              Math.min(100,Math.max(0,pct*100))}%;background:${
+              pct>=1?"var(--teal)":pct>=.9?"var(--orange)":"var(--red)"}"></i></div>`;
+            return [esc(r.flavour), n0(r.target), `<b>${n0(r.made)}</b>`,
+              r.left?`<b style="color:var(--warn)">${n0(r.left)}</b>`
+                    :`<span style="color:var(--ok)">\u2713 +${n0((r.made||0)-(r.target||0))}</span>`,
+              (pct==null?dash(null):pc(pct))+bar];
+          }),
+          [t("totalRow"), n0(rows.reduce((a,r)=>a+(r.target||0),0)),
+           n0(rows.reduce((a,r)=>a+(r.made||0),0)), n0(short), ""])
+        +`<div class="src">${t("flNet",{s:n0(short),o:n0(over),l:pr.left!=null?n0(pr.left):"\u2014",p:esc(pn)})}</div>
+        </div></details>`;
+    }).join("");
     if(M.flav_partial)
       h+=`<div class="warnbox" style="margin-top:10px">${
         t("flavTargetNote").replace("{d}", dmy(M.flav_from))}</div>`;
@@ -4161,6 +4252,16 @@ function viewDays(){
       else if(x.rows_at)
         inner += `<div class="src">${t("dSnapAt").replace("{t}", x.rows_at.replace("T"," "))}</div>`;
     }
+    /* Why the day came out as it did, in the chef's words - next to the numbers it
+       explains. A day off the model with nothing written says so. */
+    const dl=(D.delays||[]).find(z=>z.date===x.date)||{};
+    const RS=dl.reasons||[], off=/high|low|too/i.test(x.reading||"");
+    if(RS.length || dl.note)
+      inner += `<div class="lbl" style="margin-top:12px">${t("dReasons")}</div>`
+        + (RS.length?tbl([{h:t("product")},{h:t("dCat")},{h:t("dReason"),wrap:true},{h:t("dWhat"),wrap:true}],
+            RS.map(z=>[esc(z.prod||""),esc(z.cat||""),esc(z.reason||""),esc(z.what||"")])):"")
+        + (dl.note?`<div class="src">${esc(dl.note)}</div>`:"");
+    else if(off) inner += `<div class="warnbox" style="margin-top:10px">${t("dNoReason")}</div>`;
     h+=`<tr class="subrow"><td colspan="8">${stageChips(
         {plan_pcs:x.plan, plan_boxes:x.plan_boxes, made:x.made, coated:x.coated, packed:x.packed})}
         <div style="margin-top:10px">${inner}</div></td></tr>`;
@@ -4533,6 +4634,21 @@ swipeInit();
 document.addEventListener("visibilitychange", () => {
   if(document.visibilityState === "visible") checkFresh();
 });
+</script>
+<script>
+/* The green header steps out of the way when scrolling down the page and comes back
+   the moment you scroll up - the usual app behaviour, so the list gets the screen. */
+(function(){
+  let last=window.scrollY, acc=0;
+  const hd=document.querySelector("header");
+  window.addEventListener("scroll",()=>{
+    const y=window.scrollY, dy=y-last; last=y;
+    if(y<80){ hd.classList.remove("hid"); acc=0; return; }
+    acc = (dy>0)===(acc>0) ? acc+dy : dy;
+    if(acc>24) hd.classList.add("hid");
+    else if(acc<-12) hd.classList.remove("hid");
+  },{passive:true});
+})();
 </script>
 </body>
 </html>
