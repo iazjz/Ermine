@@ -198,12 +198,12 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-15T18:35",
+  "at": "2026-11-16T11:50",
   "days_total": 26,
-  "packed_box": 10307,
+  "packed_box": 11553,
   "pieces": [
    {
-    "made": 35626,
+    "made": 40945,
     "need": 43250,
     "product": "Classic"
    },
@@ -223,22 +223,22 @@
     "product": "Cake"
    },
    {
-    "made": 33330,
+    "made": 34830,
     "need": 128163,
     "product": "Coins"
    },
    {
-    "made": 546,
+    "made": 1418,
     "need": 5310,
     "product": "Fingers"
    },
    {
-    "made": 13939,
+    "made": 16332,
     "need": 20430,
     "product": "Half"
    },
    {
-    "made": 7004,
+    "made": 9273,
     "need": 22000,
     "product": "Origin"
    },
@@ -256,11 +256,11 @@
   "rows": [
    {
     "box": "Big 30",
-    "packed": 465,
+    "packed": 601,
     "pcs": 30,
     "price": 129.565,
     "target": 845,
-    "value": 60247.725,
+    "value": 77868.565,
     "value_target": 109482.425
    },
    {
@@ -301,47 +301,47 @@
    },
    {
     "box": "Mini",
-    "packed": 697,
+    "packed": 769,
     "pcs": 30,
     "price": 112.174,
     "target": 1136,
-    "value": 78185.278,
+    "value": 86261.80600000001,
     "value_target": 127429.664
    },
    {
     "box": "Coins",
-    "packed": 977,
+    "packed": 1085,
     "pcs": 30,
     "price": 120.87,
     "target": 3842,
-    "value": 118089.99,
+    "value": 131143.95,
     "value_target": 464382.54000000004
    },
    {
     "box": "Half",
-    "packed": 407,
+    "packed": 480,
     "pcs": 30,
     "price": 150,
     "target": 681,
-    "value": 61050,
+    "value": 72000,
     "value_target": 102150
    },
    {
     "box": "Origin",
-    "packed": 4996,
+    "packed": 5750,
     "pcs": 2,
     "price": 10,
     "target": 11000,
-    "value": 49960,
+    "value": 57500,
     "value_target": 110000
    },
    {
     "box": "Fingers",
-    "packed": 106,
+    "packed": 154,
     "pcs": 30,
     "price": 104.34,
     "target": 177,
-    "value": 11060.04,
+    "value": 16068.36,
     "value_target": 18468.18
    },
    {
@@ -355,11 +355,11 @@
    },
    {
     "box": "Cake",
-    "packed": 146,
+    "packed": 201,
     "pcs": 14,
     "price": 109.564,
     "target": 380,
-    "value": 15996.344,
+    "value": 22022.363999999998,
     "value_target": 41634.32
    },
    {
@@ -391,7 +391,7 @@
    }
   ],
   "target_box": 19539,
-  "value": 483568.06299999997,
+  "value": 551843.731,
   "value_target": 1082429.797
  }
 }
