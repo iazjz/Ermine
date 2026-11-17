@@ -198,17 +198,17 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-17T11:51",
+  "at": "2026-11-17T23:18",
   "days_total": 26,
-  "packed_box": 12178,
+  "packed_box": 13649,
   "pieces": [
    {
-    "made": 47141,
+    "made": 48416,
     "need": 43250,
     "product": "Classic"
    },
    {
-    "made": 4307,
+    "made": 5075,
     "need": 4710,
     "product": "Kingdom"
    },
@@ -218,27 +218,27 @@
     "product": "Mini"
    },
    {
-    "made": 2513,
+    "made": 2975,
     "need": 5323,
     "product": "Cake"
    },
    {
-    "made": 38970,
+    "made": 45090,
     "need": 128163,
     "product": "Coins"
    },
    {
-    "made": 1418,
+    "made": 1624,
     "need": 5310,
     "product": "Fingers"
    },
    {
-    "made": 17425,
+    "made": 18676,
     "need": 20430,
     "product": "Half"
    },
    {
-    "made": 9273,
+    "made": 11210,
     "need": 22000,
     "product": "Origin"
    },
@@ -301,38 +301,38 @@
    },
    {
     "box": "Mini",
-    "packed": 865,
+    "packed": 1015,
     "pcs": 30,
     "price": 112.174,
     "target": 1136,
-    "value": 97030.51000000001,
+    "value": 113856.61,
     "value_target": 127429.664
    },
    {
     "box": "Coins",
-    "packed": 1344,
+    "packed": 1500,
     "pcs": 30,
     "price": 120.87,
     "target": 3842,
-    "value": 162449.28,
+    "value": 181305.0,
     "value_target": 464382.54000000004
    },
    {
     "box": "Half",
-    "packed": 490,
+    "packed": 615,
     "pcs": 30,
     "price": 150,
     "target": 681,
-    "value": 73500,
+    "value": 92250,
     "value_target": 102150
    },
    {
     "box": "Origin",
-    "packed": 5750,
+    "packed": 6752,
     "pcs": 2,
     "price": 10,
     "target": 11000,
-    "value": 57500,
+    "value": 67520,
     "value_target": 110000
    },
    {
@@ -355,11 +355,11 @@
    },
    {
     "box": "Cake",
-    "packed": 201,
+    "packed": 239,
     "pcs": 14,
     "price": 109.564,
     "target": 380,
-    "value": 22022.363999999998,
+    "value": 26185.796,
     "value_target": 41634.32
    },
    {
@@ -391,7 +391,7 @@
    }
   ],
   "target_box": 19539,
-  "value": 596197.765,
+  "value": 664813.0170000001,
   "value_target": 1082429.797
  }
 }
