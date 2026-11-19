@@ -136,6 +136,89 @@
      "boxes": 15
     }
    ]
+  },
+  {
+   "sent": "2026-11-19",
+   "from": "2026-11-22",
+   "to": "2026-12-11",
+   "source": "Sales Request - 20 days (11).xlsx (19 Nov) - 20-day window",
+   "lines": [
+    {
+     "box": "Half",
+     "flavour": "Half Peanut",
+     "boxes": 800
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Salted Caramel Pecan",
+     "boxes": 400
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Dates",
+     "boxes": 100
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Coconut",
+     "boxes": 100
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Tiramisu",
+     "boxes": 5
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Vanilla with Praline",
+     "boxes": 5
+    },
+    {
+     "box": "Half",
+     "flavour": "Half Coconut with Chocolate",
+     "boxes": 5
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Peanut Fingers",
+     "boxes": 60
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Caramel Fingers",
+     "boxes": 300
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Coconut Fingers",
+     "boxes": 25
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Pistachio Fingers",
+     "boxes": 20
+    },
+    {
+     "box": "Fingers",
+     "flavour": "Praline Fingers",
+     "boxes": 20
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Dark Chocolate",
+     "boxes": 22
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Salted Caramel",
+     "boxes": 66
+    },
+    {
+     "box": "Large Bites",
+     "flavour": "Classic Coffee",
+     "boxes": 30
+    }
+   ]
   }
  ]
 }
