@@ -198,12 +198,12 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-18T18:35",
+  "at": "2026-11-19T13:41",
   "days_total": 26,
-  "packed_box": 13649,
+  "packed_box": 14289,
   "pieces": [
    {
-    "made": 48416,
+    "made": 48886,
     "need": 43250,
     "product": "Classic"
    },
@@ -218,27 +218,27 @@
     "product": "Mini"
    },
    {
-    "made": 2975,
+    "made": 3485,
     "need": 5323,
     "product": "Cake"
    },
    {
-    "made": 45090,
+    "made": 51330,
     "need": 128163,
     "product": "Coins"
    },
    {
-    "made": 1624,
+    "made": 2932,
     "need": 5310,
     "product": "Fingers"
    },
    {
-    "made": 18676,
+    "made": 19982,
     "need": 20430,
     "product": "Half"
    },
    {
-    "made": 11210,
+    "made": 13302,
     "need": 22000,
     "product": "Origin"
    },
@@ -251,6 +251,11 @@
     "made": 0,
     "need": 0,
     "product": "Ice Cream"
+   },
+   {
+    "made": 0,
+    "need": 0,
+    "product": "Marshmallow Cake"
    }
   ],
   "rows": [
@@ -274,11 +279,11 @@
    },
    {
     "box": "Big 12",
-    "packed": 966,
+    "packed": 1254,
     "pcs": 12,
     "price": 68.696,
     "target": 1249,
-    "value": 66360.336,
+    "value": 86144.784,
     "value_target": 85801.304
    },
    {
@@ -292,29 +297,29 @@
    },
    {
     "box": "Large Bites",
-    "packed": 23,
+    "packed": 34,
     "pcs": 45,
     "price": 135,
     "target": 0,
-    "value": 3105,
+    "value": 4590,
     "value_target": 0
    },
    {
     "box": "Mini",
-    "packed": 1015,
+    "packed": 1153,
     "pcs": 30,
     "price": 112.174,
     "target": 1136,
-    "value": 113856.61,
+    "value": 129336.622,
     "value_target": 127429.664
    },
    {
     "box": "Coins",
-    "packed": 1500,
+    "packed": 1670,
     "pcs": 30,
     "price": 120.87,
     "target": 3842,
-    "value": 181305.0,
+    "value": 201852.9,
     "value_target": 464382.54000000004
    },
    {
@@ -355,11 +360,11 @@
    },
    {
     "box": "Cake",
-    "packed": 239,
+    "packed": 272,
     "pcs": 14,
     "price": 109.564,
     "target": 380,
-    "value": 26185.796,
+    "value": 29801.408,
     "value_target": 41634.32
    },
    {
@@ -388,10 +393,37 @@
     "target": 33,
     "value": 0,
     "value_target": 2970
+   },
+   {
+    "box": "Melted",
+    "packed": 0,
+    "pcs": 12,
+    "price": null,
+    "target": 0,
+    "value": null,
+    "value_target": null
+   },
+   {
+    "box": "Crown",
+    "packed": 0,
+    "pcs": 21,
+    "price": null,
+    "target": 0,
+    "value": null,
+    "value_target": null
+   },
+   {
+    "box": "Marshmallow Cake",
+    "packed": 0,
+    "pcs": 1,
+    "price": null,
+    "target": 0,
+    "value": null,
+    "value_target": null
    }
   ],
   "target_box": 19539,
-  "value": 664813.0170000001,
+  "value": 725725.9890000001,
   "value_target": 1082429.797
  }
 }

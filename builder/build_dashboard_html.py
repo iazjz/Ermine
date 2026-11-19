@@ -299,6 +299,28 @@ def read(path):
                                       wb["Daily Plan"], wb["Calibration"])
     d = {}
 
+    # Where the blocks are, read from the sheets rather than assumed. These were fixed
+    # numbers (log columns 11-35, box rows 13-27, product rows 32-41) until three boxes
+    # and a product were added on 19 Nov 2026 and every one of them moved.
+    def _rowof(ws, text, col=1, start=1, stop=400):
+        for _r in range(start, stop):
+            if str(ws.cell(_r, col).value or "").strip() == text:
+                return _r
+        return None
+    MT_B1 = 13
+    MT_B2 = _rowof(MT, "TOTAL boxes") or 28
+    _pt = _rowof(MT, "PIECES THE BOX TARGET NEEDS")
+    MT_P1 = (_pt + 2) if _pt else 32
+    MT_P2 = _rowof(MT, "TOTAL pcs", start=MT_P1) or 42
+    SR_2 = _rowof(SR, "TOTAL", col=2, start=7) or 25
+    _grp = {str(AL.cell(13, _c).value or "").split(" (")[0].split(" -")[0]: _c
+            for _c in range(1, AL.max_column + 1) if AL.cell(13, _c).value}
+    AL_P1 = _grp.get("ACTUAL PCS PRODUCED", 11)
+    AL_B1 = _grp.get("ACTUAL BOXES PACKED", 21)
+    AL_B2 = _grp.get("PLAN pcs", 36)
+    AL_OT = next((_c for _c in range(1, AL.max_column + 1)
+                  if str(AL.cell(14, _c).value or "").startswith("Overtime")), 61)
+
     def find(ws, text, col=1, upto=90):
         for r in range(1, upto):
             v = ws.cell(r, col).value
@@ -329,9 +351,11 @@ def read(path):
     }
     # where the day's hours actually go, so a refusal can be aimed at something
     steps = []
+    # the Labor Hours column, found by its header - it moves right with every product
+    _lh = next((c for c in range(1, 40) if str(_ce.cell(16, c).value or "").strip() == "Labor Hours"), 15)
     for r in range(17, 33):
         nm = _ce.cell(r, 1).value
-        hv = num(_ce.cell(r, 15).value)
+        hv = num(_ce.cell(r, _lh).value)
         if isinstance(nm, str) and nm.strip() and hv and hv > 0:
             steps.append({"step": nm.strip(), "hours": round(hv, 1)})
     steps.sort(key=lambda x: -x["hours"])
@@ -381,7 +405,10 @@ def read(path):
                       "fits_h": (nums(_f) or [None])[0]})
     d["plans"] = plans
     d["rate"] = RATE
-    d["available_h"] = num(ST["D70"].value)      # hours the floor actually has today
+    # hours the floor actually has today - on the "Does it fit the day?" row, which moves
+    # down whenever a flavour or product is added
+    _fit = next((r for r in range(40, 140) if str(ST.cell(r, 1).value or "").strip() == "Does it fit the day?"), 70)
+    d["available_h"] = num(ST.cell(_fit, 4).value)
 
     # ---- 2b. the suggestion, product by product -------------------------------
     # The Stock sheet works out A, B and IDEAL per product in its "SUGGESTED FOR TODAY"
@@ -436,8 +463,8 @@ def read(path):
         day = AL.cell(r, 1).value
         if not isinstance(day, (dt.datetime, dt.date)) or not num(AL.cell(r, 2).value):
             continue
-        made = sum(v for c in range(11, 21) if (v := num(AL.cell(r, c).value)))
-        packed = sum(v for c in range(21, 36) if (v := num(AL.cell(r, c).value)))
+        made = sum(v for c in range(AL_P1, AL_B1) if (v := num(AL.cell(r, c).value)))
+        packed = sum(v for c in range(AL_B1, AL_B2) if (v := num(AL.cell(r, c).value)))
         log.append({"date": day, "staff": num(AL.cell(r, 2).value),
                     "hours": num(AL.cell(r, 6).value), "ratio": num(AL.cell(r, 8).value),
                     "reading": str(AL.cell(r, 9).value or ""),
@@ -445,11 +472,11 @@ def read(path):
                     "note": str(AL.cell(r, 10).value or ""),
                     # kept in the history so a month can still be reported after the
                     # Actual Log's 120-day calendar has rolled past it
-                    "by_prod": {str(AL.cell(14, c).value).strip(): v for c in range(11, 21)
+                    "by_prod": {str(AL.cell(14, c).value).strip(): v for c in range(AL_P1, AL_B1)
                                 if (v := num(AL.cell(r, c).value)) and AL.cell(14, c).value},
-                    "by_box": {str(AL.cell(14, c).value).strip(): v for c in range(21, 36)
+                    "by_box": {str(AL.cell(14, c).value).strip(): v for c in range(AL_B1, AL_B2)
                                if (v := num(AL.cell(r, c).value)) and AL.cell(14, c).value},
-                    "ot": num(AL.cell(r, 61).value)})
+                    "ot": num(AL.cell(r, AL_OT).value)})
     # What each PRODUCT made, day by day. The flavour snapshot records what each
     # FLAVOUR made, and the chef does not always fill it in - so this is what the
     # missing figure gets checked against, and in the unambiguous case recovered from.
@@ -460,7 +487,7 @@ def read(path):
         if not isinstance(dd, dt.date) or not AL.cell(r, 2).value:
             continue
         got = {}
-        for c in range(11, 21):
+        for c in range(AL_P1, AL_B1):
             nm = AL.cell(14, c).value
             v = num(AL.cell(r, c).value)
             if isinstance(nm, str) and nm.strip() and v:
@@ -491,7 +518,7 @@ def read(path):
                 _dr.setdefault(dd.isoformat(), []).append(it)
     except KeyError:
         pass
-    _pn = [str(AL.cell(14, c).value or "").strip() for c in range(11, 21)]
+    _pn = [str(AL.cell(14, c).value or "").strip() for c in range(AL_P1, AL_B1)]
     _today = now_local().date()
     delays = []
     for r in range(15, 135):
@@ -503,8 +530,8 @@ def read(path):
         rs = _dr.get(k, [])
         if dd == _today and not rs:
             continue                      # today is not closed yet
-        plan = {n: (num(AL.cell(r, 25 + i + 11).value) or 0) for i, n in enumerate(_pn) if n}
-        made = {n: (num(AL.cell(r, 11 + i).value) or 0) for i, n in enumerate(_pn) if n}
+        plan = {n: (num(AL.cell(r, AL_B2 + i).value) or 0) for i, n in enumerate(_pn) if n}
+        made = {n: (num(AL.cell(r, AL_P1 + i).value) or 0) for i, n in enumerate(_pn) if n}
         P, M = sum(plan.values()), sum(made.values())
         rec = bool(num(AL.cell(r, 2).value))
         if not P and not rs and not rec:
@@ -588,7 +615,7 @@ def read(path):
     # ---- 5. boxes: the store, what came in from the chef, what went out to sales ----
     boxes, tot = [], {"store": 0, "recv": 0, "out": 0, "asked": 0, "owed": 0,
                       "target": 0, "packed": 0, "left": 0}
-    for r in range(13, 28):
+    for r in range(MT_B1, MT_B2):
         b = MT.cell(r, 1).value
         if not b:
             continue
@@ -597,7 +624,7 @@ def read(path):
                "left": num(MT.cell(r, 5).value)}
         boxes.append(row)
     sr = {}
-    for r in range(7, 25):
+    for r in range(7, SR_2):
         b = SR.cell(r, 2).value
         if isinstance(b, str) and b.strip() and b.strip() != "TOTAL":
             sr[b.strip()] = {"recv": num(SR.cell(r, 5).value), "gap": num(SR.cell(r, 6).value),
@@ -620,7 +647,7 @@ def read(path):
     _packed_since = {}
     if _since:
         _pcol = {}
-        for c in range(21, 36):
+        for c in range(AL_B1, AL_B2):
             nm = AL.cell(14, c).value
             if isinstance(nm, str) and nm.strip():
                 _pcol[nm.strip()] = c
@@ -697,7 +724,7 @@ def read(path):
         prod = CAL.cell(r, 1).value
         if prod:
             rates[str(prod)] = num(CAL.cell(r, 10).value) or 0     # hours per 1,000 pcs
-    sizes = {str(MT.cell(r, 1).value): num(MT.cell(r, 2).value) or 1 for r in range(13, 28)
+    sizes = {str(MT.cell(r, 1).value): num(MT.cell(r, 2).value) or 1 for r in range(MT_B1, MT_B2)
              if MT.cell(r, 1).value}
     # Boxes and loose pieces are totalled apart. Thirteen of these lines are counted in
     # boxes and two - Classic and Kingdom loose - in pieces, because their box holds one
@@ -990,7 +1017,7 @@ def read(path):
         "standard": num(wb["Capacity Engine"]["B7"].value),
         "month": num(AL.cell(6, 10).value),
         "days": num(AL.cell(7, 10).value),
-        "last": num(AL.cell(lr, 61).value) if lr else None,
+        "last": num(AL.cell(lr, AL_OT).value) if lr else None,
         "cost": None,
     }
     # Per day and per person as well as the total. "431 hours" is a number nobody has
@@ -1090,7 +1117,7 @@ def read(path):
     dt_left = num(MT["B7"].value) or 0
     gone = max(0, dt_total - dt_left)
     mrows = []
-    for r in range(13, 28):
+    for r in range(MT_B1, MT_B2):
         nm = MT.cell(r, 1).value
         if not isinstance(nm, str) or not nm.strip():
             continue
@@ -1236,7 +1263,7 @@ def read(path):
     # The Order Book in boxes, from today forward, with each box's size, so the page can
     # weigh a new order against what sales have already booked.
     _sz = {str(MT.cell(r, 1).value).strip(): (num(MT.cell(r, 2).value) or 1)
-           for r in range(13, 28) if MT.cell(r, 1).value}
+           for r in range(MT_B1, MT_B2) if MT.cell(r, 1).value}
     obdays = []
     if isinstance(today, dt.date):
         for r in range(7, 157):
@@ -1255,8 +1282,8 @@ def read(path):
     # feed: Monthly Targets' pieces block (products) and its box block (boxes).
     try:
         LS = wb["Lists"]
-        _prods = [str(MT.cell(r, 1).value).strip() for r in range(32, 42) if MT.cell(r, 1).value]
-        _units = [str(MT.cell(r, 1).value).strip() for r in range(13, 28) if MT.cell(r, 1).value]
+        _prods = [str(MT.cell(r, 1).value).strip() for r in range(MT_P1, MT_P2) if MT.cell(r, 1).value]
+        _units = [str(MT.cell(r, 1).value).strip() for r in range(MT_B1, MT_B2) if MT.cell(r, 1).value]
         d["rates"] = {
             "make": {p: num(LS.cell(301, 2 + j).value) for j, p in enumerate(_prods)},
             "pack": {u: num(LS.cell(303, 2 + j).value) for j, u in enumerate(_units)}}
