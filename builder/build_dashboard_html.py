@@ -120,7 +120,11 @@ def ali_store(path):
     # cannot be lost that way, so they are totalled here instead and the cached values
     # are used only to cross-check. Same answer, one fewer thing that can go empty.
     def key_of(nm):
-        return ("Half" if nm.startswith("Half") else
+        # Half became Crown on 19 Nov 2026: Ali's per-filling lines ("Crown Dates", and the
+        # old "Half Dates" in his earlier log lines) are boxes of 30 = "Crown 30"; the
+        # 21-piece box is its own line, "Crown 21"
+        if nm == "Crown 21": return nm
+        return ("Crown 30" if nm.startswith(("Half", "Crown")) else
                 "Fingers" if nm.startswith("Fingers") else nm)
 
     moved, by_flavour = {}, {}
@@ -1305,7 +1309,7 @@ def read(path):
     fill, horizon = {}, None
     if isinstance(today, dt.date):
         horizon = today + dt.timedelta(days=14)
-        for bx in ("Half", "Fingers", "Large Bites"):
+        for bx in ("Crown 30", "Fingers", "Large Bites"):
             ordered = sum((x["by"].get(bx) or 0) for x in obdays
                           if dt.date.fromisoformat(x["date"]) <= horizon)
             byf = {}

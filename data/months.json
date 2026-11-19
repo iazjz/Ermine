@@ -37,7 +37,7 @@
    {
     "made": 26019.0,
     "need": 18810.0,
-    "product": "Half"
+    "product": "Crown"
    },
    {
     "made": 21879.0,
@@ -120,7 +120,7 @@
     "value_target": 409628.43
    },
    {
-    "box": "Half",
+    "box": "Crown 30",
     "packed": 849.0,
     "pcs": 30.0,
     "price": 150.0,
@@ -198,7 +198,7 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-19T21:20",
+  "at": "2026-11-19T23:44",
   "days_total": 26,
   "packed_box": 15260,
   "pieces": [
@@ -235,7 +235,7 @@
    {
     "made": 19982,
     "need": 20430,
-    "product": "Half"
+    "product": "Crown"
    },
    {
     "made": 15604,
@@ -323,7 +323,7 @@
     "value_target": 464382.54000000004
    },
    {
-    "box": "Half",
+    "box": "Crown 30",
     "packed": 674,
     "pcs": 30,
     "price": 150,
@@ -404,7 +404,7 @@
     "value_target": null
    },
    {
-    "box": "Crown",
+    "box": "Crown 21",
     "packed": 0,
     "pcs": 21,
     "price": null,

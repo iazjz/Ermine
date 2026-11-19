@@ -778,7 +778,7 @@ const T = {
    inferred:"worked out from the product total",
    ambiguous:"{p} had more than one flavour planned, so the day\u2019s total cannot be split between them",
    flavLineNote:"One filling of {b}. Ali records {b} by filling; the target and the order book count {b} as one line.",
-   byFlavourNote:"Which filling the boxes on the shelf actually are. The rest of the system counts Half and Fingers as one line, because the target and the order book do; the shelf does not.",
+   byFlavourNote:"Which filling the boxes on the shelf actually are. The rest of the system counts Crown and Fingers as one line, because the target and the order book do; the shelf does not.",
    gapSince:"Packed and received are both counted from the stocktake on {d}, so the two sides cover the same days. A negative gap is the store recording something the chef logged before that date.",
    fcOpenNote:"Frozen on {d} and never recalculated, so the payroll line can be held against it at the close.",
    fcOpenLate:"Frozen on {d}, {n} working days into the run rather than on the first - the run was already under way when the page learned to keep this. From the next run it is taken on day one.",
@@ -1170,7 +1170,7 @@ const T = {
    inferred:"مستنتَج من إجمالي المنتج",
    ambiguous:"{p} خُطِّط له أكثر من نكهة، فلا يمكن تقسيم إجمالي اليوم بينها",
    flavLineNote:"حشوة واحدة من {b}. علي يسجّل {b} حسب الحشوة، والمستهدف ودفتر الطلبات يعدّان {b} سطرًا واحدًا.",
-   byFlavourNote:"أي حشوة هي البوكسات الموجودة على الرف فعلًا. بقية النظام تعدّ Half وFingers سطرًا واحدًا لأن المستهدف ودفتر الطلبات كذلك؛ أمّا الرف فلا.",
+   byFlavourNote:"أي حشوة هي البوكسات الموجودة على الرف فعلًا. بقية النظام تعدّ Crown وFingers سطرًا واحدًا لأن المستهدف ودفتر الطلبات كذلك؛ أمّا الرف فلا.",
    gapSince:"المعبّأ والمستلَم كلاهما محسوب من جرد {d}، فالطرفان يغطّيان نفس الأيام. والفجوة السالبة تعني أن المخزن سجّل شيئًا دوّنه الشيف قبل ذلك التاريخ.",
    fcOpenNote:"جُمِّد في {d} ولا يُعاد حسابه، حتى يُقارَن به مسيَّر الرواتب عند الإقفال.",
    fcOpenLate:"جُمِّد في {d}، بعد {n} أيام عمل من بداية المسيَّر لا في أوله — فالمسيَّر كان قد بدأ حين تعلّمت الصفحة حفظه. ومن المسيَّر القادم يُؤخذ في يومه الأول.",
@@ -1322,7 +1322,7 @@ const t = (k, v) => {
    table. Kept here, beside t(), because it is a fact about the data rather than about
    one view, and because the day finance confirms them this is the single line to
    delete. */
-const DERIVED_PRICE = new Set(["Half","Fingers","Large Bites","Cake"]);
+const DERIVED_PRICE = new Set(["Crown 30","Fingers","Large Bites","Cake"]);
 
 /* Quality and Tasks sit behind the same code, so they showed the same box - written
    out twice, including the same element id. Nothing broke, because only one view is
@@ -3015,12 +3015,14 @@ function fillBlock(){
    Everything is the page's own arithmetic on figures from the files, and says so. */
 const TRY={box:null, n:"", date:"", mode:"box", prod:null, bs:"", bn:"", np:false, more:[]};
 const WINTER_BOX=12;           // Winter Box: marshmallow macarons, 12 to a box
-const MAIN_UNIT={Classic:"Big 30",Kingdom:"Big 24",Mini:"Mini",Coins:"Coins",Half:"Half",
+const MAIN_UNIT={Classic:"Big 30",Kingdom:"Big 24",Mini:"Mini",Coins:"Coins",Crown:"Crown 30",
+  Winter:"Melted","Marshmallow Cake":"Marshmallow Cake",
   Origin:"Origin",Fingers:"Fingers",Cake:"Cake","Ice Cream":"Ice Cream"};
 const trySizes=()=>Object.assign({}, (D.ob&&D.ob.pcs)||{}, {"Winter Box":WINTER_BOX});
 const PROD_OF={"Big 30":"Classic","Big 12":"Classic","Big 6":"Classic","Large Bites":"Classic",
   "Classic pcs loose":"Classic","Big 24":"Kingdom","Kingdom pcs loose":"Kingdom",
-  "Mini Raspberry loose":"Mini","Winter Box":"Winter"};
+  "Mini Raspberry loose":"Mini","Winter Box":"Winter",
+  "Crown 30":"Crown","Crown 21":"Crown","Melted":"Winter"};
 const prodOf=b=>PROD_OF[b]||b;
 const WDAY=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
 function isoPlus(iso,k){ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+k);
@@ -3252,7 +3254,7 @@ function tryUpdate(){ const o=document.getElementById("tryout"); if(o) o.innerHT
 window.trySet=function(k,v){ TRY[k]=v; tryUpdate(); };
 function viewTry(){
   const sz=trySizes();
-  const boxes=((D.mtarget||{}).rows||[]).map(r=>r.box).filter(b=>sz[b]!=null).concat(["Winter Box"]);
+  const boxes=((D.mtarget||{}).rows||[]).map(r=>r.box).filter(b=>sz[b]!=null).concat(sz["Melted"]!=null?[]:["Winter Box"]);   // Melted is the real Winter box since 19 Nov
   const prods=((D.mtarget||{}).pieces||[]).map(r=>r.product);
   if(!TRY.box) TRY.box=boxes[0]||null;
   if(!TRY.prod) TRY.prod=prods[0]||null;

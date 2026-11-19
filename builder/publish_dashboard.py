@@ -130,6 +130,12 @@ def main():
     run(["git", "clone", "--depth", "1", "--branch", branch, url, work], token=token)
     history = os.path.join(work, "data", "flavours.json")
 
+    # One-off data migrations (e.g. the Half -> Crown rename of 19 Nov 2026) run on the
+    # fresh clone's data/ before the build, so the pushed history carries them. Unset = none.
+    mig = os.environ.get("ERMINE_MIGRATE")
+    if mig:
+        print("  " + run(f'python3 "{mig}" "{os.path.join(work, "data")}"', token=token).strip().splitlines()[-1])
+
     if not NO_BUILD:
         print("rebuilding the dashboard from the live workbook")
         for script in ("build_dashboard_html.py", "build_site.py"):
