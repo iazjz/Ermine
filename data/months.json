@@ -198,7 +198,7 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-19T23:46",
+  "at": "2026-11-20T00:06",
   "days_total": 26,
   "packed_box": 15260,
   "pieces": [
@@ -234,7 +234,7 @@
    },
    {
     "made": 19982,
-    "need": 20430,
+    "need": 35130,
     "product": "Crown"
    },
    {
@@ -244,7 +244,7 @@
    },
    {
     "made": 0,
-    "need": 12540,
+    "need": 37140,
     "product": "Winter"
    },
    {
@@ -254,7 +254,7 @@
    },
    {
     "made": 0,
-    "need": 0,
+    "need": 500,
     "product": "Marshmallow Cake"
    }
   ],
@@ -399,7 +399,7 @@
     "packed": 0,
     "pcs": 12,
     "price": null,
-    "target": 0,
+    "target": 2050,
     "value": null,
     "value_target": null
    },
@@ -408,7 +408,7 @@
     "packed": 0,
     "pcs": 21,
     "price": null,
-    "target": 0,
+    "target": 700,
     "value": null,
     "value_target": null
    },
@@ -417,12 +417,12 @@
     "packed": 0,
     "pcs": 1,
     "price": null,
-    "target": 0,
+    "target": 500,
     "value": null,
     "value_target": null
    }
   ],
-  "target_box": 19539,
+  "target_box": 22789,
   "value": 774380.724,
   "value_target": 1082429.797
  }
