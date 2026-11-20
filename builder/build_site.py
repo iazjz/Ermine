@@ -198,6 +198,11 @@ def main():
 
             icon(dst, size)   # the drawn E, only if we can draw
     open(os.path.join(out, "manifest.webmanifest"), "w").write(MANIFEST)
+    # 20 Nov 2026: the Wardiya app (sign-in first) lives at /app/ on the same site.
+    app = os.path.join(HERE, "wardiya_app.html")
+    if os.path.exists(app):
+        os.makedirs(os.path.join(out, "app"), exist_ok=True)
+        shutil.copy2(app, os.path.join(out, "app", "index.html"))
     open(os.path.join(out, ".nojekyll"), "w").write("")
     open(os.path.join(out, "README.md"), "w", encoding="utf-8").write(README)
 

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>وردية</title>
+<meta name="theme-color" content="#D9417E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Wardiya - sign-in (20 Nov 2026). Email code, no password. Public values only on this
+     page: the project URL and the publishable key. Row security in the database decides
+     what each person can see; this page never holds the server key. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--p50:#FDF2F7;--p100:#FBE4EF;--p200:#F7C6DC;--p300:#F09CC0;--p400:#E66A9E;--p500:#D9417E;
+  --p600:#BF2C66;--p700:#9C2353;--p900:#5C1733;--bg:#FDF2F7;--card:#fff;--ink:#3A1426;--dim:#8A5A6F;
+  --line:#F7C6DC;--main:#D9417E;--ok:#1F8A5B;--bad:#C0392B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A0D14;--card:#2A1520;--ink:#FBE4EF;
+  --dim:#C99AB0;--line:#4A2436;--main:#F09CC0}}
+:root[data-theme="dark"]{--bg:#1A0D14;--card:#2A1520;--ink:#FBE4EF;--dim:#C99AB0;--line:#4A2436;--main:#F09CC0}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans Arabic",system-ui,-apple-system,sans-serif;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:520px;width:100%;margin:0 auto}
+.brand{font-weight:700;font-size:22px;color:var(--main);letter-spacing:0}
+.lang{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;cursor:pointer}
+main{flex:1;display:grid;place-items:center;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px 22px;width:100%;max-width:420px;
+  box-shadow:0 10px 30px rgba(217,65,126,.10);animation:rise .35s ease-out both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.card{animation:none}}
+h1{margin:0 0 6px;font-size:22px}
+p.sub{margin:0 0 20px;color:var(--dim);font-size:14.5px;line-height:1.6}
+label{display:block;font-size:13px;color:var(--dim);margin:0 0 6px}
+input{width:100%;font:inherit;font-size:17px;padding:13px 14px;border:1.5px solid var(--line);border-radius:14px;
+  background:var(--bg);color:var(--ink);outline:none;transition:border-color .15s}
+input:focus{border-color:var(--main)}
+input.code{letter-spacing:.35em;text-align:center;font-size:24px;direction:ltr}
+button.go{width:100%;margin-top:14px;font:inherit;font-weight:700;font-size:16px;padding:13px;border:0;border-radius:14px;
+  background:var(--p500);color:#fff;cursor:pointer;transition:transform .1s,opacity .15s}
+button.go:active{transform:scale(.98)} button.go:disabled{opacity:.55;cursor:default}
+button.link{background:none;border:0;color:var(--main);font:inherit;font-size:14px;cursor:pointer;margin-top:12px;padding:4px}
+.msg{margin-top:12px;font-size:14px;line-height:1.6;min-height:1.2em}
+.msg.bad{color:var(--bad)} .msg.ok{color:var(--ok)}
+.who{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.row:last-child{border-bottom:0}
+.pill{display:inline-block;background:var(--p100);color:var(--p700);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:600}
+:root[data-theme="dark"] .pill{background:#4A2436;color:var(--p200)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill{background:#4A2436;color:var(--p200)}}
+.foot{text-align:center;color:var(--dim);font-size:12px;padding:16px}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand" id="brand">وردية</div><button class="lang" id="lang" type="button">EN</button></div>
+<main><div class="card" id="card"></div></main>
+<div class="foot" id="foot"></div>
+<script>
+const SB_URL="https://txqrrnymaglkilowgvee.supabase.co";
+const SB_KEY="sb_publishable_Jc1BIS5tm2t04X6982tHfQ_mQmSokSJ";
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
+const T={
+ ar:{brand:"وردية",other:"EN",hello:"تسجيل الدخول",sub:"اكتب بريدك، ونرسل لك رابط دخول. لا توجد كلمة مرور.",
+  email:"البريد الإلكتروني",send:"أرسل رابط الدخول",sending:"جارٍ الإرسال…",codeT:"افتح بريدك",
+  codeSub:"أرسلنا رابط دخول إلى {e}. اضغط «Sign in» في الرسالة من هذا الجهاز نفسه. يصل خلال دقيقة؛ افحص البريد غير المرغوب. وإذا وصلك رمز بدل الرابط فاكتبه هنا.",code:"الرمز",verify:"دخول",
+  checking:"جارٍ التحقق…",back:"تغيير البريد",resend:"أرسل الرابط مرة أخرى",badEmail:"اكتب بريدًا صحيحًا.",
+  badCode:"الرمز غير صحيح أو انتهت صلاحيته. اطلب رمزًا جديدًا.",wait:"انتظر قليلًا قبل طلب رمز جديد.",
+  fail:"تعذّر الاتصال. حاول مرة أخرى.",nameT:"مرحبًا بك",nameSub:"اكتب اسمك كما تريد أن يظهر للفريق.",
+  name:"الاسم",save:"حفظ",inT:"أنت داخل",factory:"المصنع",role:"الدور",none:"حسابك غير مرتبط بمصنع بعد. اطلب من المدير إضافتك.",
+  out:"تسجيل الخروج",foot:"وردية · أول مصنع: إيرماين",
+  roles:{owner:"المالك",admin:"مدير",planner:"مخطِّط",chef:"شيف",lead:"قائد محطة",storekeeper:"أمين المخزن",qc:"الجودة",viewer:"مشاهد"}},
+ en:{brand:"Wardiya",other:"ع",hello:"Sign in",sub:"Type your email and we send you a sign-in link. No password.",
+  email:"Email",send:"Send the sign-in link",sending:"Sending…",codeT:"Open your email",
+  codeSub:"We sent a sign-in link to {e}. Tap \u201cSign in\u201d in it on this same device. It arrives within a minute; check spam. If you got a code instead, type it here.",code:"Code",verify:"Sign in",
+  checking:"Checking…",back:"Change email",resend:"Send the link again",badEmail:"Type a valid email.",
+  badCode:"The code is wrong or has expired. Ask for a new one.",wait:"Wait a little before asking for a new code.",
+  fail:"Could not connect. Try again.",nameT:"Welcome",nameSub:"Type your name as the team should see it.",
+  name:"Name",save:"Save",inT:"You are signed in",factory:"Factory",role:"Role",none:"Your account is not linked to a factory yet. Ask the owner to add you.",
+  out:"Sign out",foot:"Wardiya · first factory: ERMINE",
+  roles:{owner:"Owner",admin:"Admin",planner:"Planner",chef:"Chef",lead:"Station lead",storekeeper:"Storekeeper",qc:"Quality",viewer:"Viewer"}}};
+let L="ar"; try{ L=localStorage.getItem("wd-lang")||"ar"; }catch(e){}
+let EMAIL="", STEP="email";
+const t=(k,v={})=>String(T[L][k]).replace(/\{(\w+)\}/g,(_,x)=>v[x]??"");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+function msg(text,cls){ const m=$("#msg"); if(m){ m.textContent=text||""; m.className="msg "+(cls||""); } }
+async function draw(){
+  document.documentElement.lang=L; document.documentElement.dir=L==="ar"?"rtl":"ltr";
+  $("#brand").textContent=t("brand"); $("#lang").textContent=t("other"); $("#foot").textContent=t("foot");
+  document.title=t("brand");
+  const {data:{session}}=await sb.auth.getSession();
+  const c=$("#card");
+  if(session){ return drawIn(session); }
+  if(STEP==="code"){
+    c.innerHTML=`<h1>${t("codeT")}</h1><p class="sub">${esc(t("codeSub",{e:EMAIL}))}</p>
+      <label for="code">${t("code")}</label>
+      <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
+      <button class="go" id="verify" type="button">${t("verify")}</button>
+      <div class="msg" id="msg"></div>
+      <button class="link" id="resend" type="button">${t("resend")}</button>
+      <button class="link" id="back" type="button">${t("back")}</button>`;
+    $("#code").focus();
+    $("#code").addEventListener("keydown",e=>{ if(e.key==="Enter") verify(); });
+    $("#verify").onclick=verify; $("#resend").onclick=send; $("#back").onclick=()=>{STEP="email";draw();};
+    return;
+  }
+  c.innerHTML=`<h1>${t("hello")}</h1><p class="sub">${t("sub")}</p>
+    <label for="email">${t("email")}</label>
+    <input id="email" type="email" inputmode="email" autocomplete="email" dir="ltr" value="${esc(EMAIL)}">
+    <button class="go" id="send" type="button">${t("send")}</button><div class="msg" id="msg"></div>`;
+  $("#email").focus();
+  $("#email").addEventListener("keydown",e=>{ if(e.key==="Enter") send(); });
+  $("#send").onclick=send;
+}
+async function send(){
+  const el=$("#email"); if(el) EMAIL=el.value.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(EMAIL)) return msg(t("badEmail"),"bad");
+  const b=$("#send")||$("#resend"); if(b){ b.disabled=true; b.textContent=t("sending"); }
+  const {error}=await sb.auth.signInWithOtp({email:EMAIL,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname}});
+  if(error){ if(b){ b.disabled=false; b.textContent=STEP==="code"?t("resend"):t("send"); }
+    return msg(/rate|seconds|security/i.test(error.message)?t("wait"):t("fail"),"bad"); }
+  STEP="code"; draw();
+}
+async function verify(){
+  const token=($("#code").value||"").replace(/\D/g,"");
+  if(token.length<6) return msg(t("badCode"),"bad");
+  const b=$("#verify"); b.disabled=true; b.textContent=t("checking");
+  const {error}=await sb.auth.verifyOtp({email:EMAIL,token,type:"email"});
+  if(error){ b.disabled=false; b.textContent=t("verify"); return msg(t("badCode"),"bad"); }
+  STEP="email"; draw();
+}
+async function drawIn(session){
+  const c=$("#card"), uid=session.user.id;
+  const {data:prof}=await sb.from("profiles").select("full_name,lang").eq("user_id",uid).maybeSingle();
+  if(!prof){
+    c.innerHTML=`<h1>${t("nameT")}</h1><p class="sub">${t("nameSub")}</p>
+      <label for="nm">${t("name")}</label><input id="nm" autocomplete="name">
+      <button class="go" id="sv" type="button">${t("save")}</button><div class="msg" id="msg"></div>
+      <button class="link" id="out" type="button">${t("out")}</button>`;
+    $("#nm").focus(); $("#out").onclick=signOut;
+    $("#sv").onclick=async()=>{ const n=$("#nm").value.trim(); if(n.length<2) return;
+      const {error}=await sb.from("profiles").insert({user_id:uid,full_name:n,lang:L});
+      if(error) return msg(t("fail"),"bad"); draw(); };
+    return;
+  }
+  const {data:mem}=await sb.from("memberships").select("role,active,factories(name)").eq("user_id",uid).eq("active",true);
+  const rows=(mem||[]).map(m=>`<div class="row"><span>${esc(m.factories?.name||"—")}</span><span class="pill">${esc(T[L].roles[m.role]||m.role)}</span></div>`).join("");
+  c.innerHTML=`<h1>${t("inT")}</h1><p class="sub">${esc(prof.full_name)} · <span dir="ltr">${esc(session.user.email)}</span></p>
+    <div class="who">${rows||`<p class="sub">${t("none")}</p>`}</div>
+    <button class="link" id="out" type="button">${t("out")}</button>`;
+  $("#out").onclick=signOut;
+}
+async function signOut(){ await sb.auth.signOut(); STEP="email"; draw(); }
+$("#lang").onclick=()=>{ L=L==="ar"?"en":"ar"; try{ localStorage.setItem("wd-lang",L); }catch(e){} draw(); };
+sb.auth.onAuthStateChange((ev)=>{ if(ev==="SIGNED_OUT"||ev==="SIGNED_IN") draw(); });
+draw();
+</script>
+</body>
+</html>

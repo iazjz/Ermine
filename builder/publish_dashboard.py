@@ -88,7 +88,7 @@ def config():
 BUILDER_CODE = ("build_dashboard_html.py", "build_site.py", "dashboard_template.html",
                 "publish_dashboard.py", "ermine_env.py", "ermine_paths.py",
                 "history_fixes.json", "sales_flavours.json", "prices.json", "qc_api.txt",
-                "sync_db.py")
+                "sync_db.py", "wardiya_app.html")
 
 
 def builder_files():
