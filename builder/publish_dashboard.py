@@ -87,7 +87,8 @@ def config():
 
 BUILDER_CODE = ("build_dashboard_html.py", "build_site.py", "dashboard_template.html",
                 "publish_dashboard.py", "ermine_env.py", "ermine_paths.py",
-                "history_fixes.json", "sales_flavours.json", "prices.json", "qc_api.txt")
+                "history_fixes.json", "sales_flavours.json", "prices.json", "qc_api.txt",
+                "sync_db.py")
 
 
 def builder_files():
@@ -146,6 +147,12 @@ def main():
             out = run(f'cd "{HERE}" && {cap}'
                       f'ERMINE_HISTORY="{history}" python3 {script}', token=token)
             print("  " + out.strip().splitlines()[-1])
+
+        # 20 Nov 2026: keep the Wardiya database in step with Excel. Never stops a publish.
+        try:
+            print("  " + run(f'cd "{HERE}" && python3 sync_db.py', token=token).strip().splitlines()[-1])
+        except (Exception, SystemExit) as e:
+            print("  db sync failed (publish continues):", str(e)[:160])
 
     import ermine_env
     site = os.path.join(ermine_env.work_dir(), "ermine-site")
