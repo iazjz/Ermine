@@ -180,6 +180,21 @@ tbody tr:hover{background:var(--bg)}
 .src{font-size:10.5px;color:var(--dim);margin-top:10px;letter-spacing:.2px;line-height:1.5}
 
 .tap{cursor:pointer;position:relative;transition:transform .14s,border-color .14s,box-shadow .14s}
+/* 20 Nov 2026 - motion (Aziz): tabs slide in from the side they sit on, numbers count up,
+   cards lift under the pointer, notes unfold; all of it off for reduce-motion. */
+.tnum{cursor:pointer;border-radius:10px;transition:background .15s,transform .12s}
+.tnum:hover{background:color-mix(in srgb,var(--teal) 9%,transparent)}
+.tnum:active{transform:scale(.96)}
+.tnum .lbl::after{content:" \u203a";opacity:.55}
+@media (hover:hover){ .card.tap:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.12)} }
+.subnav button,.bnav button,nav button{transition:background .22s,color .22s,border-color .22s,transform .12s}
+.subnav button:active,.bnav button:active{transform:scale(.94)}
+#main.slide{animation:slidein .34s cubic-bezier(.2,.8,.2,1) both}
+@keyframes slidein{from{opacity:0;transform:translateX(var(--dx,0))}to{opacity:1;transform:none}}
+.infobox:not([hidden]){animation:unfold .26s ease-out both}
+@keyframes unfold{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.infob{transition:background .2s,color .2s,transform .2s}.infob.on{transform:rotate(360deg)}
+@media (prefers-reduced-motion:reduce){ #main.slide,.infobox:not([hidden]){animation:none} .card.tap:hover{transform:none} }
 .tap:active{transform:scale(.985)}
 .tap:hover{border-color:var(--green)}
 .tap::after{content:"›";position:absolute;inset-inline-end:14px;top:11px;
@@ -758,7 +773,7 @@ const T = {
    rpNone:"No logged days in this range.", rpHead:"Summary", rpMade:"Pieces made", rpPacked:"Boxes packed", rpLoose:"loose pieces packed",
    rpPerDay:"per working day", rpAdh:"Days on plan", rpAdhOf:"{a} of {b} days with a plan", rpHit:"Made against plan",
    rpLate:"Days that missed the plan", rpExpl:"of them explained", rpOt:"Overtime", rpOtCost:"cost", rpOtPer:"per person",
-   rpProd:"Productivity", rpProdU:"per staff-hour", rpPerPerson:"per person in this range", rpValPacked:"packed (box price x boxes, worked out)", rpPcsH:"pieces per staff-hour", rpNoPrice:"No price, left out", rpStaff:"Average staff", rpHrs:"Staff-hours worked",
+   rpProd:"Productivity", rpProdU:"per staff-hour", rpOnMonth:"This month\u2019s tables are on the Month target page \u203a", rpPerPerson:"per person in this range", rpValPacked:"packed (box price x boxes, worked out)", rpPcsH:"pieces per staff-hour", rpNoPrice:"No price, left out", rpStaff:"Average staff", rpHrs:"Staff-hours worked",
    rpModel:"Model accuracy", rpModelU:"days within \u00b115%", rpTarget:"Month target (boxes)", rpTargetOf:"{a} packed of {b} \u00b7 as of {d}",
    rpValue:"Value packed", rpTopWhy:"Most common reason", rpByWhy:"Delays by reason", rpByProd:"Made, by product", rpByBox:"Packed, by box",
    rpDaily:"Day by day", rpShare:"share", rpCount:"days", rpDay:"day", rpPlan:"plan", rpMadeC:"made", rpDiff:"vs plan",
@@ -1159,7 +1174,7 @@ const T = {
    rpNone:"لا أيام مسجّلة في هذه الفترة.", rpHead:"الملخص", rpMade:"حبات صُنعت", rpPacked:"بوكسات عُبّئت", rpLoose:"حبة سائبة عُبّئت",
    rpPerDay:"لكل يوم عمل", rpAdh:"أيام على الخطة", rpAdhOf:"{a} من {b} يومًا فيها خطة", rpHit:"المصنوع مقابل الخطة",
    rpLate:"أيام فاتتها الخطة", rpExpl:"منها مُبرَّر", rpOt:"الأوفرتايم", rpOtCost:"التكلفة", rpOtPer:"للفرد",
-   rpProd:"الإنتاجية", rpProdU:"لكل ساعة عمل", rpPerPerson:"للفرد في هذه الفترة", rpValPacked:"قيمة المعبّأ (سعر البوكس × العدد، محسوبة)", rpPcsH:"حبة لكل ساعة عمل", rpNoPrice:"بلا سعر، غير محسوب", rpStaff:"متوسط الأفراد", rpHrs:"ساعات العمل",
+   rpProd:"الإنتاجية", rpProdU:"لكل ساعة عمل", rpOnMonth:"جداول هذا الشهر في صفحة مستهدف الشهر \u2039", rpPerPerson:"للفرد في هذه الفترة", rpValPacked:"قيمة المعبّأ (سعر البوكس × العدد، محسوبة)", rpPcsH:"حبة لكل ساعة عمل", rpNoPrice:"بلا سعر، غير محسوب", rpStaff:"متوسط الأفراد", rpHrs:"ساعات العمل",
    rpModel:"دقة النموذج", rpModelU:"أيام ضمن ±١٥٪", rpTarget:"مستهدف الشهر (بوكس)", rpTargetOf:"عُبّئ {a} من {b} · حتى {d}",
    rpValue:"قيمة المعبّأ", rpTopWhy:"أكثر سبب تكرارًا", rpByWhy:"التأخير حسب السبب", rpByProd:"المصنوع حسب المنتج", rpByBox:"المعبّأ حسب البوكس",
    rpDaily:"يومًا بيوم", rpShare:"النسبة", rpCount:"أيام", rpDay:"اليوم", rpPlan:"الخطة", rpMadeC:"صُنع", rpDiff:"مقابل الخطة",
@@ -1900,6 +1915,8 @@ function go(v, push){
   if(v === "ideas") v = "plan";
   if(v === "late") v = "days";          // delays live on the day log since 20 Nov 2026
   const from = VIEW;
+  { const a=PAGES.indexOf(from), b=PAGES.indexOf(v||"home");
+    window.__dx = (a<0||b<0||a===b) ? 0 : (b>a?1:-1); }
   if(v && v !== VIEW) TRAIL.push({v: from, y: window.scrollY});
   if(v === "home") TRAIL = [];
   if(TRAIL.length > 12) TRAIL.shift();
@@ -2051,7 +2068,9 @@ function render(){
     window.__drawn=true;
     applyHidden();
     foldNotes();
+    slideIn();
     stagger();
+    countUp();
     applyFocus();
     setTimeout(()=>{ if(VIEW==="month") monthChart(); if(VIEW==="shift") keptChart();
                      if(VIEW==="days") daysChart();
@@ -2062,6 +2081,37 @@ function render(){
   renderHome();
   applyHidden();
   foldNotes();
+  slideIn();
+  countUp();
+}
+const RM=()=>matchMedia("(prefers-reduced-motion:reduce)").matches;
+function slideIn(){
+  const m=$("#main"), d=window.__dx||0; window.__dx=0;
+  if(!d || RM()) return;
+  m.classList.remove("slide"); void m.offsetWidth;
+  m.style.setProperty("--dx", (d*(L==="ar"?-1:1)*28)+"px"); m.classList.add("slide");
+}
+/* Big figures count up from zero once, in their own digits (Arabic or Latin), keeping
+   the decimals, the % and the sign exactly as written. */
+function countUp(){
+  if(RM()) return;
+  const AR="\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669";
+  const toL=x=>x.replace(/[\u0660-\u0669]/g,c=>AR.indexOf(c));
+  document.querySelectorAll("#main .big, #main .huge, #main .mid").forEach(el=>{
+    const tn=[...el.childNodes].find(n=>n.nodeType===3 && /[0-9\u0660-\u0669]/.test(n.nodeValue));
+    if(!tn) return;
+    const raw=tn.nodeValue, m=/([0-9\u0660-\u0669][0-9\u0660-\u0669,\u066C.\u066B]*)/.exec(raw);
+    if(!m) return;
+    const ar=/[\u0660-\u0669]/.test(m[1]);
+    const num=toL(m[1]).replace(/[,\u066C]/g,"").replace("\u066B",".");
+    const val=parseFloat(num); if(!isFinite(val) || val<2) return;
+    const dec=(num.split(".")[1]||"").length;
+    const fmt=new Intl.NumberFormat(ar?"ar-EG":"en-GB",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+    const pre=raw.slice(0,m.index), post=raw.slice(m.index+m[1].length), t0=performance.now(), dur=650;
+    const step=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3);
+      tn.nodeValue=pre+fmt.format(k<1?val*e:val)+post; if(k<1) requestAnimationFrame(step); else tn.nodeValue=raw; };
+    requestAnimationFrame(step);
+  });
 }
 /* Every plain note (.src without a bold warning in it) inside a card moves behind one ⓘ
    button on that card. Nothing is removed; alerts, units and "worked out" stay visible.
@@ -4187,7 +4237,7 @@ function repSetMonth(m){ if(!m) return; const [y,mo]=m.split("-").map(Number);
   const last=new Date(y,mo,0).getDate(); REP.from=m+"-01"; REP.to=m+"-"+String(last).padStart(2,"0"); render(); }
 function repShift(k){ const ms=repMonths(); if(!ms.length) return; repSetMonth(ms[Math.min(k,ms.length-1)]); }
 function repMonthName(m){ return new Date(m+"-01T00:00:00").toLocaleDateString(loc(),{month:"long",year:"numeric"}); }
-function viewRep(){
+function viewRep(full){
   const ms=repMonths();
   if(!REP.from && ms.length){ const m=ms[0]; const [y,mo]=m.split("-").map(Number);
     REP.from=m+"-01"; REP.to=m+"-"+String(new Date(y,mo,0).getDate()).padStart(2,"0"); }
@@ -4217,7 +4267,7 @@ function viewRep(){
   const why={}; X.forEach(x=>(x.rs||[]).forEach(z=>{const k=z.r||z.c||t("rpNoWhy"); why[k]=(why[k]||0)+1;}));
   const wk=Object.keys(why).sort((a,b)=>why[b]-why[a]);
   const MT=whole&&D.months?D.months[curM]:null;
-  const tile=(l,v,u,sub,c)=>`<div><div class="lbl">${l}</div><div class="big" ${c?`style="color:${c}"`:""}>${v}${u?`<span class="unit">${u}</span>`:""}</div>${sub?`<div class="src" style="margin-top:2px">${sub}</div>`:""}</div>`;
+  const tile=(l,v,u,sub,c,to)=>`<div${to?` class="tnum" onclick="go('${to}')"`:""}><div class="lbl">${l}</div><div class="big" ${c?`style="color:${c}"`:""}>${v}${u?`<span class="unit">${u}</span>`:""}</div>${sub?`<div class="src" style="margin-top:2px">${sub}</div>`:""}</div>`;
   /* 20 Nov 2026 (Aziz): productivity in riyals, not pieces per hour. Value = boxes packed in
      the range x the month's box price (Monthly Targets); boxes with no price are left out
      and named. Worked out. */
@@ -4228,20 +4278,20 @@ function viewRep(){
   X.forEach(x=>Object.entries(x.bb||{}).forEach(([k,v])=>{ if(!v) return; const pr=_pr(k);
     if(pr==null) rpPvNo.add(k); else rpPv+=v*pr; }));
   h+=`<h3>${t("rpHead")}</h3><div class="card"><div class="row">
-    ${tile(t("rpMade"),n0(made),t("pieces"),`${n0(made/n)} ${t("rpPerDay")}`)}
-    ${tile(t("rpPacked"),n0(boxes),t("boxes"),loose?`+ ${n0(loose)} ${t("rpLoose")}`:"")}
+    ${tile(t("rpMade"),n0(made),t("pieces"),`${n0(made/n)} ${t("rpPerDay")}`,"","days")}
+    ${tile(t("rpPacked"),n0(boxes),t("boxes"),loose?`+ ${n0(loose)} ${t("rpLoose")}`:"","","store")}
     ${tile(t("rpAdh"),P.length?pc(onp.length/P.length):"—","",t("rpAdhOf",{a:n0(onp.length),b:n0(P.length)}),
         P.length?(onp.length/P.length>=0.8?"var(--ok)":"var(--warn)"):"")}
     ${tile(t("rpHit"),pSum?pc(pMade/pSum):"—","",pSum?`${n0(pMade)} / ${n0(pSum)} ${t("pieces")}`:"")}
   </div><div class="row" style="margin-top:14px">
-    ${tile(t("rpLate"),n0(late.length),"",`${n0(expl.length)} ${t("rpExpl")}`,late.length-expl.length?"var(--bad)":"")}
+    ${tile(t("rpLate"),n0(late.length),"",`${n0(expl.length)} ${t("rpExpl")}`,late.length-expl.length?"var(--bad)":"","days")}
     ${tile(t("rpOt"),n0(ot),t("hours"),`${n1(avgS?ot/avgS:0)} ${t("perHead")}<br>${t("rpOtCost")}: <b>${n0(ot*rate)}</b> ${sar()}`,ot?"var(--warn)":"")}
     ${tile(t("rpProd"),sh&&rpPv?n0(rpPv/sh):"—",sar()+" "+t("rpProdU"),
        avgS&&rpPv?`${n0(rpPv/avgS)} ${sar()} ${t("rpPerPerson")}`:"")}
     ${tile(t("rpModel"),R.length?pc(rOk.length/R.length):"—",t("rpModelU"),`${n0(rOk.length)} / ${n0(R.length)}`)}
   </div>`;
   if(whole) h+= MT ? `<div class="row" style="margin-top:14px">
-      ${tile(t("rpTarget"),pc((MT.packed_box||0)/(MT.target_box||1)),"",t("rpTargetOf",{a:n0(MT.packed_box),b:n0(MT.target_box),d:dmy(String(MT.at).slice(0,10))}))}
+      ${tile(t("rpTarget"),pc((MT.packed_box||0)/(MT.target_box||1)),"",t("rpTargetOf",{a:n0(MT.packed_box),b:n0(MT.target_box),d:dmy(String(MT.at).slice(0,10))}),"","month")}
       ${MT.value_target?tile(t("rpValue"),n0(MT.value),sar(),`/ ${n0(MT.value_target)} ${sar()}`):""}</div>`
     : `<div class="src">${t("rpNoTarget")}</div>`;
   h+=`<div class="src">${t("rpProd")}: ${n0(rpPv)} ${sar()} ${t("rpValPacked")} · ${n0(sh)} ${t("rpHrs")} · ${n1(avgS)} ${t("rpStaff")} · ${sh?n1(made/sh):"—"} ${t("rpPcsH")}${
@@ -4269,6 +4319,12 @@ function viewRep(){
   const isLoose=k=>/loose/i.test(k);
   const unitTag=k=>isLoose(k)?` <span class="sub2">${t("pieces")}</span>`:"";
   const MR=whole&&MT&&MT.rows&&MT.rows.length?MT.rows.filter(z=>z.target||z.packed):null;
+  /* 20 Nov 2026: the current month's box and product tables are the Month target page.
+     Shown there only; the report export (full) still prints them. */
+  const liveM = full!==true && whole && curM===String((D.mtarget||{}).month||todayIso()).slice(0,7);
+  if(liveM) h+=`<div class="card tap" onclick="go('month')"><div class="lbl">${t("rpByBox")} \u00b7 ${t("rpByProd")}</div>
+      <div class="mid" style="margin-top:4px">${t("rpOnMonth")}</div></div>`;
+  else {
   h+=`<h3>${t("rpByBox")}</h3><div class="card">`;
   if(MR){
     const tb=MR.filter(z=>!isLoose(z.box));
@@ -4311,6 +4367,7 @@ function viewRep(){
     PR ? [t("totalRow"), n0(pn), n0(pm), "", n0(made), "", n0(pv)+" "+sar()]
        : [t("totalRow"), n0(made), "", "", n0(pv)+" "+sar()])
     +`<div class="src">${t(PR?"rpPcsNoteM":"rpPcsNoteR")}</div></div>`;
+  }
   h+=`<h3>${t("rpDaily")}</h3><div class="card">`+tbl(
     [{h:t("rpDay")},{h:t("rpPlan")},{h:t("rpMadeC")},{h:t("rpDiff")},{h:t("rpPackC")},{h:t("rpStaffC")},{h:t("rpHrsC")},{h:t("rpOtC")},{h:t("rpWhyC")}],
     X.map(x=>{ const d=x.p?((x.m||0)-x.p)/x.p:null;
@@ -4474,7 +4531,7 @@ function monthChart(){
  *  screen is right in the report, and there is no second wording to   *
  *  drift out of step.                                                 *
  * ================================================================== */
-const EXPORTABLE = {plan:viewPlan, shift:viewShift, store:viewStore, month:viewMonth, rep:viewRep, late:viewLate};
+const EXPORTABLE = {plan:viewPlan, shift:viewShift, store:viewStore, month:viewMonth, rep:()=>viewRep(true), late:viewLate};
 
 function exportDialog(){
   // The first version built the options with attributes called "data-l=ar" and then
