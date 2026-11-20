@@ -81,6 +81,16 @@ select{width:100%;font:inherit;font-size:16px;padding:12px;border:1.5px solid va
 .st{font-size:11.5px;border-radius:999px;padding:2px 8px;margin-inline-start:6px}
 .st.pending{background:#FFF3D6;color:#8A5A00} .st.void{background:#eee;color:#666}
 .empty{color:var(--dim);text-align:center;padding:20px 0}
+/* closed groups (Aziz, 20 Nov 2026): a long list opens one product / area at a time */
+details.grp{border:1px solid var(--line);border-radius:14px;margin-top:8px;background:var(--card)}
+details.grp>summary{list-style:none;display:flex;align-items:center;gap:8px;padding:12px;cursor:pointer;font-weight:700}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::before{content:"\203A";display:inline-block;transition:transform .2s;color:var(--dim);font-size:18px}
+html[dir="rtl"] details.grp>summary::before{content:"\2039"}
+details.grp[open]>summary::before{transform:rotate(-90deg)}
+details.grp>summary .gs{margin-inline-start:auto;font-weight:600;font-size:13px;color:var(--dim)}
+details.grp>summary .gt{font-weight:700;color:var(--main);font-size:14px}
+details.grp>.gb{padding:0 10px 6px}
 [hidden]{display:none !important}
 </style>
 </head>
@@ -448,29 +458,33 @@ async function drawPlan(a,head){
   // pieces
   h+=`<div class="panel"><h2>${u("pcsPlan")}</h2>${ed?`<button class="x" type="button" id="tsg">${u("takeSugg")}</button>`:""}`;
   R.products.forEach(p=>{ const fl=R.flavours.filter(f=>f.product_id===p.id); if(!fl.length) return;
-    h+=`<div class="fname" style="margin-top:12px">${esc(p.code)}</div>`+fl.map(f=>{ const r=X.rf[f.id]||{};
+    const sgT=fl.reduce((a2,f)=>a2+((X.rf[f.id]||{}).suggested||0),0);
+    h+=`<details class="grp"><summary><bdi>${esc(p.code)}</bdi><span class="gs">${u("sugg")} ${n0(sgT)} · ${u("planned")} <span class="gt">0</span></span></summary><div class="gb">`+fl.map(f=>{ const r=X.rf[f.id]||{};
       const lt=r.month_target!=null&&r.month_made!=null?r.month_target-r.month_made:null;
       return `<div class="ent"><div><div class="w"><bdi>${esc(f.name_en)}</bdi></div><div class="m">${u("stock")} ${cnt[f.id]?n0(cnt[f.id].stock)+" ("+u("fromCount")+" "+esc(cnt[f.id].day.slice(5))+")":n0(r.stock)} · ${u("sugg")} <b>${n0(r.suggested)}</b>${
         lt!=null?` · ${u("left")} ${lt>0?n0(lt):"✓"}`:""}</div></div>
-        <input class="pq" data-p="${p.id}" data-f="${f.id}" data-s="${r.suggested||0}" inputmode="numeric" style="width:92px" value="${esc(qv("made","flavour_id",f.id))}"${dis}></div>`; }).join(""); });
+        <input class="pq" data-p="${p.id}" data-f="${f.id}" data-s="${r.suggested||0}" inputmode="numeric" style="width:92px" value="${esc(qv("made","flavour_id",f.id))}"${dis}></div>`; }).join("")+`</div></details>`; });
   h+=`</div>`;
   // boxes
-  h+=`<div class="panel"><h2>${u("boxPlan")}</h2>`+R.boxes.map(b=>{ const r=X.rb[b.id]||{};
+  const bxRow=b=>{ const r=X.rb[b.id]||{};
     return `<div class="ent"><div><div class="w"><bdi>${esc(b.code)}</bdi></div><div class="m">${u("maxB")} ${n0(r.max_possible)}${
       r.still_to_pack!=null?` · ${u("left")} ${n0(r.still_to_pack)}`:""}${ord[b.id]?` · ${u("ord")} <b>${n0(ord[b.id])}</b>`:""}</div></div>
-      <input class="bq" data-b="${b.id}" inputmode="numeric" style="width:92px" value="${esc(qv("packed","box_id",b.id))}"${dis}></div>`; }).join("")+`</div>`;
+      <input class="bq" data-b="${b.id}" inputmode="numeric" style="width:92px" value="${esc(qv("packed","box_id",b.id))}"${dis}></div>`; };
+  const bgrp={}; R.boxes.forEach(b=>{ const pc=R.bc.find(x=>x.box_id===b.id); const k=pc?(R.products.find(q=>q.id===pc.product_id)||{}).code||"—":"—"; (bgrp[k]=bgrp[k]||[]).push(b); });
+  h+=`<div class="panel"><h2>${u("boxPlan")}</h2>`+Object.entries(bgrp).map(([k,bs])=>{ const oT=bs.reduce((a2,b)=>a2+(ord[b.id]||0),0);
+    return `<details class="grp"><summary><bdi>${esc(k)}</bdi><span class="gs">${oT?u("ord")+" "+n0(oT)+" · ":""}${u("planned")} <span class="gt">0</span></span></summary><div class="gb">${bs.map(bxRow).join("")}</div></details>`; }).join("")+`</div>`;
   // areas
   const so2=(half,st,slot)=>{ const t=P.tasks.find(x=>x.station_id===st&&x.half===half&&x.slot===slot);
     return `<select class="tk" data-st="${st}" data-h="${half}" data-sl="${slot}"${dis}>${opt("",u("slot"))}${X.steps.map(s=>opt(s.name,s.name,t&&t.task===s.name)).join("")}</select>`; };
-  h+=`<div class="panel"><h2>${u("areas")}</h2>`+X.stations.map(s=>`<div class="fld"><label><bdi>${esc(L==="ar"?(s.name_ar||s.name_en):s.name_en)}</bdi></label>
+  h+=`<div class="panel"><h2>${u("areas")}</h2>`+X.stations.map(s=>`<details class="grp" data-sel="1"><summary><bdi>${esc(L==="ar"?(s.name_ar||s.name_en):s.name_en)}</bdi><span class="gs"><span class="gt"></span></span></summary><div class="gb">
     <div class="m" style="font-size:12px;color:var(--dim)">${u("am")}</div><div class="seg">${[1,2,3].map(i=>so2("am",s.id,i)).join("")}</div>
-    <div class="m" style="font-size:12px;color:var(--dim)">${u("pm")}</div><div class="seg">${[1,2,3].map(i=>so2("pm",s.id,i)).join("")}</div></div>`).join("")+`</div>`;
+    <div class="m" style="font-size:12px;color:var(--dim)">${u("pm")}</div><div class="seg">${[1,2,3].map(i=>so2("pm",s.id,i)).join("")}</div></div></details>`).join("")+`</div>`;
   // roster
   const ro=(half,sf,slot)=>{ const t=P.roster.find(x=>x.staff_id===sf&&x.half===half&&x.slot===slot);
     return `<select class="rs" data-sf="${sf}" data-h="${half}" data-sl="${slot}"${dis}>${opt("",u("slot"))}${X.stations.map(s=>opt(s.id,L==="ar"?(s.name_ar||s.name_en):s.name_en,t&&t.station_id===s.id)).join("")}</select>`; };
-  h+=`<details class="panel"><summary style="cursor:pointer;font-weight:700">${u("roster")} (${X.staff.length})</summary>`+X.staff.map(f=>`<div class="fld" style="margin-top:10px"><label><bdi>${esc(f.name)}</bdi></label>
+  h+=`<div class="panel"><h2>${u("roster")} (${X.staff.length})</h2>`+X.staff.map(f=>`<details class="grp" data-sel="1"><summary><bdi>${esc(f.name)}</bdi><span class="gs"><span class="gt"></span></span></summary><div class="gb">
     <div class="m" style="font-size:12px;color:var(--dim)">${u("am")}</div><div class="seg">${[1,2,3].map(i=>ro("am",f.id,i)).join("")}</div>
-    <div class="m" style="font-size:12px;color:var(--dim)">${u("pm")}</div><div class="seg">${[1,2,3].map(i=>ro("pm",f.id,i)).join("")}</div></div>`).join("")+`</details>`;
+    <div class="m" style="font-size:12px;color:var(--dim)">${u("pm")}</div><div class="seg">${[1,2,3].map(i=>ro("pm",f.id,i)).join("")}</div></div></details>`).join("")+`</div>`;
   // summary + note + actions
   h+=`<div class="panel"><h2>${u("sumT")}</h2><div class="tot" id="sum"></div><p class="sub" style="margin:0">${u("estNote")}</p></div>
     <div class="panel"><div class="fld"><label>${u("noteT")}</label><input id="pn" value="${esc(pl.note||"")}"${dis}></div>
@@ -478,6 +492,9 @@ async function drawPlan(a,head){
     <button class="go" id="pp" type="button">${u("publish")}</button>`:""}<div class="msg" id="msg"></div></div>`;
   $("#pl").className=""; $("#pl").innerHTML=h;
   const sum=()=>{ let pcs=0,bxs=0,hrs=0;
+    a.querySelectorAll("#pl details.grp").forEach(d=>{ const g=d.querySelector(".gt"); if(!g) return;
+      if(d.dataset.sel){ const ss=[...d.querySelectorAll("select")]; const n=ss.filter(x=>x.value).length; g.textContent=n?n0(n)+" / "+n0(ss.length):""; return; }
+      const t=[...d.querySelectorAll("input")].reduce((a2,i)=>a2+(+i.value||0),0); g.textContent=n0(t); });
     a.querySelectorAll(".pq").forEach(i=>{ const q=+i.value||0; pcs+=q; hrs+=q*(X.mk[i.dataset.p]||0); });
     a.querySelectorAll(".bq").forEach(i=>{ const q=+i.value||0; bxs+=q; hrs+=q*(X.pk[i.dataset.b]||0); });
     const n=+$("#ps").value||0, t1=$("#p1").value, t2=$("#p2").value, br=+$("#pb").value||0;
@@ -489,7 +506,8 @@ async function drawPlan(a,head){
     $("#sum").innerHTML=`<div><b>${n0(pcs)}</b><span>${u("pcs")}</span></div><div><b>${n0(bxs)}</b><span>${u("boxes")}</span></div>
       <div><b style="color:${have!=null&&hrs>have?"var(--bad)":"inherit"}">${n0(hrs)}</b><span>${u("hNeed")}${have!=null?" / "+n0(have):""}</span></div>
       <div style="grid-column:1/-1"><b dir="ltr">${fin}</b><span>${u("finish")}</span></div>`; };
-  a.querySelectorAll("#pl input").forEach(i=>i.addEventListener("input",sum)); sum();
+  a.querySelectorAll("#pl input").forEach(i=>i.addEventListener("input",sum));
+  a.querySelectorAll("#pl select").forEach(i=>i.addEventListener("change",sum)); sum();
   if(!ed) return;
   $("#tsg").onclick=()=>{ a.querySelectorAll(".pq").forEach(i=>{ if(!i.value&&+i.dataset.s>0) i.value=i.dataset.s; }); sum(); };
   $("#pd").onclick=()=>savePlan(day,false); $("#pp").onclick=()=>{ if(confirm(u("pubQ"))) savePlan(day,true); };
@@ -584,7 +602,8 @@ async function drawStock(a,head){
   }
   h+=`<div class="panel"><h2>${u("stT")}</h2><p class="sub">${u("stSub")}</p>${ed?`<button class="x" type="button" id="mall">${u("matchAll")}</button>`:""}`;
   R.products.forEach(p=>{ const fls=R.flavours.filter(f=>f.product_id===p.id); if(!fls.length) return;
-    h+=`<div class="fname" style="margin-top:14px">${esc(p.code)}</div>`+fls.map(fl=>{ const m=M[fl.id], showC=p.is_coated||m.base.coated>0||m.expC>0;
+    const nOld=fls.filter(fl=>{ const g=age(M[fl.id].last&&M[fl.id].last.entered_at); return g==null||g>2; }).length;
+    h+=`<details class="grp"><summary><bdi>${esc(p.code)}</bdi><span class="gs">${nOld?"⚠ "+n0(nOld)+" · ":""}<span class="gt"></span> / ${n0(fls.length)}</span></summary><div class="gb">`+fls.map(fl=>{ const m=M[fl.id], showC=p.is_coated||m.base.coated>0||m.expC>0;
       const g=age(m.last&&m.last.entered_at);
       return `<div class="ent" style="display:block"><div class="w"><bdi>${esc(fl.name_en)}</bdi></div>
         <div class="m">${u("expT")}: ${u("unc")} <b>${n0(m.expU)}</b>${showC?` · ${u("cot")} <b>${n0(m.expC)}</b>`:""} · ${
@@ -594,15 +613,17 @@ async function drawStock(a,head){
           ${showC?`<label style="flex:1;margin:0;font-size:11.5px">${u("cot")}<input class="cc" data-f="${fl.id}" inputmode="numeric"${dis}></label>`:""}
           ${ed?`<button class="x" type="button" data-m="${fl.id}" style="align-self:flex-end">${u("match")}</button>`:""}</div>
         <details style="margin-top:6px"><summary class="m" style="cursor:pointer">${u("lw")} / ${u("lp")}</summary><div class="seg" style="margin:6px 0 0">
-          <label style="flex:1;margin:0;font-size:11.5px">${u("lw")}<input class="lw" data-f="${fl.id}" inputmode="numeric"${dis}></label><label style="flex:1;margin:0;font-size:11.5px">${u("lp")}<input class="lp" data-f="${fl.id}" inputmode="numeric"${dis}></label></div></details></div>`; }).join(""); });
+          <label style="flex:1;margin:0;font-size:11.5px">${u("lw")}<input class="lw" data-f="${fl.id}" inputmode="numeric"${dis}></label><label style="flex:1;margin:0;font-size:11.5px">${u("lp")}<input class="lp" data-f="${fl.id}" inputmode="numeric"${dis}></label></div></details></div>`; }).join("")+`</div></details>`; });
   h+=ed?`<button class="go" id="csave" type="button">${u("saveCount")}</button><div class="msg" id="msg"></div>`:`<p class="sub">${u("readOnly")}</p>`;
   h+=`</div>`;
   $("#sk").className=""; $("#sk").innerHTML=h;
+  const cntUpd=()=>a.querySelectorAll("#sk details.grp").forEach(d=>{ const g=d.querySelector(".gt"); if(g) g.textContent=n0([...d.querySelectorAll(".cu")].filter(i=>i.value!=="").length); });
+  a.querySelectorAll("#sk input").forEach(i=>i.addEventListener("input",cntUpd)); cntUpd();
   if(!ed) return;
   const fill=id=>{ const i=a.querySelector(`.cu[data-f="${id}"]`); i.value=i.dataset.e;
     const c=a.querySelector(`.cc[data-f="${id}"]`); if(c) c.value=i.dataset.ec; };
-  a.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>fill(b.dataset.m));
-  $("#mall").onclick=()=>a.querySelectorAll(".cu").forEach(i=>{ if(!i.value) fill(i.dataset.f); });
+  a.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{ fill(b.dataset.m); cntUpd(); });
+  $("#mall").onclick=()=>{ a.querySelectorAll(".cu").forEach(i=>{ if(!i.value) fill(i.dataset.f); }); cntUpd(); };
   $("#csave").onclick=async()=>{
     const toInt=v=>{ const s=String(v||"").replace(/\D/g,""); return s===""?null:parseInt(s); };
     const day=riyadh(0), rows=[];
