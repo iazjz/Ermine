@@ -150,7 +150,7 @@ def main():
 
         # 20 Nov 2026: keep the Wardiya database in step with Excel. Never stops a publish.
         try:
-            print("  " + run(f'cd "{HERE}" && python3 sync_db.py', token=token).strip().splitlines()[-1])
+            print("  " + run(f'cd "{HERE}" && ERMINE_HISTORY="{history}" python3 sync_db.py', token=token).strip().splitlines()[-1])
         except (Exception, SystemExit) as e:
             print("  db sync failed (publish continues):", str(e)[:160])
 

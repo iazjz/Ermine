@@ -233,11 +233,12 @@ async function loadRef(){
   S.ref={products:p.data||[],flavours:fl.data||[],boxes:b.data||[],bc:bc.data||[],reasons:r.data||[]};
 }
 function drawApp(){
-  const tabs=[["entry","tEntry"],["today","tToday"]].concat(isMgr()?[["team","tTeam"]]:[]);
+  const tabs=[["entry","tEntry"],["plan","tPlan"],["today","tToday"]].concat(isMgr()?[["team","tTeam"]]:[]);
   $("#tabs").innerHTML=tabs.map(([k,l])=>`<button class="${S.view===k?"on":""}" data-v="${k}" type="button">${u(l)}</button>`).join("");
   $("#tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ S.view=b.dataset.v; S.form=null; drawApp(); });
   const head=`<div class="fname">${esc(S.fname)} · <span class="pill">${S.roles.map(r=>esc(T[L].roles[r]||r)).join("، ")}</span></div>`;
   const a=$("#app");
+  if(S.view==="plan") return drawPlan(a,head);
   if(S.view==="today") return drawToday(a,head);
   if(S.view==="team") return drawTeam(a,head);
   a.innerHTML=head+`<div class="big4">
@@ -347,7 +348,7 @@ async function drawToday(a,head){
       <div class="m">${tm(x.entered_at)} · ${u("by")} ${esc(names[x.entered_by]||"—")}</div></div>
       ${can?`<button class="x" type="button" data-k="${x.kind}" data-id="${x.id}">${u("voidB")}</button>`:""}</div>`;
   }).join("");
-  $("#tl").className=""; $("#tl").innerHTML=h;
+  $("#tl").className=""; $("#tl").innerHTML=(await planVsActual(day,all))+h;
   $("#tl").querySelectorAll(".x").forEach(b=>b.onclick=async()=>{
     if(!confirm(u("voidQ"))) return;
     const {error}=await sb.from(b.dataset.k==="pe"?"production_entries":"delays").update({status:"void"}).eq("id",b.dataset.id);
@@ -377,6 +378,148 @@ async function listTeam(){
   $("#tm").querySelectorAll(".x").forEach(b=>b.onclick=async()=>{ if(!confirm(u("stopQ"))) return;
     const {error}=await sb.from("memberships").update({active:false}).eq("factory_id",S.fid).eq("user_id",b.dataset.u).eq("role",b.dataset.r);
     if(error) return alert(t("fail")); listTeam(); });
+}
+/* ---------- day plan + shift (20 Nov 2026) ---------- */
+Object.assign(T2.ar,{tPlan:"الخطة",planFor:"خطة يوم",tomorrow:"بكرة",shift:"الوردية",staffIn:"عدد الحضور",start:"البداية",end:"النهاية",
+  brk:"الاستراحة (دقيقة)",pcsPlan:"الإنتاج المخطط (حبة)",boxPlan:"التعبئة المخططة (بوكس)",areas:"المهام حسب المنطقة",roster:"مين وين",
+  am:"صباحًا",pm:"مساءً",stock:"المخزون",sugg:"المقترح",left:"باقي للهدف",maxB:"أقصى ممكن",ord:"طلبات اليوم",takeSugg:"خذ المقترح",
+  sumT:"الملخص (تقدير)",hNeed:"الساعات المطلوبة",hHave:"ساعات الحضور",finish:"الانتهاء المتوقع",draft:"حفظ مسودة",publish:"اعتماد الخطة",
+  published:"معتمدة",notPub:"مسودة",savedDraft:"حُفظت المسودة ✓",savedPub:"اعتُمدت الخطة ✓",noteT:"ماذا حدث اليوم (ملاحظة الشيف)",
+  readOnly:"عرض فقط. الخطة يعدّلها الشيف والمخطِّط.",noPlan:"لا توجد خطة لهذا اليوم بعد.",estNote:"الساعات من معدلات ملف الإنتاج لكل حبة وكل بوكس. تقدير.",
+  vsT:"الخطة مقابل الفعلي",planned:"المخطط",actual:"الفعلي",pubQ:"اعتماد الخطة؟ تظهر للفريق، وأي تعديل بعدها يُسجَّل.",slot:"—"});
+Object.assign(T2.en,{tPlan:"Plan",planFor:"Plan for",tomorrow:"Tomorrow",shift:"Shift",staffIn:"Staff in",start:"Start",end:"End",
+  brk:"Break (min)",pcsPlan:"Planned production (pieces)",boxPlan:"Planned packing (boxes)",areas:"Tasks by area",roster:"Who is where",
+  am:"AM",pm:"PM",stock:"Stock",sugg:"Suggested",left:"Left to target",maxB:"Max possible",ord:"Orders that day",takeSugg:"Take the suggestion",
+  sumT:"Summary (estimate)",hNeed:"Hours needed",hHave:"Hours on the floor",finish:"Expected finish",draft:"Save draft",publish:"Approve the plan",
+  published:"Approved",notPub:"Draft",savedDraft:"Draft saved ✓",savedPub:"Plan approved ✓",noteT:"What happened today (chef's note)",
+  readOnly:"View only. The chef and the planner edit the plan.",noPlan:"No plan for this day yet.",estNote:"Hours from the production file's rates per piece and per box. An estimate.",
+  vsT:"Plan against actual",planned:"Planned",actual:"Actual",pubQ:"Approve the plan? The team sees it, and any later change is logged.",slot:"—"});
+const canPlan=()=>S.roles.some(r=>["owner","admin","planner","chef"].includes(r));
+const P={off:0,plan:null,lines:[],tasks:[],roster:[],ext:null};
+async function loadPlanExtras(){
+  if(P.ext) return P.ext;
+  const f=S.fid;
+  const [st,sp,sf,rf,rb]=await Promise.all([
+    sb.from("stations").select("id,name_en,name_ar").eq("factory_id",f).eq("active",true),
+    sb.from("step_types").select("name,sort").eq("factory_id",f).eq("active",true).order("sort"),
+    sb.from("staff").select("id,name,sort").eq("factory_id",f).eq("active",true).order("sort"),
+    sb.from("ref_flavour").select("flavour_id,stock,coated_stock,suggested,month_target,month_made").eq("factory_id",f),
+    sb.from("ref_box").select("box_id,max_possible,still_to_pack").eq("factory_id",f)]);
+  const [pr,bx]=await Promise.all([
+    sb.from("products").select("id,make_h_per_pc").eq("factory_id",f),
+    sb.from("boxes").select("id,pack_h_per_box").eq("factory_id",f)]);
+  const num=s=>parseInt(String(s.name_en).split(" ")[0])||99;
+  P.ext={stations:(st.data||[]).sort((a,b)=>num(a)-num(b)),steps:sp.data||[],staff:sf.data||[],
+    rf:Object.fromEntries((rf.data||[]).map(x=>[x.flavour_id,x])),rb:Object.fromEntries((rb.data||[]).map(x=>[x.box_id,x])),
+    mk:Object.fromEntries((pr.data||[]).map(x=>[x.id,+x.make_h_per_pc||0])),pk:Object.fromEntries((bx.data||[]).map(x=>[x.id,+x.pack_h_per_box||0]))};
+  return P.ext;
+}
+async function loadPlan(day){
+  const {data:pl}=await sb.from("daily_plans").select("*").eq("factory_id",S.fid).eq("day",day).maybeSingle();
+  P.plan=pl||null; P.lines=[]; P.tasks=[]; P.roster=[];
+  if(pl){ const [l,t,r]=await Promise.all([
+      sb.from("daily_plan_lines").select("stage,product_id,flavour_id,box_id,qty").eq("plan_id",pl.id),
+      sb.from("plan_tasks").select("station_id,half,slot,task").eq("plan_id",pl.id),
+      sb.from("plan_roster").select("staff_id,half,slot,station_id").eq("plan_id",pl.id)]);
+    P.lines=l.data||[]; P.tasks=t.data||[]; P.roster=r.data||[]; }
+}
+const hm=s=>s?String(s).slice(0,5):"";
+async function drawPlan(a,head){
+  const day=riyadh(P.off===0?0:-1), ed=canPlan(), R=S.ref;
+  a.innerHTML=head+`<div class="seg"><button type="button" data-o="0" class="${P.off===0?"on":""}">${u("today")}<br><small dir="ltr">${riyadh(0)}</small></button>
+    <button type="button" data-o="1" class="${P.off===1?"on":""}">${u("tomorrow")}<br><small dir="ltr">${riyadh(-1)}</small></button></div><div id="pl" class="empty">…</div>`;
+  a.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ P.off=+b.dataset.o; drawApp(); });
+  const X=await loadPlanExtras(); await loadPlan(day);
+  const {data:so}=await sb.from("sales_orders").select("box_id,qty").eq("factory_id",S.fid).eq("day",day);
+  const ord={}; (so||[]).forEach(o=>ord[o.box_id]=(ord[o.box_id]||0)+o.qty);
+  const pl=P.plan||{}, dis=ed?"":" disabled";
+  const qv=(st,key,id)=>{ const l=P.lines.find(x=>x.stage===st&&x[key]===id); return l?l.qty:""; };
+  let h=`<div class="panel"><h2>${u("planFor")} <span dir="ltr">${day}</span> · <span class="pill">${pl.published?u("published"):u("notPub")}</span></h2>
+    ${ed?"":`<p class="sub">${u("readOnly")}</p>`}
+    <div class="big4" style="grid-template-columns:1fr 1fr">
+      <div class="fld"><label>${u("staffIn")}</label><input id="ps" inputmode="numeric" value="${esc(pl.staff_in??"")}"${dis}></div>
+      <div class="fld"><label>${u("brk")}</label><input id="pb" inputmode="numeric" value="${esc(pl.break_min??"")}"${dis}></div>
+      <div class="fld"><label>${u("start")}</label><input id="p1" type="time" value="${hm(pl.shift_start)}"${dis}></div>
+      <div class="fld"><label>${u("end")}</label><input id="p2" type="time" value="${hm(pl.shift_end)}"${dis}></div></div></div>`;
+  // pieces
+  h+=`<div class="panel"><h2>${u("pcsPlan")}</h2>${ed?`<button class="x" type="button" id="tsg">${u("takeSugg")}</button>`:""}`;
+  R.products.forEach(p=>{ const fl=R.flavours.filter(f=>f.product_id===p.id); if(!fl.length) return;
+    h+=`<div class="fname" style="margin-top:12px">${esc(p.code)}</div>`+fl.map(f=>{ const r=X.rf[f.id]||{};
+      const lt=r.month_target!=null&&r.month_made!=null?r.month_target-r.month_made:null;
+      return `<div class="ent"><div><div class="w"><bdi>${esc(f.name_en)}</bdi></div><div class="m">${u("stock")} ${n0(r.stock)} · ${u("sugg")} <b>${n0(r.suggested)}</b>${
+        lt!=null?` · ${u("left")} ${lt>0?n0(lt):"✓"}`:""}</div></div>
+        <input class="pq" data-p="${p.id}" data-f="${f.id}" data-s="${r.suggested||0}" inputmode="numeric" style="width:92px" value="${esc(qv("made","flavour_id",f.id))}"${dis}></div>`; }).join(""); });
+  h+=`</div>`;
+  // boxes
+  h+=`<div class="panel"><h2>${u("boxPlan")}</h2>`+R.boxes.map(b=>{ const r=X.rb[b.id]||{};
+    return `<div class="ent"><div><div class="w"><bdi>${esc(b.code)}</bdi></div><div class="m">${u("maxB")} ${n0(r.max_possible)}${
+      r.still_to_pack!=null?` · ${u("left")} ${n0(r.still_to_pack)}`:""}${ord[b.id]?` · ${u("ord")} <b>${n0(ord[b.id])}</b>`:""}</div></div>
+      <input class="bq" data-b="${b.id}" inputmode="numeric" style="width:92px" value="${esc(qv("packed","box_id",b.id))}"${dis}></div>`; }).join("")+`</div>`;
+  // areas
+  const so2=(half,st,slot)=>{ const t=P.tasks.find(x=>x.station_id===st&&x.half===half&&x.slot===slot);
+    return `<select class="tk" data-st="${st}" data-h="${half}" data-sl="${slot}"${dis}>${opt("",u("slot"))}${X.steps.map(s=>opt(s.name,s.name,t&&t.task===s.name)).join("")}</select>`; };
+  h+=`<div class="panel"><h2>${u("areas")}</h2>`+X.stations.map(s=>`<div class="fld"><label><bdi>${esc(L==="ar"?(s.name_ar||s.name_en):s.name_en)}</bdi></label>
+    <div class="m" style="font-size:12px;color:var(--dim)">${u("am")}</div><div class="seg">${[1,2,3].map(i=>so2("am",s.id,i)).join("")}</div>
+    <div class="m" style="font-size:12px;color:var(--dim)">${u("pm")}</div><div class="seg">${[1,2,3].map(i=>so2("pm",s.id,i)).join("")}</div></div>`).join("")+`</div>`;
+  // roster
+  const ro=(half,sf,slot)=>{ const t=P.roster.find(x=>x.staff_id===sf&&x.half===half&&x.slot===slot);
+    return `<select class="rs" data-sf="${sf}" data-h="${half}" data-sl="${slot}"${dis}>${opt("",u("slot"))}${X.stations.map(s=>opt(s.id,L==="ar"?(s.name_ar||s.name_en):s.name_en,t&&t.station_id===s.id)).join("")}</select>`; };
+  h+=`<details class="panel"><summary style="cursor:pointer;font-weight:700">${u("roster")} (${X.staff.length})</summary>`+X.staff.map(f=>`<div class="fld" style="margin-top:10px"><label><bdi>${esc(f.name)}</bdi></label>
+    <div class="m" style="font-size:12px;color:var(--dim)">${u("am")}</div><div class="seg">${[1,2,3].map(i=>ro("am",f.id,i)).join("")}</div>
+    <div class="m" style="font-size:12px;color:var(--dim)">${u("pm")}</div><div class="seg">${[1,2,3].map(i=>ro("pm",f.id,i)).join("")}</div></div>`).join("")+`</details>`;
+  // summary + note + actions
+  h+=`<div class="panel"><h2>${u("sumT")}</h2><div class="tot" id="sum"></div><p class="sub" style="margin:0">${u("estNote")}</p></div>
+    <div class="panel"><div class="fld"><label>${u("noteT")}</label><input id="pn" value="${esc(pl.note||"")}"${dis}></div>
+    ${ed?`<button class="go" id="pd" type="button" style="background:var(--p300)">${u("draft")}</button>
+    <button class="go" id="pp" type="button">${u("publish")}</button>`:""}<div class="msg" id="msg"></div></div>`;
+  $("#pl").className=""; $("#pl").innerHTML=h;
+  const sum=()=>{ let pcs=0,bxs=0,hrs=0;
+    a.querySelectorAll(".pq").forEach(i=>{ const q=+i.value||0; pcs+=q; hrs+=q*(X.mk[i.dataset.p]||0); });
+    a.querySelectorAll(".bq").forEach(i=>{ const q=+i.value||0; bxs+=q; hrs+=q*(X.pk[i.dataset.b]||0); });
+    const n=+$("#ps").value||0, t1=$("#p1").value, t2=$("#p2").value, br=+$("#pb").value||0;
+    const mins=x=>{ const [hh,mm]=(x||"").split(":").map(Number); return isNaN(hh)?null:hh*60+(mm||0); };
+    let have=null, fin="—";
+    if(n&&mins(t1)!=null&&mins(t2)!=null){ let span=mins(t2)-mins(t1); if(span<=0) span+=1440; have=n*Math.max(0,span-br)/60; }
+    if(n&&mins(t1)!=null){ let f=Math.round(mins(t1)+br+hrs*60/n); const nd=f>=1440; f%=1440;
+      fin=String(Math.floor(f/60)).padStart(2,"0")+":"+String(f%60).padStart(2,"0")+(nd?" (+1)":""); }
+    $("#sum").innerHTML=`<div><b>${n0(pcs)}</b><span>${u("pcs")}</span></div><div><b>${n0(bxs)}</b><span>${u("boxes")}</span></div>
+      <div><b style="color:${have!=null&&hrs>have?"var(--bad)":"inherit"}">${n0(hrs)}</b><span>${u("hNeed")}${have!=null?" / "+n0(have):""}</span></div>
+      <div style="grid-column:1/-1"><b dir="ltr">${fin}</b><span>${u("finish")}</span></div>`; };
+  a.querySelectorAll("#pl input").forEach(i=>i.addEventListener("input",sum)); sum();
+  if(!ed) return;
+  $("#tsg").onclick=()=>{ a.querySelectorAll(".pq").forEach(i=>{ if(!i.value&&+i.dataset.s>0) i.value=i.dataset.s; }); sum(); };
+  $("#pd").onclick=()=>savePlan(day,false); $("#pp").onclick=()=>{ if(confirm(u("pubQ"))) savePlan(day,true); };
+}
+async function savePlan(day,pub){
+  const a=$("#app"), toInt=v=>parseInt(String(v).replace(/\D/g,""))||null;
+  const row={factory_id:S.fid,day,staff_in:toInt($("#ps").value),break_min:toInt($("#pb").value),
+    shift_start:$("#p1").value||null,shift_end:$("#p2").value||null,note:$("#pn").value.trim()||null};
+  if(pub){ row.published=true; row.published_at=new Date().toISOString(); }
+  const {data:pl,error}=await sb.from("daily_plans").upsert(row,{onConflict:"factory_id,day"}).select("id").single();
+  if(error){ console.warn(error); return msg(t("fail"),"bad"); }
+  const id=pl.id;
+  const lines=[]; a.querySelectorAll(".pq").forEach(i=>{ const q=toInt(i.value); if(q) lines.push({plan_id:id,stage:"made",product_id:i.dataset.p,flavour_id:i.dataset.f,qty:q}); });
+  a.querySelectorAll(".bq").forEach(i=>{ const q=toInt(i.value); if(q){ const pc=S.ref.bc.find(x=>x.box_id===i.dataset.b);
+    lines.push({plan_id:id,stage:"packed",box_id:i.dataset.b,product_id:pc?pc.product_id:null,qty:q}); } });
+  const tasks=[]; a.querySelectorAll(".tk").forEach(s=>{ if(s.value) tasks.push({plan_id:id,station_id:s.dataset.st,half:s.dataset.h,slot:+s.dataset.sl,task:s.value}); });
+  const ros=[]; a.querySelectorAll(".rs").forEach(s=>{ if(s.value) ros.push({plan_id:id,staff_id:s.dataset.sf,half:s.dataset.h,slot:+s.dataset.sl,station_id:s.value}); });
+  for(const [tb,rows] of [["daily_plan_lines",lines],["plan_tasks",tasks],["plan_roster",ros]]){
+    const d=await sb.from(tb).delete().eq("plan_id",id); if(d.error){ console.warn(d.error); return msg(t("fail"),"bad"); }
+    if(rows.length){ const r=await sb.from(tb).insert(rows); if(r.error){ console.warn(r.error); return msg(t("fail"),"bad"); } }
+  }
+  msg(u(pub?"savedPub":"savedDraft"),"ok");
+  if(pub){ P.plan=null; setTimeout(()=>drawApp(),700); }
+}
+// plan against actual, on the Today list
+async function planVsActual(day,all){
+  const {data:pl}=await sb.from("daily_plans").select("id,published").eq("factory_id",S.fid).eq("day",day).maybeSingle();
+  if(!pl||!pl.published) return "";
+  const {data:l}=await sb.from("daily_plan_lines").select("stage,qty").eq("plan_id",pl.id);
+  const pM=(l||[]).filter(x=>x.stage==="made").reduce((s,x)=>s+x.qty,0), pB=(l||[]).filter(x=>x.stage==="packed").reduce((s,x)=>s+x.qty,0);
+  const ok=x=>x.kind==="pe"&&x.status==="approved", aM=all.filter(x=>ok(x)&&x.stage==="made").reduce((s,x)=>s+x.qty,0),
+        aB=all.filter(x=>ok(x)&&x.stage==="packed").reduce((s,x)=>s+x.qty,0);
+  return `<div class="panel" style="margin:0 0 12px"><h2>${u("vsT")}</h2><div class="tot" style="grid-template-columns:1fr 1fr">
+    <div><b>${n0(aM)} / ${n0(pM)}</b><span>${u("tMade")} · ${u("pcs")}</span></div><div><b>${n0(aB)} / ${n0(pB)}</b><span>${u("tPack")} · ${u("boxes")}</span></div></div></div>`;
 }
 async function signOut(){ await sb.auth.signOut(); STEP="email"; S.fid=null; S.ref=null; $("#app").hidden=true; $("#tabs").hidden=true; $("#mainbox").hidden=false; draw(); }
 $("#lang").onclick=()=>{ L=L==="ar"?"en":"ar"; try{ localStorage.setItem("wd-lang",L); }catch(e){} draw(); };

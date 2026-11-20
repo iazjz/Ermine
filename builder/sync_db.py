@@ -12,7 +12,8 @@ import openpyxl, ermine_paths
 URL = "https://txqrrnymaglkilowgvee.supabase.co"
 HERE = os.path.dirname(os.path.abspath(__file__))
 AR = {"Kitchen": "المطبخ", "Chocolate Room": "غرفة الشوكولاتة", "Hallway": "الممر",
-      "Dishwashing Area": "منطقة غسيل الأطباق", "Entrance": "المدخل"}
+      "Dishwashing Area": "منطقة غسيل الأطباق", "Entrance": "المدخل", "Chiller Room": "غرفة التبريد",
+      "Freezer Room": "غرفة التجميد", "Store": "المخزن"}
 OF = {"Big 30": "Classic", "Big 12": "Classic", "Big 6": "Classic", "Large Bites": "Classic",
       "Classic pcs loose": "Classic", "Big 24": "Kingdom", "Kingdom pcs loose": "Kingdom",
       "Mini Raspberry loose": "Mini", "Crown 30": "Crown", "Crown 21": "Crown", "Melted": "Winter"}
@@ -38,10 +39,11 @@ def workbook():
 def payload(wb):
     mt, st, ob, ar, ls = wb["Monthly Targets"], wb["Stock"], wb["Order Book"], wb["Areas"], wb["Lists"]
     prices = json.load(open(os.path.join(HERE, "prices.json"), encoding="utf-8"))["box"]
-    stations = []
+    stations = []   # the 10 numbered areas, named as the Daily Plan names them ("1 - Kitchen")
     for r in range(5, 40):
-        a = ar.cell(r, 2).value
-        if a and a not in [s["en"] for s in stations]: stations.append({"en": a, "ar": AR.get(a)})
+        code, a = ar.cell(r, 1).value, ar.cell(r, 2).value
+        if isinstance(code, (int, float)) and a:
+            stations.append({"en": f"{int(code)} - {a}", "ar": f"{int(code)} - {AR.get(a, a)}"})
     top = next(r for r in range(1, 120) if mt.cell(r, 1).value == "Product" and mt.cell(r, 2).value == "Pcs needed")
     prods = []
     for r in range(top + 1, top + 30):
@@ -101,6 +103,68 @@ def payload(wb):
             "t_flav": t_flav, "orders_from": month.isoformat(), "orders": orders}
 
 
+def ref_payload(wb, base):
+    """Figures the plan screen shows beside each line, read from the workbook as it stands."""
+    mt, st, ls, ss = wb["Monthly Targets"], wb["Stock"], wb["Lists"], wb["Staff & Skills"]
+    steps = []
+    for r in range(1, 60):
+        v = ls.cell(r, 1).value
+        if not v or str(v).startswith("labour hours"): break
+        steps.append({"name": str(v).strip(), "sort": len(steps)})
+    staff = []
+    for r in range(5, 80):
+        v = ss.cell(r, 1).value
+        if not v: break
+        staff.append({"name": str(v).strip(), "sort": len(staff)})
+    prods = [x["code"] for x in base["products"]]
+    boxes = [x["code"] for x in base["boxes"]]
+    num = lambda v: v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+    make = [{"code": p, "h": num(ls.cell(301, 2 + j).value)} for j, p in enumerate(prods) if num(ls.cell(301, 2 + j).value) is not None]
+    pack = [{"code": b, "h": num(ls.cell(303, 2 + j).value)} for j, b in enumerate(boxes) if num(ls.cell(303, 2 + j).value) is not None]
+    H = {st.cell(12, c).value: c for c in range(1, 60) if st.cell(12, c).value}
+    targets = {x["flavour"]: x["qty"] for x in base["t_flav"]}
+    made = {}
+    hist = os.environ.get("ERMINE_HISTORY")
+    if hist and os.path.exists(hist):
+        mon = base["month"][:7]
+        for day, v in json.load(open(hist, encoding="utf-8")).items():
+            if day[:7] == mon and isinstance(v, dict):
+                for r in v.get("rows") or []:
+                    made[r.get("name")] = made.get(r.get("name"), 0) + (r.get("made") or 0)
+    fl = []
+    for r in range(13, 140):
+        nm = st.cell(r, 2).value
+        if not nm:
+            if r > 20: break
+            continue
+        nm = str(nm).strip()
+        g = lambda h: num(st.cell(r, H[h]).value) if h in H else None
+        fl.append({"name": nm, "stock": round(g("STOCK NOW (pcs)") or 0), "coated": round(g("COATED stock now") or 0),
+                   "sugg": round(g("SUGGESTED (pcs)") or 0), "target": targets.get(nm),
+                   "made": made.get(nm) if hist else None})
+    bx = []
+    cb, cm = H.get("Box"), H.get("Max possible")
+    left = {}
+    hdr = next(r for r in range(1, 40) if mt.cell(r, 1).value == "Box")
+    for r in range(hdr + 1, hdr + 40):
+        b = mt.cell(r, 1).value
+        if not b or b == "TOTAL boxes": break
+        left[b] = num(mt.cell(r, 5).value)
+    for r in range(13, 60):
+        b = st.cell(r, cb).value if cb else None
+        if not isinstance(b, str) or not b.strip() or b.strip().upper() == "TOTAL": break
+        bx.append({"code": b.strip(), "max": round(num(st.cell(r, cm).value) or 0) if cm else None, "left": left.get(b.strip())})
+    return {"factory": "ermine", "stations": base["stations"], "steps": steps, "staff": staff,
+            "make": make, "pack": pack, "fl": fl, "bx": bx}
+
+
+def post(key, fn, body):
+    req = urllib.request.Request(URL + "/rest/v1/rpc/" + fn, method="POST", data=json.dumps({"p": body}).encode(),
+                                 headers={"apikey": key, "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.load(r)
+
+
 def main():
     key = secret()
     if not key:
@@ -111,12 +175,12 @@ def main():
             print("db sync skipped: workbook not found"); return
         p = payload(wb)
         if "--dry-run" in sys.argv:
-            print("db sync dry run:", len(p["orders"]), "order lines,", sum(x["qty"] for x in p["t_box"]), "target boxes"); return
-        req = urllib.request.Request(URL + "/rest/v1/rpc/sync_from_excel", method="POST",
-              data=json.dumps({"p": p}).encode(),
-              headers={"apikey": key, "Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=60) as r:
-            res = json.load(r)
+            q = ref_payload(wb, p)
+            print("db sync dry run:", len(p["orders"]), "order lines,", sum(x["qty"] for x in p["t_box"]), "target boxes,",
+                  len(p["stations"]), "areas,", len(q["steps"]), "steps,", len(q["staff"]), "staff,", len(q["make"]), "make rates,",
+                  len(q["pack"]), "pack rates,", len(q["fl"]), "flavours,", len(q["bx"]), "boxes"); return
+        res = post(key, "sync_from_excel", p)
+        res.update(post(key, "sync_ref", ref_payload(wb, p)))
         print("db synced:", ", ".join(f"{k} {v}" for k, v in res.items()))
     except Exception as e:
         msg = str(e).replace(key, "***")
