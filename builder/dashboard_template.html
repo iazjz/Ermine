@@ -66,6 +66,34 @@ nav button{background:transparent;border:0;color:rgba(255,255,255,.62);cursor:po
 nav button.on{color:#fff;border-bottom-color:var(--orange)}
 nav button:hover{color:#fff}
 
+/* 20 Nov 2026: five sections; the pages of a section are tabs under the title. On a phone
+   the sections sit in a bar at the bottom (outside the header, which slides away). */
+.subnav{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;max-width:1240px;margin:10px auto 0;padding:0 16px}
+.subnav::-webkit-scrollbar{display:none}
+.subnav button{border:1px solid var(--line);background:var(--card,#fff);color:var(--ink);border-radius:999px;
+  font:inherit;font-size:13px;font-weight:650;padding:7px 14px;white-space:nowrap;cursor:pointer}
+.subnav button.on{background:var(--green);border-color:var(--green);color:#fff}
+.bnav{display:none}
+@media (max-width:700px){
+  header nav#nav{display:none}
+  .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--green);
+    padding:4px 4px calc(4px + env(safe-area-inset-bottom));justify-content:space-around}
+  .bnav button{flex:1;background:transparent;border:0;color:rgba(255,255,255,.66);font:inherit;
+    font-size:11.5px;font-weight:650;padding:8px 2px;border-top:2.5px solid transparent;cursor:pointer}
+  .bnav button.on{color:#fff;border-top-color:var(--orange)}
+  body{padding-bottom:64px}
+  #toast{bottom:84px}
+}
+@media print{ .subnav,.bnav{display:none !important} }
+/* the long notes under a card fold behind one button (Aziz, 20 Nov 2026) */
+.card.hasinfo{position:relative;padding-inline-end:44px}
+.infob{position:absolute;top:10px;inset-inline-end:10px;width:26px;height:26px;border-radius:50%;
+  border:1px solid var(--line);background:transparent;color:var(--dim);font-size:14px;line-height:1;
+  padding:0;cursor:pointer;display:grid;place-items:center}
+.infob.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.infobox{margin-top:10px;border-top:1px dashed var(--line);padding-top:4px}
+@media print{ .infob{display:none !important} .infobox{display:block !important} }
+
 /* ---------- page title: you always know which page you are on ---------- */
 .pagehead{padding:16px 16px 2px;max-width:1240px;margin:0 auto}
 .pagetitle{font-family:var(--serif);font-size:25px;font-weight:600;letter-spacing:-.2px;
@@ -107,6 +135,8 @@ h3:first-child{margin-top:4px}
 .lbl{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;
   font-weight:700}
 .row{display:flex;gap:12px} .row>*{flex:1;min-width:0}
+/* phone: four big figures side by side ran into each other - two per line instead */
+@media (max-width:520px){ .card .row{flex-wrap:wrap;row-gap:14px} .card .row>*{flex:1 1 calc(50% - 12px)} }
 .bar{height:9px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:9px}
 .bar>i{display:block;height:100%;background:var(--green);border-radius:5px;width:0;
   transition:width .9s cubic-bezier(.2,.8,.2,1)}
@@ -491,6 +521,8 @@ html[dir=rtl] .backbtn{transform:scaleX(1)}
   <button class="backbtn" id="back" hidden onclick="goBack()"></button>
   <nav id="nav"></nav>
 </header>
+<nav id="subnav" class="subnav" hidden></nav>
+<nav id="bnav" class="bnav"></nav>
 <div class="pagehead"><h1 class="pagetitle" id="ptitle"></h1>
   <div class="pagesub" id="psub"></div></div>
 <main id="main"></main>
@@ -742,7 +774,8 @@ const T = {
    rpNotes:"What the chef wrote, day by day", rpNoWhy:"no reason picked",
    otSmall:"The plan runs {m} minutes per person past the standard day ({h} staff-hours, about {c} {s}). Below the 30-minute line, so no decision is asked for.",
    rpNoTarget:"No month target stored for this month (kept from November 2026 on).",
-   mDays:"Last 7 days", vDays:"The last seven days",
+   mDays:"Day log", vDays:"Day by day",
+   sToday:"Today", sPerf:"Performance", sMonth:"Month", sStock:"Stock", sQc:"Quality", infoT:"Explanation",
    vDaysSub:"what was planned, what came out, and what it took",
    dPlanned:"planned", dMade:"made", dPacked:"packed", dHrs:"hours", dStaff:"people",
    dHit:"of plan", dNoPlan:"plan not captured",
@@ -1142,7 +1175,8 @@ const T = {
    rpNotes:"ما كتبه الشيف، يومًا بيوم", rpNoWhy:"بلا سبب محدد",
    otSmall:"الخطة تتجاوز اليوم المعتاد بـ{m} دقيقة للفرد ({h} ساعة عمل، نحو {c} {s}). أقل من حد ٣٠ دقيقة، فلا يُطلب قرار.",
    rpNoTarget:"لا يوجد مستهدف محفوظ لهذا الشهر (يُحفظ من نوفمبر ٢٠٢٦ فصاعدًا).",
-   mDays:"آخر ٧ أيام", vDays:"آخر سبعة أيام",
+   mDays:"سجل الأيام", vDays:"يومًا بيوم",
+   sToday:"اليوم", sPerf:"الأداء", sMonth:"الشهر", sStock:"المخزون", sQc:"الجودة", infoT:"الشرح",
    vDaysSub:"ما خُطِّط، وما خرج، وكم كلّف من وقت",
    dPlanned:"المخطط", dMade:"المنتَج", dPacked:"المعبّأ", dHrs:"ساعات", dStaff:"العدد",
    dHit:"من الخطة", dNoPlan:"لم تُلتقط الخطة",
@@ -1563,6 +1597,7 @@ function sectionHtml(h3){
   const parts = [h3, ...sectionBody(h3)].map(el=>{
     const c = el.cloneNode(true);
     c.querySelectorAll("button,canvas,.chartbox,.tapnote,.chev").forEach(x=>x.remove());
+    c.querySelectorAll(".infobox").forEach(x=>x.removeAttribute("hidden"));
     unblur(c);
     return c.outerHTML;
   }).join("\n");
@@ -1589,6 +1624,7 @@ function secTitle(h3){
 function partHtml(el, title){
   const c = el.cloneNode(true);
   c.querySelectorAll("button,canvas,.chartbox,.tapnote,.chev").forEach(x=>x.remove());
+  c.querySelectorAll(".infobox").forEach(x=>x.removeAttribute("hidden"));
   unblur(c);
   const when = new Date().toLocaleString(loc(),
       {day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
@@ -1844,7 +1880,12 @@ function overall(){
 /* The order Aziz reads them in: what happened, what is planned, what is left.
    Planning ideas is no longer a page of its own - the three plans are a block at the
    foot of Today's plan, which is where the question they answer is actually asked. */
-const PAGES=["home","plan","shift","days","late","store","pcs","mat","month","rep","try","qc"];
+const SECTIONS=[["sToday",["home","plan","shift"]],["sPerf",["days","rep"]],["sMonth",["month","try"]],
+  ["sStock",["store","pcs","mat"]],["sQc",["qc"]]];
+const PAGES=SECTIONS.flatMap(x=>x[1]);
+const SECLAST={};
+const secOf=v=>SECTIONS.find(x=>x[1].includes(v))||SECTIONS[0];
+window.goSec=function(k){ const S=SECTIONS.find(x=>x[0]===k); go(SECLAST[k]&&S[1].includes(SECLAST[k])?SECLAST[k]:S[1][0]); };
 let VIEW="home";
 /* Where you came from, and where you were on that page.
 
@@ -1857,6 +1898,7 @@ let TRAIL = [];
 function go(v, push){
   // Planning ideas used to be its own page; anyone with that link still has it.
   if(v === "ideas") v = "plan";
+  if(v === "late") v = "days";          // delays live on the day log since 20 Nov 2026
   const from = VIEW;
   if(v && v !== VIEW) TRAIL.push({v: from, y: window.scrollY});
   if(v === "home") TRAIL = [];
@@ -1972,9 +2014,12 @@ function render(){
     back.hidden = !TRAIL.length;
     back.textContent = "\u2039 " + t("backTo");
   }
-  $("#nav").innerHTML=PAGES.map(p=>
-    `<button class="${p===VIEW?"on":""}" onclick="go('${p}')">${
-      t("m"+p[0].toUpperCase()+p.slice(1))}</button>`).join("");
+  const SC=secOf(VIEW); SECLAST[SC[0]]=VIEW;
+  const secBtns=SECTIONS.map(([k])=>`<button class="${k===SC[0]?"on":""}" onclick="goSec('${k}')">${t(k)}</button>`).join("");
+  $("#nav").innerHTML=secBtns; $("#bnav").innerHTML=secBtns;
+  $("#subnav").hidden = SC[1].length<2;
+  $("#subnav").innerHTML = SC[1].length<2 ? "" : SC[1].map(p=>
+    `<button class="${p===VIEW?"on":""}" onclick="go('${p}')">${t("m"+p[0].toUpperCase()+p.slice(1))}</button>`).join("");
 
   const TITLES={home:["hHome","hHomeSub"],plan:["vPlan","vPlanSub"],days:["vDays","vDaysSub"],late:["vLate","vLateSub"],rep:["vRep","vRepSub"],
                 shift:["vShift","vShiftSub"],store:["vStore","vStoreSub"],pcs:["vPcs","vPcsSub"],try:["vTry","vTrySub"],
@@ -2005,6 +2050,7 @@ function render(){
     }
     window.__drawn=true;
     applyHidden();
+    foldNotes();
     stagger();
     applyFocus();
     setTimeout(()=>{ if(VIEW==="month") monthChart(); if(VIEW==="shift") keptChart();
@@ -2015,6 +2061,24 @@ function render(){
   $("#main").className="";
   renderHome();
   applyHidden();
+  foldNotes();
+}
+/* Every plain note (.src without a bold warning in it) inside a card moves behind one ⓘ
+   button on that card. Nothing is removed; alerts, units and "worked out" stay visible.
+   Runs again after a part of the page redraws itself (the what-if result). */
+function foldNotes(){
+  document.querySelectorAll("#main .card").forEach(card=>{
+    const notes=[...card.querySelectorAll(".src")].filter(x=>x.closest(".card")===card &&
+      !x.closest(".infobox") && !x.closest(".row") && !x.querySelector("b,strong") && !x.classList.contains("keep") && x.textContent.trim());
+    if(!notes.length) return;
+    let box=[...card.children].find(x=>x.classList.contains("infobox"));
+    if(!box){ box=document.createElement("div"); box.className="infobox"; box.hidden=true; card.appendChild(box);
+      const b=document.createElement("button"); b.type="button"; b.className="infob"; b.textContent="\u24D8";
+      b.title=t("infoT"); b.setAttribute("aria-label",t("infoT"));
+      b.onclick=e=>{ e.stopPropagation(); box.hidden=!box.hidden; b.classList.toggle("on",!box.hidden); };
+      card.prepend(b); card.classList.add("hasinfo"); }
+    notes.forEach(n=>box.appendChild(n));
+  });
 }
 
 /* entry motion: cards arrive in order, 45ms apart, once */
@@ -2035,13 +2099,13 @@ function renderHome(){
      "The chef's plan for today" used to sit underneath saying the same thing in other
      words - the banner named the commitment, the card named what it costs. Two cards
      about one decision is one card too many on a page whose job is to be glanced at. */
-  h+=`<div class="banner tap ${st}" onclick="go('plan')">
+  h+=`<div class="banner tap ${PC?"ok":st}" onclick="go('plan')">
     ${SYMBOL?`<img class="crest" src="${SYMBOL}" alt="">`:""}
     <div class="lbl">${esc(dmy(D.today.date))}</div>
-    <div class="big">${st==="ok"?t("onTrack"):t("attention")}</div>
+    <div class="big">${PC?t("pcTitle"):st==="ok"?t("onTrack"):t("attention")}</div>
     <div class="sub">${PC?t("pcHome"):esc(sCommit())}
       ${D.today.finish&&!PC?` · ${t("finish")} ${esc(finTxt())}`:""}</div>
-    <div class="brow"${PC?" hidden":""}>
+    <div class="brow"${PC?' style="display:none"':""}>
       <div><span class="lbl">${t("hours")}</span><b>${n0(A.hours)}</b>${
         A.people?`<i class="per"> · ${n1(A.hours/A.people)} ${t("fcPerPerson")}</i>`:""}</div>
       <div><span class="lbl">${t("people")}</span><b>${n1(A.people)}</b></div>
@@ -2052,8 +2116,8 @@ function renderHome(){
          of an Arabic sentence: the translation existed in both dictionaries and was
          simply never called. Fall back to the raw cell only when the numbers are
          missing, which is the one case where the English is better than nothing. -->
-    <div class="tapnote">${sDayNote()?t("finishHow")+" "+esc(sDayNote())+" · ":""}${
-       esc(sVerdict())}</div>
+    ${PC?"":`<div class="tapnote">${sDayNote()?t("finishHow")+" "+esc(sDayNote())+" · ":""}${
+       esc(sVerdict())}</div>`}
     <div class="tapnote">${t("tapPlan")}</div></div>`;
 
   /* 2. The month target, directly under the judgement and deliberately loud.
@@ -2864,23 +2928,8 @@ function viewShift(){
     h+=`<div class="card"><div class="src">${t("flavNone")}</div></div>`;
   }
 
-  if((D.log||[]).length){
-    h+=`<h3>${t("trendTitle")}</h3><div class="card">
-        <div class="chartbox"><canvas id="c-h"></canvas></div></div>`;
-  }
-
-  /* the series the capture makes possible: planned against made, day by day */
-  const K=D.kept||[];
-  if(K.length){
-    const avg=K.reduce((s,k)=>s+k.hit,0)/K.length;
-    h+=`<h3>${t("keptTitle")}</h3><div class="card">
-      <div class="row">
-        <div><div class="lbl">${t("keptAvg")}</div><div class="big">${pc(avg)}</div></div>
-        <div><div class="lbl">${t("keptDays")}</div><div class="mid">${n0(K.length)}</div></div>
-      </div>
-      <div class="chartbox" style="height:200px;margin-top:8px"><canvas id="c-k"></canvas></div>
-      <div class="src">${t("keptNote")}</div></div>`;
-  }
+  /* 20 Nov 2026: the 14-day hours chart and the planned-vs-made series moved to the day
+     log - this page is the last day only. */
 
   const pr=S.products.filter(p=>p.actual||p.plan);
   h+=`<h3>${t("byProduct")}</h3><div class="card">`;
@@ -3305,7 +3354,7 @@ function tryResult(){
   h+=`<div class="src">${t(R.fallback?"tryNoteFb":"tryNote2",{h:n1(R.hpp*1000), p:esc(R.q)})}</div>`;
   return h;
 }
-function tryUpdate(){ const o=document.getElementById("tryout"); if(o) o.innerHTML=tryResult(); }
+function tryUpdate(){ const o=document.getElementById("tryout"); if(o){ o.innerHTML=tryResult(); foldNotes(); } }
 window.trySet=function(k,v){ TRY[k]=v; tryUpdate(); };
 function viewTry(){
   const sz=trySizes();
@@ -4059,7 +4108,12 @@ function lateDay(x){
   if(x.note && x.note!=="None") h+=`<div class="src">${t("lLogNote")}: ${esc(x.note)}</div>`;
   return h+`</div>`;
 }
-function viewLate(){
+function lateSummary(){
+  const A=(D.delays||[]).slice().reverse();
+  if(!A.length) return "";
+  return viewLate(true);
+}
+function viewLate(only){
   const A=(D.delays||[]).slice().reverse();
   if(!A.length) return `<div class="card"><div class="muted">${t("lNone")}</div></div>`;
   const mo=String(D.today.date||"").slice(0,7);
@@ -4077,6 +4131,7 @@ function viewLate(){
   if(ck.length) h+=`<div class="lbl" style="margin-top:12px">${t("lCats")}</div><div class="names">${
      ck.map(k=>`<span class="name">${esc(trR(k))} <b>${n0(cats[k])}</b></span>`).join("")}</div>`;
   h+=`<div class="src">${t("lRule")}</div></div>`;
+  if(only===true) return h;
   const list=LATE.all?A:A.filter(x=>x.late||x.reasons.length||x.model_off||!x.recorded&&x.plan);
   h+=`<div class="dlgrow" style="margin:8px 0"><button class="go alt" onclick="LATE.all=!LATE.all;render()">${t(LATE.all?"lShowLess":"lShowAll")}</button></div>`;
   h+= list.length ? list.map(lateDay).join("") : `<div class="card"><div class="muted">${t("lAllOk")}</div></div>`;
@@ -4182,14 +4237,15 @@ function viewRep(){
     ${tile(t("rpLate"),n0(late.length),"",`${n0(expl.length)} ${t("rpExpl")}`,late.length-expl.length?"var(--bad)":"")}
     ${tile(t("rpOt"),n0(ot),t("hours"),`${n1(avgS?ot/avgS:0)} ${t("perHead")}<br>${t("rpOtCost")}: <b>${n0(ot*rate)}</b> ${sar()}`,ot?"var(--warn)":"")}
     ${tile(t("rpProd"),sh&&rpPv?n0(rpPv/sh):"—",sar()+" "+t("rpProdU"),
-       `${avgS&&rpPv?`<b>${n0(rpPv/avgS)}</b> ${sar()} ${t("rpPerPerson")} · `:""}${n0(rpPv)} ${sar()} ${t("rpValPacked")}<br>${n0(sh)} ${t("rpHrs")} · ${n1(avgS)} ${t("rpStaff")} · ${sh?n1(made/sh):"—"} ${t("rpPcsH")}${
-        rpPvNo.size?`<br>${t("rpNoPrice")}: ${esc([...rpPvNo].join(", "))}`:""}`)}
+       avgS&&rpPv?`${n0(rpPv/avgS)} ${sar()} ${t("rpPerPerson")}`:"")}
     ${tile(t("rpModel"),R.length?pc(rOk.length/R.length):"—",t("rpModelU"),`${n0(rOk.length)} / ${n0(R.length)}`)}
   </div>`;
   if(whole) h+= MT ? `<div class="row" style="margin-top:14px">
       ${tile(t("rpTarget"),pc((MT.packed_box||0)/(MT.target_box||1)),"",t("rpTargetOf",{a:n0(MT.packed_box),b:n0(MT.target_box),d:dmy(String(MT.at).slice(0,10))}))}
       ${MT.value_target?tile(t("rpValue"),n0(MT.value),sar(),`/ ${n0(MT.value_target)} ${sar()}`):""}</div>`
     : `<div class="src">${t("rpNoTarget")}</div>`;
+  h+=`<div class="src">${t("rpProd")}: ${n0(rpPv)} ${sar()} ${t("rpValPacked")} · ${n0(sh)} ${t("rpHrs")} · ${n1(avgS)} ${t("rpStaff")} · ${sh?n1(made/sh):"—"} ${t("rpPcsH")}${
+        rpPvNo.size?` · ${t("rpNoPrice")}: ${esc([...rpPvNo].join(", "))}`:""}</div>`;
   if(wk.length) h+=`<div class="src" style="margin-top:10px"><b>${t("rpTopWhy")}:</b> ${esc(trR(wk[0]))} (${n0(why[wk[0]])} ${t("rpCount")})</div>`;
   h+=`</div>`;
   if(wk.length){
@@ -4269,7 +4325,7 @@ function viewDays(){
   const DD=(D.days||[]).slice().reverse();      // newest first; that is what gets read
   if(!DD.length) return `<div class="card"><div class="muted">${t("dFlavNone")}</div></div>`;
 
-  let h=`<h3>${t("vDays")}</h3><div class="card">
+  let h=lateSummary()+`<h3>${t("vDays")}</h3><div class="card">
     <div class="chartbox" style="height:240px"><canvas id="c-d"></canvas></div></div>`;
 
   const noPlan=DD.some(x=>!x.plan);
