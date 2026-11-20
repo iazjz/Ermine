@@ -84,6 +84,7 @@ jobs:
           ERMINE_WORK: ${{ runner.temp }}/work
           ERMINE_GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ERMINE_GH_REPO: ${{ github.repository }}
+          ERMINE_SB_SECRET: ${{ secrets.ERMINE_SB_SECRET }}
         run: |
           cd builder
           if [ "${{ inputs.dry_run }}" = "true" ]; then
