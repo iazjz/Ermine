@@ -526,6 +526,13 @@ const T = {
    e_net:"Could not reach the backend.", e_error:"Something went wrong. Try again.",
    e_unknown_action:"The backend does not know this button yet. In Apps Script: Deploy \u2192 Manage deployments \u2192 edit \u2192 New version, then try again.",
    e_timeout:"The backend did not answer within 25 seconds. Try again.", otBusy:"Saving\u2026",
+   pcTitle:"Day closed", pcDone:"The chef has recorded what was made today - the day is closed. Its plan is no longer today's work.",
+   pcPast:"The plan on the file is for a day that has passed. The chef has not entered today's plan yet.",
+   pcWait:"The page shows the next plan as soon as the chef enters it with its date.",
+   pcSugg:"Suggested for the next day (worked out by the file, not entered by the chef)",
+   pcSuggCol:"Suggested", pcStockCol:"Stock now", pcNoSugg:"The file suggests nothing to make right now.",
+   pcSuggNote:"Source: the Stock sheet's \u201cSuggested\u201d column (stock against the month target and orders). Worked out - the chef decides the plan.",
+   pcShowOld:"Show the closed day\u2019s plan ({d})", pcHome:"Day closed - waiting for the chef\u2019s next plan",
    planFor:"Plan for", bToday:"today", bYesterday:"yesterday", bTomorrow:"tomorrow",
    bAgo:"{n} days ago", bAhead:"in {n} days",
    stagesTitle:"How far the chef has got", stPlan:"Plan", stMade:"Made", stCoat:"Coated",
@@ -719,7 +726,7 @@ const T = {
    rpNone:"No logged days in this range.", rpHead:"Summary", rpMade:"Pieces made", rpPacked:"Boxes packed", rpLoose:"loose pieces packed",
    rpPerDay:"per working day", rpAdh:"Days on plan", rpAdhOf:"{a} of {b} days with a plan", rpHit:"Made against plan",
    rpLate:"Days that missed the plan", rpExpl:"of them explained", rpOt:"Overtime", rpOtCost:"cost", rpOtPer:"per person",
-   rpProd:"Productivity", rpProdU:"pieces per staff-hour", rpStaff:"Average staff", rpHrs:"Staff-hours worked",
+   rpProd:"Productivity", rpProdU:"per staff-hour", rpPerPerson:"per person in this range", rpValPacked:"packed (box price x boxes, worked out)", rpPcsH:"pieces per staff-hour", rpNoPrice:"No price, left out", rpStaff:"Average staff", rpHrs:"Staff-hours worked",
    rpModel:"Model accuracy", rpModelU:"days within \u00b115%", rpTarget:"Month target (boxes)", rpTargetOf:"{a} packed of {b} \u00b7 as of {d}",
    rpValue:"Value packed", rpTopWhy:"Most common reason", rpByWhy:"Delays by reason", rpByProd:"Made, by product", rpByBox:"Packed, by box",
    rpDaily:"Day by day", rpShare:"share", rpCount:"days", rpDay:"day", rpPlan:"plan", rpMadeC:"made", rpDiff:"vs plan",
@@ -766,7 +773,8 @@ const T = {
    dNoReason:"This day is off the model and no reason was written for it.",
    tryAdd:"Add another product", tryRemove:"remove", tryLinesT:"The order, line by line",
    tryFromStock:"from stock", tryToMake:"to make",
-   tryMultiNote:"Worked out here. The lines are made one after another in the order listed: each line\u2019s date includes the hours of the lines above it. Stock of the same product is counted once. Change the order of the lines to see another priority.",
+   tryMultiNote:"Worked out here. Each line has its own delivery date; the earliest delivery is made first (same date: the order listed), so each line\u2019s ready date includes the hours of the lines before it. Stock of the same product is counted once. The summary above covers everything up to the latest date.",
+   tryLineSt:"By its date", tryLineFits:"Fits", tryLineShort:"Short {h} h \u00b7 {p} h/person/day", tryLineSoon:"Date too soon",
    tryMultiNoB:"Staged delivery and the weekly pace are worked out for one product at a time. Free hours over the next 4 weeks, after what is already booked: about {h} a week.",
    dTapDay:"Tap a day to see its flavours and the chef\u2019s reasons.",
    pcsTargetTitle:"The month in pieces", pcsNeed:"pieces needed", pcsMade:"made so far",
@@ -918,6 +926,13 @@ const T = {
    e_net:"تعذّر الوصول إلى الخدمة.", e_error:"حدث خطأ، حاول مرة ثانية.",
    e_unknown_action:"الخدمة لا تعرف هذا الزر بعد. في Apps Script: Deploy \u2190 Manage deployments \u2190 تعديل \u2190 New version، ثم جرّب مرة ثانية.",
    e_timeout:"لم تردّ الخدمة خلال ٢٥ ثانية. جرّب مرة ثانية.", otBusy:"جارٍ الحفظ\u2026",
+   pcTitle:"اليوم مقفل", pcDone:"سجّل الشيف إنتاج اليوم الفعلي، فاليوم مقفل وخطته لم تعد عمل اليوم.",
+   pcPast:"الخطة الموجودة في الملف ليوم مضى، والشيف لم يدخل خطة اليوم بعد.",
+   pcWait:"تظهر الخطة التالية هنا بمجرد أن يدخلها الشيف بتاريخها.",
+   pcSugg:"مقترح لليوم التالي (محسوب من الملف، لم يدخله الشيف)",
+   pcSuggCol:"المقترح", pcStockCol:"المخزون الآن", pcNoSugg:"لا يقترح الملف إنتاج شيء الآن.",
+   pcSuggNote:"المصدر: عمود \u201cSuggested\u201d في صفحة Stock (المخزون مقابل هدف الشهر والطلبات). رقم محسوب - والقرار للشيف.",
+   pcShowOld:"اعرض خطة اليوم المقفل ({d})", pcHome:"اليوم مقفل - بانتظار خطة الشيف التالية",
    planFor:"خطة يوم", bToday:"اليوم", bYesterday:"أمس", bTomorrow:"غدًا",
    bAgo:"قبل {n} أيام", bAhead:"بعد {n} أيام",
    stagesTitle:"أين وصل الشيف", stPlan:"الخطة", stMade:"الصنع", stCoat:"التغطية",
@@ -1111,7 +1126,7 @@ const T = {
    rpNone:"لا أيام مسجّلة في هذه الفترة.", rpHead:"الملخص", rpMade:"حبات صُنعت", rpPacked:"بوكسات عُبّئت", rpLoose:"حبة سائبة عُبّئت",
    rpPerDay:"لكل يوم عمل", rpAdh:"أيام على الخطة", rpAdhOf:"{a} من {b} يومًا فيها خطة", rpHit:"المصنوع مقابل الخطة",
    rpLate:"أيام فاتتها الخطة", rpExpl:"منها مُبرَّر", rpOt:"الأوفرتايم", rpOtCost:"التكلفة", rpOtPer:"للفرد",
-   rpProd:"الإنتاجية", rpProdU:"حبة لكل ساعة عمل", rpStaff:"متوسط الأفراد", rpHrs:"ساعات العمل",
+   rpProd:"الإنتاجية", rpProdU:"لكل ساعة عمل", rpPerPerson:"للفرد في هذه الفترة", rpValPacked:"قيمة المعبّأ (سعر البوكس × العدد، محسوبة)", rpPcsH:"حبة لكل ساعة عمل", rpNoPrice:"بلا سعر، غير محسوب", rpStaff:"متوسط الأفراد", rpHrs:"ساعات العمل",
    rpModel:"دقة النموذج", rpModelU:"أيام ضمن ±١٥٪", rpTarget:"مستهدف الشهر (بوكس)", rpTargetOf:"عُبّئ {a} من {b} · حتى {d}",
    rpValue:"قيمة المعبّأ", rpTopWhy:"أكثر سبب تكرارًا", rpByWhy:"التأخير حسب السبب", rpByProd:"المصنوع حسب المنتج", rpByBox:"المعبّأ حسب البوكس",
    rpDaily:"يومًا بيوم", rpShare:"النسبة", rpCount:"أيام", rpDay:"اليوم", rpPlan:"الخطة", rpMadeC:"صُنع", rpDiff:"مقابل الخطة",
@@ -1158,7 +1173,8 @@ const T = {
    dNoReason:"هذا اليوم بعيد عن توقع الموديل ولم يُكتب له سبب.",
    tryAdd:"أضف منتجًا آخر", tryRemove:"حذف", tryLinesT:"الطلب سطرًا سطرًا",
    tryFromStock:"من المخزون", tryToMake:"للتصنيع",
-   tryMultiNote:"محسوب هنا. تُصنع الأسطر واحدًا بعد الآخر بالترتيب المكتوب: تاريخ كل سطر يشمل ساعات الأسطر التي فوقه. ومخزون المنتج الواحد يُحسب مرة واحدة. غيّر ترتيب الأسطر لترى أولوية أخرى.",
+   tryMultiNote:"محسوب هنا. لكل سطر تاريخ تسليمه؛ يُصنع الأقرب تسليمًا أولًا (وعند تساوي التاريخ: بالترتيب المكتوب)، فتاريخ جاهزية كل سطر يشمل ساعات الأسطر التي قبله. ومخزون المنتج الواحد يُحسب مرة واحدة. الملخص أعلاه يغطي كل شيء حتى آخر تاريخ.",
+   tryLineSt:"حسب تاريخه", tryLineFits:"يلحق", tryLineShort:"ناقص {h} ساعة \u00b7 {p} ساعة/فرد/يوم", tryLineSoon:"التاريخ قريب جدًا",
    tryMultiNoB:"التسليم على دفعات والوتيرة الأسبوعية تُحسب لمنتج واحد فقط. الساعات الحرة في الأسابيع الأربعة القادمة بعد المحجوز: نحو {h} ساعة أسبوعيًا.",
    dTapDay:"اضغط على اليوم لترى نكهاته وتبرير الشيف.",
    pcsTargetTitle:"الشهر بالحبة", pcsNeed:"الحبات المطلوبة", pcsMade:"المصنوع حتى الآن",
@@ -2011,7 +2027,7 @@ function stagger(){
 
 function renderHome(){
   const A=D.plans[0], last=D.last, M=D.month, X=D.tot;
-  const st=overall();
+  const st=overall(), PC=planClosed();
   let h="";
 
   /* 1. The judgement, with the cost of the day folded into it.
@@ -2023,9 +2039,9 @@ function renderHome(){
     ${SYMBOL?`<img class="crest" src="${SYMBOL}" alt="">`:""}
     <div class="lbl">${esc(dmy(D.today.date))}</div>
     <div class="big">${st==="ok"?t("onTrack"):t("attention")}</div>
-    <div class="sub">${esc(sCommit())}
-      ${D.today.finish?` · ${t("finish")} ${esc(finTxt())}`:""}</div>
-    <div class="brow">
+    <div class="sub">${PC?t("pcHome"):esc(sCommit())}
+      ${D.today.finish&&!PC?` · ${t("finish")} ${esc(finTxt())}`:""}</div>
+    <div class="brow"${PC?" hidden":""}>
       <div><span class="lbl">${t("hours")}</span><b>${n0(A.hours)}</b>${
         A.people?`<i class="per"> · ${n1(A.hours/A.people)} ${t("fcPerPerson")}</i>`:""}</div>
       <div><span class="lbl">${t("people")}</span><b>${n1(A.people)}</b></div>
@@ -2749,6 +2765,35 @@ function viewPlan(){
             bIdle.map(x=>[esc(x.b.box), tgtCell(x.v)+splitLine(boxSplit(x.b,-x.v,P))]))}</div></details>`;
   h+=stationsBlock();
   h+=ideasBlock();
+  /* 20 Nov 2026 (Aziz): once the chef has recorded what was made, the day is over - opening
+     the page that night must not show yesterday's plan as if it were today's. Until the
+     chef enters the next plan (a new plan date on the Stock sheet), the page says the day
+     is closed and shows the file's own suggestion; the closed plan stays one tap away. */
+  const C=planClosed();
+  if(C) return closedCard(C,P) + `<details class="card idle"><summary class="src" style="margin:0;cursor:pointer">${
+      t("pcShowOld",{d:esc(longDay(C.pd))})}</summary><div style="margin-top:10px">${h}</div></details>`;
+  return h;
+}
+function planClosed(){
+  const S0=D.stage_today||{}, pd=isoOf(S0.date||(D.plan||{}).date), td=todayIso();
+  if(!pd) return null;
+  if(pd<td) return {pd, why:"past", S0};
+  if(pd===td && (S0.made||S0.packed)) return {pd, why:"done", S0};
+  return null;
+}
+function closedCard(C,P){
+  const sg=(P.flavours||[]).filter(f=>(f.sugg||0)>0).sort((a,b)=>(b.sugg||0)-(a.sugg||0));
+  let h=`<div class="card"><div class="lbl">${t("pcTitle")}</div>
+    <div class="big" style="font-size:21px;line-height:1.35">${esc(longDay(C.pd))}${dayBadge(C.pd)}</div>
+    <div class="warnbox" style="border-color:var(--ok);margin-top:10px">${t(C.why==="done"?"pcDone":"pcPast")}</div>
+    <div class="lbl" style="margin-top:12px">${t("stagesTitle")}</div>${stageChips(C.S0)}
+    <div class="src">${t("pcWait")}</div></div>`;
+  h+=`<div class="card"><div class="lbl">${t("pcSugg")}</div>`+(sg.length
+    ? tbl([{h:t("product")},{h:t("flavour")},{h:t("pcSuggCol")+" \u00b7 "+t("pieces")},{h:t("pcStockCol")+" \u00b7 "+t("pieces")}],
+        sg.map(f=>[esc(f.counts||f.product||"\u2014"), esc(f.flavour), `<b>${n0(f.sugg)}</b>`, f.stock!=null?n0(f.stock):dash(null)]),
+        [t("totalRow"), "", n0(sg.reduce((a,f)=>a+(f.sugg||0),0)), ""])
+      +`<div class="src">${t("pcSuggNote")}</div>`
+    : `<div class="muted">${t("pcNoSugg")}</div>`)+`</div>`;
   return h;
 }
 
@@ -3092,8 +3137,8 @@ function tryModel(){
    hours of the lines above it. One product behaves exactly as before. */
 function tryLines(){
   const pm=TRY.mode==="pcs";
-  return [{box:TRY.box,prod:TRY.prod,n:TRY.n}].concat(TRY.more||[])
-    .map((x,i)=>({i, key:pm?x.prod:x.box, qty:Math.max(0,+x.n||0)}))
+  return [{box:TRY.box,prod:TRY.prod,n:TRY.n,date:TRY.date}].concat(TRY.more||[])
+    .map((x,i)=>({i, key:pm?x.prod:x.box, qty:Math.max(0,+x.n||0), date:x.date||TRY.date||""}))
     .filter(x=>x.key&&x.qty);
 }
 function tryCalc(){
@@ -3102,10 +3147,13 @@ function tryCalc(){
   const Mo=tryModel(), M=D.mtarget||{};
   const rate=(D.fc&&D.fc.rate)||13.7;
   const free=Mo.days.map((_,i)=>Math.max(0,Mo.cap-Mo.booked[i]));
+  /* 20 Nov 2026 - every line has its own delivery date (Aziz). The window of the summary is
+     the LATEST date (everything due by then); each line is checked against its own date. */
+  const DD=L.reduce((a,x)=>x.date&&x.date>a?x.date:a,"");
   let n=0, capH=0, bookedW=0, freeW=0;
-  if(TRY.date)
-    Mo.days.forEach((iso,i)=>{ if(iso<TRY.date){ n++; capH+=Mo.cap; bookedW+=Mo.booked[i]; freeW+=free[i]; } });
-  const kS = TRY.date ? n : 10;
+  if(DD)
+    Mo.days.forEach((iso,i)=>{ if(iso<DD){ n++; capH+=Mo.cap; bookedW+=Mo.booked[i]; freeW+=free[i]; } });
+  const kS = DD ? n : 10;
   const avail={};
   const mon=String(M.month||"").slice(0,7);
   const lines=L.map(x=>{
@@ -3118,7 +3166,7 @@ function tryCalc(){
     const make=Math.max(0,pcs-spare);
     const mr=(M.rows||[]).find(r=>r.box===x.key)||{};
     let rest=0; if(!pm) ((D.ob&&D.ob.days)||[]).forEach(d=>{ if(d.date.slice(0,7)===mon) rest+=(d.by[x.key]||0); });
-    return {key:x.key, q, qty:x.qty, unitSz, pcs, hpp, fallback, spare, make, needH:make*hpp, mr, rest,
+    return {key:x.key, date:x.date, q, qty:x.qty, unitSz, pcs, hpp, fallback, spare, make, needH:make*hpp, mr, rest,
             pr:(M.pieces||[]).find(r=>r.product===q)||{}};
   });
   const needH=lines.reduce((a,x)=>a+x.needH,0);
@@ -3129,8 +3177,12 @@ function tryCalc(){
     return null; };
   const ext=TRY_OT_PP*Mo.staff;
   const dayOf=r=>r==null?null:(r.i<0?todayIso():Mo.days[r.i]);
+  // the earliest delivery is made first (same date: the order listed)
+  if(lines.length>1) lines.sort((a,b)=>(a.date||"9")<(b.date||"9")?-1:(a.date||"9")>(b.date||"9")?1:0);
   let cum=0;
-  lines.forEach(x=>{ cum+=x.needH; x.no=dayOf(finishH(0,cum)); x.ot=dayOf(finishH(ext,cum)); });
+  lines.forEach(x=>{ cum+=x.needH; x.no=dayOf(finishH(0,cum)); x.ot=dayOf(finishH(ext,cum));
+    let fb=0, nd=0; Mo.days.forEach((iso,i)=>{ if(x.date && iso<x.date){ fb+=free[i]; nd++; } });
+    x.nd=nd; x.short=Math.max(0,cum-fb); x.perP=nd?x.short/(nd*Mo.staff):null; });
   const single=lines.length===1, L0=lines[0];
   const batches=[];
   if(single){
@@ -3147,14 +3199,14 @@ function tryCalc(){
   const weekly=single ? Math.floor(freeW4/4/L0.hpp/L0.unitSz) : null;
   const full = w4.length ? (w4.reduce((a,_,i)=>a+Mo.booked[i],0)/(w4.length*Mo.cap)) : 0;
   const over=Math.max(0, needH-freeW), perP=n?over/(n*Mo.staff):0;
-  const rows=Mo.per.map(r=>{ const k=TRY.date?Mo.days.filter(iso=>iso<TRY.date).length:0;
+  const rows=Mo.per.map(r=>{ const k=DD?Mo.days.filter(iso=>iso<DD).length:0;
       return {p:r.p, must:r.pcs.slice(0,k).reduce((a,x)=>a+x,0), h:r.hrs.slice(0,k).reduce((a,x)=>a+x,0), s:r.stock}; })
     .filter(r=>r.must>=1);
   return {n, pm, lines, single, capH, booked:bookedW, free:freeW,
           spare:lines.reduce((a,x)=>a+x.spare,0), make:lines.reduce((a,x)=>a+x.make,0),
           needH, over, perP, cost:over*rate, rows, base:Math.max(0,bookedW-capH),
           assumed:Mo.assumed, noOt:lines[lines.length-1].no, withOt:lines[lines.length-1].ot,
-          otPP:TRY_OT_PP, batches, weekly, freeWeek:freeW4/4, dated:!!TRY.date, full,
+          otPP:TRY_OT_PP, batches, weekly, freeWeek:freeW4/4, dated:!!DD, dd:DD, full,
           // single-product fields, as before
           q:L0.q, pr:L0.pr, mr:L0.mr, rest:L0.rest, qty:L0.qty, hpp:L0.hpp, fallback:L0.fallback, unitSz:L0.unitSz};
 }
@@ -3187,11 +3239,14 @@ function tryResult(){
   }
   if(!R.single){
     h+=`<div class="lbl" style="margin-top:16px">${t("tryLinesT")}</div>`+tbl(
-      [{h:R.pm?t("product"):t("box")},{h:u},{h:t("tryFromStock")+" \u00b7 "+t("pieces")},
-       {h:t("tryToMake")+" \u00b7 "+t("pieces")},{h:t("hours")},{h:t("tryNoOt")},{h:t("tryWithOt",{p:n0(R.otPP)})}],
-      R.lines.map(x=>[esc(x.key), n0(x.qty), x.spare?n0(x.spare):dash(null), n0(x.make),
-        n0(x.needH), `<b>${esc(tryWhen(x.no))}</b>`, esc(tryWhen(x.ot))]),
-      [t("totalRow"), "", n0(R.spare), n0(R.make), n0(R.needH), "", ""])
+      [{h:R.pm?t("product"):t("box")},{h:u},{h:t("tryDate")},{h:t("tryFromStock")+" \u00b7 "+t("pieces")},
+       {h:t("tryToMake")+" \u00b7 "+t("pieces")},{h:t("hours")},{h:t("tryNoOt")},{h:t("tryWithOt",{p:n0(R.otPP)})},{h:t("tryLineSt")}],
+      R.lines.map(x=>[esc(x.key), n0(x.qty), esc(tryWhen(x.date)), x.spare?n0(x.spare):dash(null), n0(x.make),
+        n0(x.needH), `<b>${esc(tryWhen(x.no))}</b>`, esc(tryWhen(x.ot)),
+        !x.nd ? `<span class="pill p-bad">${t("tryLineSoon")}</span>`
+        : x.short<=0 ? `<span class="pill p-ok">${t("tryLineFits")}</span>`
+        : `<span class="pill ${x.perP>3?"p-bad":"p-warn"}">${t("tryLineShort",{h:n0(x.short),p:n1(x.perP)})}</span>`]),
+      [t("totalRow"), "", "", n0(R.spare), n0(R.make), n0(R.needH), "", "", ""])
       +`<div class="src">${t("tryMultiNote")}</div>`;
   }
   // option A - the whole quantity at once
@@ -3277,10 +3332,11 @@ function viewTry(){
         (pm?prods:boxes).map(o=>`<option value="${ea(o)}"${o===(pm?x.prod:x.box)?" selected":""}>${esc(o)}${pm?"":" \u00b7 "+n0(sz[o])+" "+t("pieces")}</option>`).join("")}</select></div>
       <div><label>${pm?t("tryQtyPcs"):t("tryQty")}</label><input type="number" min="0" inputmode="numeric" value="${ea(x.n)}"
         oninput="tryMore(${i},'n',this.value)"></div>
-      <div><button class="pill" style="border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font:inherit;padding:9px 14px"
-        onclick="TRY.more.splice(${i},1);render()">\u2715 ${t("tryRemove")}</button></div></div>`).join("")}
+      <div><label>${t("tryDate")}</label><div style="display:flex;gap:8px;align-items:center"><input type="date" style="flex:1;min-width:0" value="${ea(x.date||TRY.date)}" min="${isoPlus(todayIso(),1)}"
+        onchange="tryMore(${i},'date',this.value)"><button class="pill" title="${t("tryRemove")}" style="border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font:inherit;padding:9px 12px;flex:none"
+        onclick="TRY.more.splice(${i},1);render()">\u2715</button></div></div></div>`).join("")}
     <button class="pill p-ok" style="border:0;cursor:pointer;font:inherit;font-weight:700;padding:9px 14px;margin-top:10px"
-      onclick="TRY.more.push({box:'${ea(boxes[0]||"")}',prod:'${ea(prods[0]||"")}',n:''});render()">+ ${t("tryAdd")}</button>
+      onclick="TRY.more.push({box:'${ea(boxes[0]||"")}',prod:'${ea(prods[0]||"")}',n:'',date:TRY.date});render()">+ ${t("tryAdd")}</button>
     <div id="tryout">${tryResult()}</div></div>`;
 }
 window.tryMore=function(i,k,v){ TRY.more[i][k]=v; tryUpdate(); };
@@ -4107,6 +4163,15 @@ function viewRep(){
   const wk=Object.keys(why).sort((a,b)=>why[b]-why[a]);
   const MT=whole&&D.months?D.months[curM]:null;
   const tile=(l,v,u,sub,c)=>`<div><div class="lbl">${l}</div><div class="big" ${c?`style="color:${c}"`:""}>${v}${u?`<span class="unit">${u}</span>`:""}</div>${sub?`<div class="src" style="margin-top:2px">${sub}</div>`:""}</div>`;
+  /* 20 Nov 2026 (Aziz): productivity in riyals, not pieces per hour. Value = boxes packed in
+     the range x the month's box price (Monthly Targets); boxes with no price are left out
+     and named. Worked out. */
+  const _MS=D.months||{}, _MK=Object.keys(_MS).sort().reverse();
+  const _pr=bx=>{ for(const m of [curM,..._MK]){ const rr=(_MS[m]||{}).rows; const z=rr&&rr.find(q=>q.box===bx);
+      if(z&&z.price) return z.price; } return null; };
+  let rpPv=0; const rpPvNo=new Set();
+  X.forEach(x=>Object.entries(x.bb||{}).forEach(([k,v])=>{ if(!v) return; const pr=_pr(k);
+    if(pr==null) rpPvNo.add(k); else rpPv+=v*pr; }));
   h+=`<h3>${t("rpHead")}</h3><div class="card"><div class="row">
     ${tile(t("rpMade"),n0(made),t("pieces"),`${n0(made/n)} ${t("rpPerDay")}`)}
     ${tile(t("rpPacked"),n0(boxes),t("boxes"),loose?`+ ${n0(loose)} ${t("rpLoose")}`:"")}
@@ -4116,7 +4181,9 @@ function viewRep(){
   </div><div class="row" style="margin-top:14px">
     ${tile(t("rpLate"),n0(late.length),"",`${n0(expl.length)} ${t("rpExpl")}`,late.length-expl.length?"var(--bad)":"")}
     ${tile(t("rpOt"),n0(ot),t("hours"),`${n1(avgS?ot/avgS:0)} ${t("perHead")}<br>${t("rpOtCost")}: <b>${n0(ot*rate)}</b> ${sar()}`,ot?"var(--warn)":"")}
-    ${tile(t("rpProd"),sh?n1(made/sh):"—",t("rpProdU"),`${n0(sh)} ${t("rpHrs")} · ${n1(avgS)} ${t("rpStaff")}`)}
+    ${tile(t("rpProd"),sh&&rpPv?n0(rpPv/sh):"—",sar()+" "+t("rpProdU"),
+       `${avgS&&rpPv?`<b>${n0(rpPv/avgS)}</b> ${sar()} ${t("rpPerPerson")} · `:""}${n0(rpPv)} ${sar()} ${t("rpValPacked")}<br>${n0(sh)} ${t("rpHrs")} · ${n1(avgS)} ${t("rpStaff")} · ${sh?n1(made/sh):"—"} ${t("rpPcsH")}${
+        rpPvNo.size?`<br>${t("rpNoPrice")}: ${esc([...rpPvNo].join(", "))}`:""}`)}
     ${tile(t("rpModel"),R.length?pc(rOk.length/R.length):"—",t("rpModelU"),`${n0(rOk.length)} / ${n0(R.length)}`)}
   </div>`;
   if(whole) h+= MT ? `<div class="row" style="margin-top:14px">
