@@ -158,6 +158,33 @@ def ref_payload(wb, base):
             "make": make, "pack": pack, "fl": fl, "bx": bx}
 
 
+SET_BOX = {"mini": "Mini", "miniloose": "Mini Raspberry loose", "coins": "Coins", "origin": "Origin",
+           "icecream": "Ice Cream", "melted": "Melted", "crown3": "Crown 21", "mcake": "Marshmallow Cake"}
+SINGLE_BOX = {"Crown": "Crown 30", "Fingers": "Fingers", "Cake": "Cake"}
+
+
+def box_flavour_rows(wb):
+    """Pieces of each flavour one box takes: Stock sheet columns Big 30 / 24 / 12 / 6 and
+    'Other box' (the box of the flavour's own set)."""
+    st = wb["Stock"]
+    H = {st.cell(12, c).value: c for c in range(1, 60) if st.cell(12, c).value}
+    cc = next(c for h, c in H.items() if str(h).lower().startswith("counts"))
+    rows = []
+    for r in range(13, 140):
+        nm = st.cell(r, 2).value
+        if not nm:
+            if r > 20: break
+            continue
+        nm, bset, prod = str(nm).strip(), str(st.cell(r, 4).value or "").strip(), str(st.cell(r, cc).value or "").strip()
+        for b in ("Big 30", "Big 24", "Big 12", "Big 6"):
+            v = st.cell(r, H[b]).value if b in H else None
+            if isinstance(v, (int, float)) and v > 0: rows.append({"box": b, "flavour": nm, "pcs": v})
+        v = st.cell(r, H["Other box"]).value if "Other box" in H else None
+        box = SET_BOX.get(bset) or (SINGLE_BOX.get(prod) if bset == "single" else None)
+        if box and isinstance(v, (int, float)) and v > 0: rows.append({"box": box, "flavour": nm, "pcs": v})
+    return rows
+
+
 def post(key, fn, body):
     req = urllib.request.Request(URL + "/rest/v1/rpc/" + fn, method="POST", data=json.dumps({"p": body}).encode(),
                                  headers={"apikey": key, "Content-Type": "application/json"})
@@ -181,6 +208,7 @@ def main():
                   len(q["pack"]), "pack rates,", len(q["fl"]), "flavours,", len(q["bx"]), "boxes"); return
         res = post(key, "sync_from_excel", p)
         res.update(post(key, "sync_ref", ref_payload(wb, p)))
+        res.update(post(key, "sync_box_flavours", {"factory": "ermine", "rows": box_flavour_rows(wb)}))
         print("db synced:", ", ".join(f"{k} {v}" for k, v in res.items()))
     except Exception as e:
         msg = str(e).replace(key, "***")

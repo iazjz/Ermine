@@ -54,7 +54,7 @@ button.link{background:none;border:0;color:var(--main);font:inherit;font-size:14
 .fname{font-weight:700;font-size:18px;margin:4px 0 12px}
 .tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);
   padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
-.tabs button{flex:1;background:none;border:0;font:inherit;font-size:13.5px;font-weight:600;color:var(--dim);padding:10px 4px;
+.tabs button{flex:1;background:none;border:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--dim);padding:10px 2px;
   border-radius:12px;cursor:pointer}
 .tabs button.on{color:#fff;background:var(--p500)}
 .big4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -233,12 +233,13 @@ async function loadRef(){
   S.ref={products:p.data||[],flavours:fl.data||[],boxes:b.data||[],bc:bc.data||[],reasons:r.data||[]};
 }
 function drawApp(){
-  const tabs=[["entry","tEntry"],["plan","tPlan"],["today","tToday"]].concat(isMgr()?[["team","tTeam"]]:[]);
+  const tabs=[["entry","tEntry"],["plan","tPlan"],["stock","tStock"],["today","tToday"]].concat(isMgr()?[["team","tTeam"]]:[]);
   $("#tabs").innerHTML=tabs.map(([k,l])=>`<button class="${S.view===k?"on":""}" data-v="${k}" type="button">${u(l)}</button>`).join("");
   $("#tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ S.view=b.dataset.v; S.form=null; drawApp(); });
   const head=`<div class="fname">${esc(S.fname)} · <span class="pill">${S.roles.map(r=>esc(T[L].roles[r]||r)).join("، ")}</span></div>`;
   const a=$("#app");
   if(S.view==="plan") return drawPlan(a,head);
+  if(S.view==="stock") return drawStock(a,head);
   if(S.view==="today") return drawToday(a,head);
   if(S.view==="team") return drawTeam(a,head);
   a.innerHTML=head+`<div class="big4">
@@ -432,6 +433,9 @@ async function drawPlan(a,head){
   const X=await loadPlanExtras(); await loadPlan(day);
   const {data:so}=await sb.from("sales_orders").select("box_id,qty").eq("factory_id",S.fid).eq("day",day);
   const ord={}; (so||[]).forEach(o=>ord[o.box_id]=(ord[o.box_id]||0)+o.qty);
+  // the latest count beats the production file's figure (20 Nov 2026)
+  const {data:cn}=await sb.from("stock_counts").select("flavour_id,stock,day").eq("factory_id",S.fid).neq("status","void").order("entered_at",{ascending:false}).limit(500);
+  const cnt={}; (cn||[]).forEach(c=>{ if(!cnt[c.flavour_id]&&c.stock!=null) cnt[c.flavour_id]=c; });
   const pl=P.plan||{}, dis=ed?"":" disabled";
   const qv=(st,key,id)=>{ const l=P.lines.find(x=>x.stage===st&&x[key]===id); return l?l.qty:""; };
   let h=`<div class="panel"><h2>${u("planFor")} <span dir="ltr">${day}</span> · <span class="pill">${pl.published?u("published"):u("notPub")}</span></h2>
@@ -446,7 +450,7 @@ async function drawPlan(a,head){
   R.products.forEach(p=>{ const fl=R.flavours.filter(f=>f.product_id===p.id); if(!fl.length) return;
     h+=`<div class="fname" style="margin-top:12px">${esc(p.code)}</div>`+fl.map(f=>{ const r=X.rf[f.id]||{};
       const lt=r.month_target!=null&&r.month_made!=null?r.month_target-r.month_made:null;
-      return `<div class="ent"><div><div class="w"><bdi>${esc(f.name_en)}</bdi></div><div class="m">${u("stock")} ${n0(r.stock)} · ${u("sugg")} <b>${n0(r.suggested)}</b>${
+      return `<div class="ent"><div><div class="w"><bdi>${esc(f.name_en)}</bdi></div><div class="m">${u("stock")} ${cnt[f.id]?n0(cnt[f.id].stock)+" ("+u("fromCount")+" "+esc(cnt[f.id].day.slice(5))+")":n0(r.stock)} · ${u("sugg")} <b>${n0(r.suggested)}</b>${
         lt!=null?` · ${u("left")} ${lt>0?n0(lt):"✓"}`:""}</div></div>
         <input class="pq" data-p="${p.id}" data-f="${f.id}" data-s="${r.suggested||0}" inputmode="numeric" style="width:92px" value="${esc(qv("made","flavour_id",f.id))}"${dis}></div>`; }).join(""); });
   h+=`</div>`;
@@ -520,6 +524,99 @@ async function planVsActual(day,all){
         aB=all.filter(x=>ok(x)&&x.stage==="packed").reduce((s,x)=>s+x.qty,0);
   return `<div class="panel" style="margin:0 0 12px"><h2>${u("vsT")}</h2><div class="tot" style="grid-template-columns:1fr 1fr">
     <div><b>${n0(aM)} / ${n0(pM)}</b><span>${u("tMade")} · ${u("pcs")}</span></div><div><b>${n0(aB)} / ${n0(pB)}</b><span>${u("tPack")} · ${u("boxes")}</span></div></div></div>`;
+}
+/* ---------- pieces stock count (20 Nov 2026) ---------- */
+Object.assign(T2.ar,{tStock:"المخزون",stT:"جرد الحبات",stSub:"مرة في اليوم، الصبح قبل الخطة. «المتوقع» = آخر جرد + المصنوع − المغطّى − ما ذهب للتعبئة (محسوب).",
+  unc:"غير مغطّى",cot:"مغطّى",lw:"محلول ينتظر",lp:"محلول عُبّئ",expT:"المتوقع",match:"مطابق",matchAll:"مطابق للكل",saveCount:"حفظ الجرد",
+  countSaved:"حُفظ الجرد ✓ ({n} نكهة)",nothingTyped:"اكتب عددًا لنكهة واحدة على الأقل.",lastC:"آخر جرد",never:"لم تُجرد",
+  baseX:"الأساس: رقم ملف الإنتاج",alertT:"للمتابعة",gapT:"فرق كبير بين المتوقع والجرد",oldT:"لم تُجرد منذ أكثر من يومين",allOk:"لا شيء يحتاج متابعة.",
+  gapLine:"{f}: جرد {c} مقابل متوقع {e} (فرق {d})",days:"يوم",fromCount:"جرد"});
+Object.assign(T2.en,{tStock:"Stock",stT:"Pieces count",stSub:"Once a day, in the morning before the plan. “Expected” = last count + made − coated − used for packing (worked out).",
+  unc:"Uncoated",cot:"Coated",lw:"Loose waiting",lp:"Loose packed",expT:"Expected",match:"Matches",matchAll:"All match",saveCount:"Save the count",
+  countSaved:"Count saved ✓ ({n} flavours)",nothingTyped:"Type a number for at least one flavour.",lastC:"Last count",never:"Never counted",
+  baseX:"Base: the production file's figure",alertT:"To follow up",gapT:"Big gap between expected and counted",oldT:"Not counted for more than two days",allOk:"Nothing to follow up.",
+  gapLine:"{f}: counted {c} against expected {e} (gap {d})",days:"days",fromCount:"count"});
+const COATED_BOX=new Set(["Mini","Ice Cream","Large Bites"]);
+async function stockModel(){
+  const X=await loadPlanExtras(), R=S.ref, f=S.fid;
+  const since=new Date(Date.now()-14*864e5).toISOString();
+  const [sc,pe,bf,rf]=await Promise.all([
+    sb.from("stock_counts").select("flavour_id,stock,coated,exp_stock,exp_coated,day,entered_at,status").eq("factory_id",f).neq("status","void").order("entered_at",{ascending:false}).limit(1000),
+    sb.from("production_entries").select("stage,flavour_id,box_id,qty,entered_at").eq("factory_id",f).eq("status","approved").gte("entered_at",since),
+    sb.from("box_flavours").select("box_id,flavour_id,pcs"),
+    sb.from("ref_flavour").select("flavour_id,at").eq("factory_id",f)]);
+  const last={}; (sc.data||[]).forEach(c=>{ if(!last[c.flavour_id]) last[c.flavour_id]=c; });
+  const refAt=Object.fromEntries((rf.data||[]).map(x=>[x.flavour_id,x.at]));
+  const box=Object.fromEntries(R.boxes.map(b=>[b.id,b]));
+  const M={};
+  R.flavours.forEach(fl=>{
+    const c=last[fl.id], ref=X.rf[fl.id]||{};
+    const base = c ? {stock:c.stock||0, coated:c.coated||0, at:c.entered_at, src:"count", day:c.day}
+                   : {stock:ref.stock||0, coated:ref.coated_stock||0, at:refAt[fl.id]||since, src:"file"};
+    M[fl.id]={fl, base, made:0, coat:0, useU:0, useC:0, last:c||null};
+  });
+  (pe.data||[]).forEach(e=>{
+    if(e.stage==="made"&&M[e.flavour_id]&&e.entered_at>M[e.flavour_id].base.at) M[e.flavour_id].made+=e.qty;
+    if(e.stage==="coated"&&M[e.flavour_id]&&e.entered_at>M[e.flavour_id].base.at) M[e.flavour_id].coat+=e.qty;
+    if(e.stage==="packed"){ const b=box[e.box_id]; if(!b) return; const coatedBox=COATED_BOX.has(b.code);
+      const parts = e.flavour_id ? [{flavour_id:e.flavour_id,pcs:b.pieces_per_box}] : (bf.data||[]).filter(x=>x.box_id===e.box_id);
+      parts.forEach(pt=>{ const m=M[pt.flavour_id]; if(!m||e.entered_at<=m.base.at) return;
+        if(coatedBox) m.useC+=e.qty*pt.pcs; else m.useU+=e.qty*pt.pcs; }); }
+  });
+  Object.values(M).forEach(m=>{ m.expU=Math.round(m.base.stock+m.made-m.coat-m.useU); m.expC=Math.round(m.base.coated+m.coat-m.useC); });
+  return M;
+}
+async function drawStock(a,head){
+  const ed=canPlan(), R=S.ref;
+  a.innerHTML=head+`<div id="sk" class="empty">…</div>`;
+  const M=await stockModel(), dis=ed?"":" disabled";
+  const age=d=>d?Math.floor((Date.now()-new Date(d))/864e5):null;
+  let h="";
+  if(isMgr()||canPlan()){
+    const gaps=Object.values(M).filter(m=>m.last&&m.last.exp_stock!=null).map(m=>({m,d:(m.last.stock||0)-m.last.exp_stock}))
+      .filter(x=>Math.abs(x.d)>Math.max(50,0.05*Math.abs(x.m.last.exp_stock||0))).sort((x,y)=>Math.abs(y.d)-Math.abs(x.d));
+    const old=Object.values(M).filter(m=>{ const g=age(m.last&&m.last.entered_at); return g==null||g>2; });
+    h+=`<div class="panel" style="margin-top:0"><h2>${u("alertT")}</h2>`;
+    if(gaps.length) h+=`<div class="fld"><label>${u("gapT")}</label>${gaps.slice(0,10).map(x=>`<div class="m"><bdi>${esc(u("gapLine",{f:x.m.fl.name_en,c:n0(x.m.last.stock),e:n0(x.m.last.exp_stock),d:(x.d>0?"+":"")+n0(x.d)}))}</bdi></div>`).join("")}</div>`;
+    if(old.length) h+=`<div class="fld"><label>${u("oldT")} (${n0(old.length)})</label><div class="m">${old.slice(0,12).map(m=>`<bdi>${esc(m.fl.name_en)}</bdi>`).join(" · ")}${old.length>12?" …":""}</div></div>`;
+    if(!gaps.length&&!old.length) h+=`<p class="sub">${u("allOk")}</p>`;
+    h+=`</div>`;
+  }
+  h+=`<div class="panel"><h2>${u("stT")}</h2><p class="sub">${u("stSub")}</p>${ed?`<button class="x" type="button" id="mall">${u("matchAll")}</button>`:""}`;
+  R.products.forEach(p=>{ const fls=R.flavours.filter(f=>f.product_id===p.id); if(!fls.length) return;
+    h+=`<div class="fname" style="margin-top:14px">${esc(p.code)}</div>`+fls.map(fl=>{ const m=M[fl.id], showC=p.is_coated||m.base.coated>0||m.expC>0;
+      const g=age(m.last&&m.last.entered_at);
+      return `<div class="ent" style="display:block"><div class="w"><bdi>${esc(fl.name_en)}</bdi></div>
+        <div class="m">${u("expT")}: ${u("unc")} <b>${n0(m.expU)}</b>${showC?` · ${u("cot")} <b>${n0(m.expC)}</b>`:""} · ${
+          m.last?`${u("lastC")} ${esc(m.last.day)}${g>2?" ⚠":""}`:`${u("never")} · ${u("baseX")}`}</div>
+        <div class="seg" style="margin:8px 0 0">
+          <label style="flex:1;margin:0;font-size:11.5px">${u("unc")}<input class="cu" data-f="${fl.id}" data-e="${m.expU}" data-ec="${m.expC}" inputmode="numeric"${dis}></label>
+          ${showC?`<label style="flex:1;margin:0;font-size:11.5px">${u("cot")}<input class="cc" data-f="${fl.id}" inputmode="numeric"${dis}></label>`:""}
+          ${ed?`<button class="x" type="button" data-m="${fl.id}" style="align-self:flex-end">${u("match")}</button>`:""}</div>
+        <details style="margin-top:6px"><summary class="m" style="cursor:pointer">${u("lw")} / ${u("lp")}</summary><div class="seg" style="margin:6px 0 0">
+          <label style="flex:1;margin:0;font-size:11.5px">${u("lw")}<input class="lw" data-f="${fl.id}" inputmode="numeric"${dis}></label><label style="flex:1;margin:0;font-size:11.5px">${u("lp")}<input class="lp" data-f="${fl.id}" inputmode="numeric"${dis}></label></div></details></div>`; }).join(""); });
+  h+=ed?`<button class="go" id="csave" type="button">${u("saveCount")}</button><div class="msg" id="msg"></div>`:`<p class="sub">${u("readOnly")}</p>`;
+  h+=`</div>`;
+  $("#sk").className=""; $("#sk").innerHTML=h;
+  if(!ed) return;
+  const fill=id=>{ const i=a.querySelector(`.cu[data-f="${id}"]`); i.value=i.dataset.e;
+    const c=a.querySelector(`.cc[data-f="${id}"]`); if(c) c.value=i.dataset.ec; };
+  a.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>fill(b.dataset.m));
+  $("#mall").onclick=()=>a.querySelectorAll(".cu").forEach(i=>{ if(!i.value) fill(i.dataset.f); });
+  $("#csave").onclick=async()=>{
+    const toInt=v=>{ const s=String(v||"").replace(/\D/g,""); return s===""?null:parseInt(s); };
+    const day=riyadh(0), rows=[];
+    a.querySelectorAll(".cu").forEach(i=>{ const id=i.dataset.f, cu=toInt(i.value), c=a.querySelector(`.cc[data-f="${id}"]`), cc=c?toInt(c.value):null,
+      lw=toInt(a.querySelector(`.lw[data-f="${id}"]`).value), lp=toInt(a.querySelector(`.lp[data-f="${id}"]`).value);
+      if(cu==null&&cc==null&&lw==null&&lp==null) return;
+      rows.push({factory_id:S.fid,client_id:uuid(),day,flavour_id:id,stock:cu,coated:cc,loose_wait:lw,loose_packed:lp,
+        exp_stock:+i.dataset.e,exp_coated:+i.dataset.ec}); });
+    if(!rows.length) return msg(u("nothingTyped"),"bad");
+    const b=$("#csave"); b.disabled=true;
+    const {error}=await sb.from("stock_counts").insert(rows); b.disabled=false;
+    if(error){ console.warn(error); return msg(t("fail"),"bad"); }
+    msg(u("countSaved",{n:n0(rows.length)}),"ok"); setTimeout(()=>drawApp(),900);
+  };
 }
 async function signOut(){ await sb.auth.signOut(); STEP="email"; S.fid=null; S.ref=null; $("#app").hidden=true; $("#tabs").hidden=true; $("#mainbox").hidden=false; draw(); }
 $("#lang").onclick=()=>{ L=L==="ar"?"en":"ar"; try{ localStorage.setItem("wd-lang",L); }catch(e){} draw(); };
