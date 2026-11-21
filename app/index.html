@@ -403,15 +403,17 @@ Object.assign(T2.ar,{tPlan:"الخطة",planFor:"خطة يوم",tomorrow:"بكر
   am:"صباحًا",pm:"مساءً",stock:"المخزون",sugg:"المقترح",left:"باقي للهدف",maxB:"أقصى ممكن",ord:"طلبات اليوم",takeSugg:"خذ المقترح",
   sumT:"الملخص (تقدير)",hNeed:"الساعات المطلوبة",hHave:"ساعات الحضور",finish:"الانتهاء المتوقع",draft:"حفظ مسودة",publish:"اعتماد الخطة",
   published:"معتمدة",notPub:"مسودة",savedDraft:"حُفظت المسودة ✓",savedPub:"اعتُمدت الخطة ✓",noteT:"ماذا حدث اليوم (ملاحظة الشيف)",
-  readOnly:"عرض فقط. الخطة يعدّلها الشيف والمخطِّط.",noPlan:"لا توجد خطة لهذا اليوم بعد.",estNote:"الساعات من معدلات ملف الإنتاج لكل حبة وكل بوكس. تقدير.",
-  vsT:"الخطة مقابل الفعلي",planned:"المخطط",actual:"الفعلي",pubQ:"اعتماد الخطة؟ تظهر للفريق، وأي تعديل بعدها يُسجَّل.",slot:"—"});
+  readOnly:"عرض فقط. الخطة يعدّلها الشيف والمخطِّط.",noPlan:"لا توجد خطة لهذا اليوم بعد.",estNote:"ساعات العمل من خطوات كل منتج ومعامل المعايرة، بنفس طريقة ملف الإنتاج (طابقته في ٢١ نوفمبر). الوقت المتوقع = البداية + الساعات ÷ الحضور + الاستراحة.",
+  vsT:"الخطة مقابل الفعلي",vFits:"يكفي في يوم عادي",vOt:"يحتاج أوفرتايم: {h} ساعة لكل شخص",vTooMuch:"أكثر من يوم واحد: انقل شغل أو زد عمال",
+  hrsU:"ساعة",holding:"منطقة انتظار",areaLoad:"حمل المناطق",hPer:"ساعة لكل شخص",planned:"المخطط",actual:"الفعلي",pubQ:"اعتماد الخطة؟ تظهر للفريق، وأي تعديل بعدها يُسجَّل.",slot:"—"});
 Object.assign(T2.en,{tPlan:"Plan",planFor:"Plan for",tomorrow:"Tomorrow",shift:"Shift",staffIn:"Staff in",start:"Start",end:"End",
   brk:"Break (min)",pcsPlan:"Planned production (pieces)",boxPlan:"Planned packing (boxes)",areas:"Tasks by area",roster:"Who is where",
   am:"AM",pm:"PM",stock:"Stock",sugg:"Suggested",left:"Left to target",maxB:"Max possible",ord:"Orders that day",takeSugg:"Take the suggestion",
   sumT:"Summary (estimate)",hNeed:"Hours needed",hHave:"Hours on the floor",finish:"Expected finish",draft:"Save draft",publish:"Approve the plan",
   published:"Approved",notPub:"Draft",savedDraft:"Draft saved ✓",savedPub:"Plan approved ✓",noteT:"What happened today (chef's note)",
-  readOnly:"View only. The chef and the planner edit the plan.",noPlan:"No plan for this day yet.",estNote:"Hours from the production file's rates per piece and per box. An estimate.",
-  vsT:"Plan against actual",planned:"Planned",actual:"Actual",pubQ:"Approve the plan? The team sees it, and any later change is logged.",slot:"—"});
+  readOnly:"View only. The chef and the planner edit the plan.",noPlan:"No plan for this day yet.",estNote:"Labour hours from each product's steps and calibration factor, the same way as the production file (matched on 21 Nov). Finish = start + hours ÷ staff + break.",
+  vsT:"Plan against actual",vFits:"Fits a standard day",vOt:"Needs overtime: {h} h per person",vTooMuch:"More than one day: move work or add staff",
+  hrsU:"h",holding:"holding area",areaLoad:"Area load",hPer:"h per person",planned:"Planned",actual:"Actual",pubQ:"Approve the plan? The team sees it, and any later change is logged.",slot:"—"});
 const canPlan=()=>S.roles.some(r=>["owner","admin","planner","chef"].includes(r));
 const P={off:0,plan:null,lines:[],tasks:[],roster:[],ext:null};
 async function loadPlanExtras(){
@@ -423,13 +425,18 @@ async function loadPlanExtras(){
     sb.from("staff").select("id,name,sort").eq("factory_id",f).eq("active",true).order("sort"),
     sb.from("ref_flavour").select("flavour_id,stock,coated_stock,suggested,month_target,month_made").eq("factory_id",f),
     sb.from("ref_box").select("box_id,max_possible,still_to_pack").eq("factory_id",f)]);
-  const [pr,bx]=await Promise.all([
-    sb.from("products").select("id,make_h_per_pc").eq("factory_id",f),
-    sb.from("boxes").select("id,pack_h_per_box").eq("factory_id",f)]);
+  const [pr,bx,ps,stc,fac]=await Promise.all([
+    sb.from("products").select("id,make_h_per_pc,cal_factor").eq("factory_id",f),
+    sb.from("boxes").select("id,pack_h_per_box").eq("factory_id",f),
+    sb.from("product_steps").select("product_id,kind,time_min,qty_per,crew,busy,passive,batch,box_id,area1,w1,area2,w2").eq("factory_id",f),
+    sb.from("stations").select("id,code,parallel,name_en,name_ar").eq("factory_id",f).eq("active",true),
+    sb.from("factories").select("std_hours,break_hours,max_day_hours").eq("id",f).maybeSingle()]);
   const num=s=>parseInt(String(s.name_en).split(" ")[0])||99;
   P.ext={stations:(st.data||[]).sort((a,b)=>num(a)-num(b)),steps:sp.data||[],staff:sf.data||[],
     rf:Object.fromEntries((rf.data||[]).map(x=>[x.flavour_id,x])),rb:Object.fromEntries((rb.data||[]).map(x=>[x.box_id,x])),
-    mk:Object.fromEntries((pr.data||[]).map(x=>[x.id,+x.make_h_per_pc||0])),pk:Object.fromEntries((bx.data||[]).map(x=>[x.id,+x.pack_h_per_box||0]))};
+    mk:Object.fromEntries((pr.data||[]).map(x=>[x.id,+x.make_h_per_pc||0])),pk:Object.fromEntries((bx.data||[]).map(x=>[x.id,+x.pack_h_per_box||0])),
+    cal:Object.fromEntries((pr.data||[]).map(x=>[x.id,+x.cal_factor||1])), psteps:ps.data||[], areas:(stc.data||[]).filter(x=>x.code),
+    std:+((fac.data||{}).std_hours||8), brk:+((fac.data||{}).break_hours||1), maxd:+((fac.data||{}).max_day_hours||13)};
   return P.ext;
 }
 async function loadPlan(day){
@@ -498,21 +505,53 @@ async function drawPlan(a,head){
     ${ed?`<button class="go" id="pd" type="button" style="background:var(--p300)">${u("draft")}</button>
     <button class="go" id="pp" type="button">${u("publish")}</button>`:""}<div class="msg" id="msg"></div></div>`;
   $("#pl").className=""; $("#pl").innerHTML=h;
+  /* The workbook's Capacity Engine, step by step (checked equal to Excel on 21 Nov 2026:
+     every step, total labour and all 10 area loads). Hours = calibration x time/qty x the day's
+     quantity; labour = hours x crew x busy share, passive steps excluded. Per box / per mould rows
+     count their own pack unit; "Per loose pc" rows count pieces, exactly as the workbook does. */
+  const engine=(pcsBy,boxBy,coatBy={})=>{ let labour=0; const area={};
+    X.psteps.forEach(st=>{ const k=st.kind||"", g=st.time_min==null?null:+st.time_min, h=st.qty_per==null?null:+st.qty_per;
+      if(g==null||(k!=="Fixed"&&h==null)) return;
+      const pcs=pcsBy[st.product_id]||0; let x;
+      if(k==="Fixed") x = pcs===0?0:g*(st.batch?Math.ceil(pcs/+st.batch):1)/60;
+      else if(k==="Per coated pc") x = g/h*(coatBy[st.product_id]||0)/60;   // pieces actually coated that day, as the workbook does
+      else if(k.startsWith("Per box")||k.startsWith("Per mould")||k.slice(0,8)==="Per loose") x = g/h*(boxBy[st.box_id]||0)/60;
+      else x = g/h*pcs/60;
+      const L=(X.cal[st.product_id]||1)*x;
+      if(!st.passive&&st.crew) labour+=L*(+st.crew)*(st.busy==null?1:+st.busy);
+      if(st.area1) area[st.area1]=(area[st.area1]||0)+L*(st.w1==null?1:+st.w1);
+      if(st.area2) area[st.area2]=(area[st.area2]||0)+L*(st.w2==null?0:+st.w2); });
+    return {labour,area}; };
+  const {data:ce}=await sb.from("production_entries").select("product_id,qty").eq("factory_id",S.fid).eq("day",day).eq("stage","coated").eq("status","approved");
+  const coatBy={}; (ce||[]).forEach(e=>coatBy[e.product_id]=(coatBy[e.product_id]||0)+e.qty);
   const sum=()=>{ let pcs=0,bxs=0,hrs=0;
     a.querySelectorAll("#pl details.grp").forEach(d=>{ const g=d.querySelector(".gt"); if(!g) return;
       if(d.dataset.sel){ const ss=[...d.querySelectorAll("select")]; const n=ss.filter(x=>x.value).length; g.textContent=n?n0(n)+" / "+n0(ss.length):""; return; }
       const t=[...d.querySelectorAll("input")].reduce((a2,i)=>a2+(+i.value||0),0); g.textContent=n0(t); });
-    a.querySelectorAll(".pq").forEach(i=>{ const q=+i.value||0; pcs+=q; hrs+=q*(X.mk[i.dataset.p]||0); });
-    a.querySelectorAll(".bq").forEach(i=>{ const q=+i.value||0; bxs+=q; hrs+=q*(X.pk[i.dataset.b]||0); });
+    const pcsBy={}, boxBy={};
+    a.querySelectorAll(".pq").forEach(i=>{ const q=+i.value||0; pcs+=q; pcsBy[i.dataset.p]=(pcsBy[i.dataset.p]||0)+q; });
+    a.querySelectorAll(".bq").forEach(i=>{ const q=+i.value||0; bxs+=q; boxBy[i.dataset.b]=(boxBy[i.dataset.b]||0)+q; });
+    const E=engine(pcsBy,boxBy,coatBy); hrs=E.labour;
     const n=+$("#ps").value||0, t1=$("#p1").value, t2=$("#p2").value, br=+$("#pb").value||0;
     const mins=x=>{ const [hh,mm]=(x||"").split(":").map(Number); return isNaN(hh)?null:hh*60+(mm||0); };
     let have=null, fin="—";
-    if(n&&mins(t1)!=null&&mins(t2)!=null){ let span=mins(t2)-mins(t1); if(span<=0) span+=1440; have=n*Math.max(0,span-br)/60; }
-    if(n&&mins(t1)!=null){ let f=Math.round(mins(t1)+br+hrs*60/n); const nd=f>=1440; f%=1440;
+    have = n ? n*X.std : null;                       // staff hours in a standard day
+    const brm = $("#pb").value!=="" ? br : X.brk*60;  // the plan's break, else the factory's
+    if(n&&mins(t1)!=null){ let f=Math.round(mins(t1)+brm+hrs*60/n); const nd=f>=1440; f%=1440;
       fin=String(Math.floor(f/60)).padStart(2,"0")+":"+String(f%60).padStart(2,"0")+(nd?" (+1)":""); }
+    const pp=n?hrs/n:null;
+    const verdict = pp==null?"" : pp<=X.std ? `<span class="pill" style="background:#E3F5EC;color:var(--ok)">${u("vFits")}</span>`
+      : pp<=X.maxd ? `<span class="st pending">${u("vOt",{h:(pp-X.std).toLocaleString(L==="ar"?"ar-EG":"en-GB",{maximumFractionDigits:1})})}</span>`
+      : `<span class="st void" style="background:#FDE2E2;color:var(--bad)">${u("vTooMuch")}</span>`;
+    const ar=X.areas.slice().sort((x,y)=>x.code-y.code).map(s2=>{ const need=E.area[s2.code]||0; if(!need) return "";
+      const av=s2.parallel?X.std*(+s2.parallel):null, ld=av?need/av:null;
+      return `<div class="m"><bdi>${esc(L==="ar"?(s2.name_ar||s2.name_en):s2.name_en)}</bdi>: ${(need).toLocaleString(L==="ar"?"ar-EG":"en-GB",{maximumFractionDigits:1})} ${u("hrsU")}${
+        ld!=null?` / ${n0(av)} · <b style="color:${ld>1?"var(--bad)":ld>0.85?"#8A5A00":"var(--ok)"}">${n0(ld*100)}%</b>`:` · ${u("holding")}`}</div>`; }).join("");
     $("#sum").innerHTML=`<div><b>${n0(pcs)}</b><span>${u("pcs")}</span></div><div><b>${n0(bxs)}</b><span>${u("boxes")}</span></div>
       <div><b style="color:${have!=null&&hrs>have?"var(--bad)":"inherit"}">${n0(hrs)}</b><span>${u("hNeed")}${have!=null?" / "+n0(have):""}</span></div>
-      <div style="grid-column:1/-1"><b dir="ltr">${fin}</b><span>${u("finish")}</span></div>`; };
+      <div style="grid-column:1/-1"><b dir="ltr">${fin}</b><span>${u("finish")}${pp!=null?" · "+pp.toLocaleString(L==="ar"?"ar-EG":"en-GB",{maximumFractionDigits:1})+" "+u("hPer"):""}</span></div>
+      <div style="grid-column:1/-1">${verdict}</div>
+      ${ar?`<details class="grp" style="grid-column:1/-1;text-align:start"><summary>${u("areaLoad")}</summary><div class="gb">${ar}</div></details>`:""}`; };
   a.querySelectorAll("#pl input").forEach(i=>i.addEventListener("input",sum));
   a.querySelectorAll("#pl select").forEach(i=>i.addEventListener("change",sum)); sum();
   if(!ed) return;

@@ -238,6 +238,50 @@ def store_payload(base):
     return {"factory": "ermine", "store": store, "mats": mats}
 
 
+def engine_payload(base):
+    """The workbook's routing (rows 9..38 of each product sheet) with each step's areas resolved
+    the way the Capacity Engine resolves them. Checked against the workbook on 21 Nov 2026: every
+    step's hours, the total labour (253.69 h) and all 10 area loads matched exactly
+    (app/tools/engine_check.py)."""
+    import re
+    live = ermine_paths.find(ermine_paths.LIVE)
+    wf = openpyxl.load_workbook(live)                 # formulas: which pack cell a row counts
+    wv = workbook()
+    num = lambda v: v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+    sp, ar, cal = wv["Steps x Products"], wv["Areas"], wv["Calibration"]
+    DEF = {sp.cell(r, 1).value: (num(sp.cell(r, 2).value), num(sp.cell(r, 3).value), num(sp.cell(r, 4).value))
+           for r in range(5, 21) if sp.cell(r, 1).value}
+    code = lambda a: int(str(a).split("-")[0].strip()) if a and str(a).split("-")[0].strip().isdigit() else 0
+    steps = []
+    for pc in [x["code"] for x in base["products"]]:
+        if pc not in wf.sheetnames: continue
+        f, v = wf[pc], wv[pc]
+        hdr = next(r for r in range(1, 20) if f.cell(r, 1).value == "Sub-Step")
+        units = {}
+        for c in range(2, 14, 2):
+            lab = f.cell(6, c).value
+            if isinstance(lab, str) and lab.strip(): units[f.cell(6, c + 1).coordinate] = lab.strip()
+        for i, r in enumerate(range(hdr + 1, hdr + 31)):
+            sub = f.cell(r, 1).value
+            if not sub: continue
+            m = re.search(r"\(G\d+/H\d+\)\*\$([A-Z])\$6", str(f.cell(r, 12).value or ""))
+            main, a1s, a2s, pct = f.cell(r, 2).value, f.cell(r, 3).value, f.cell(r, 4).value, num(v.cell(r, 5).value)
+            d1, d2, dp = DEF.get(main, (None, None, None))
+            if a1s: a1, w1 = code(a1s), (pct if pct is not None else 1)
+            else: a1, w1 = int(d1 or 0), (1 if d2 is None else (0.5 if dp is None else dp))
+            if a2s: a2, w2 = code(a2s), 1 - (pct if pct is not None else 1)
+            else: a2, w2 = int(d2 or 0), 1 - (1 if d2 is None else (0.5 if dp is None else dp))
+            steps.append({"product": pc, "seq": i, "sub": str(sub), "main": main, "kind": str(f.cell(r, 6).value or ""),
+                          "time": num(v.cell(r, 7).value), "qty": num(v.cell(r, 8).value), "crew": num(v.cell(r, 9).value),
+                          "busy": num(v.cell(r, 14).value), "passive": v.cell(r, 10).value == "Yes", "batch": num(v.cell(r, 11).value),
+                          "unit": units.get(f"{m.group(1)}6") if m else None, "a1": a1, "w1": w1, "a2": a2, "w2": w2})
+    cals = [{"code": cal.cell(r, 1).value, "cal": num(cal.cell(r, 2).value)} for r in range(5, 30)
+            if cal.cell(r, 1).value and num(cal.cell(r, 2).value) is not None]
+    areas = [{"name": f"{int(ar.cell(r, 1).value)} - {ar.cell(r, 2).value}", "code": int(ar.cell(r, 1).value),
+              "parallel": num(ar.cell(r, 7).value)} for r in range(5, 40) if isinstance(ar.cell(r, 1).value, (int, float))]
+    return {"factory": "ermine", "steps": steps, "cal": cals, "areas": areas}
+
+
 def post(key, fn, body):
     req = urllib.request.Request(URL + "/rest/v1/rpc/" + fn, method="POST", data=json.dumps({"p": body}).encode(),
                                  headers={"apikey": key, "Content-Type": "application/json"})
@@ -265,6 +309,7 @@ def main():
         res.update(post(key, "sync_ref", ref_payload(wb, p)))
         res.update(post(key, "sync_box_flavours", {"factory": "ermine", "rows": box_flavour_rows(wb)}))
         res.update(post(key, "sync_store", store_payload(p)))
+        res.update(post(key, "sync_engine", engine_payload(p)))
         print("db synced:", ", ".join(f"{k} {v}" for k, v in res.items()))
     except Exception as e:
         msg = str(e).replace(key, "***")
