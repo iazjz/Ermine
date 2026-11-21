@@ -198,9 +198,9 @@
   "value_target": 823165.7
  },
  "2026-11": {
-  "at": "2026-11-21T04:43",
+  "at": "2026-11-21T16:06",
   "days_total": 26,
-  "packed_box": 15260,
+  "packed_box": 16350,
   "pieces": [
    {
     "made": 48886,
@@ -369,20 +369,20 @@
    },
    {
     "box": "Classic pcs loose",
-    "packed": 1606,
+    "packed": 2162,
     "pcs": 1,
     "price": 3,
     "target": 0,
-    "value": 4818,
+    "value": 6486,
     "value_target": 0
    },
    {
     "box": "Kingdom pcs loose",
-    "packed": 28,
+    "packed": 562,
     "pcs": 1,
     "price": 3,
     "target": 0,
-    "value": 84,
+    "value": 1686,
     "value_target": 0
    },
    {
@@ -423,7 +423,7 @@
    }
   ],
   "target_box": 22789,
-  "value": 774380.724,
+  "value": 777650.7239999999,
   "value_target": 1082429.797
  }
 }
