@@ -404,7 +404,7 @@ Object.assign(T2.ar,{tPlan:"الخطة",planFor:"خطة يوم",tomorrow:"بكر
   sumT:"الملخص (تقدير)",hNeed:"الساعات المطلوبة",hHave:"ساعات الحضور",finish:"الانتهاء المتوقع",draft:"حفظ مسودة",publish:"اعتماد الخطة",
   published:"معتمدة",notPub:"مسودة",savedDraft:"حُفظت المسودة ✓",savedPub:"اعتُمدت الخطة ✓",noteT:"ماذا حدث اليوم (ملاحظة الشيف)",
   readOnly:"عرض فقط. الخطة يعدّلها الشيف والمخطِّط.",noPlan:"لا توجد خطة لهذا اليوم بعد.",estNote:"ساعات العمل من خطوات كل منتج ومعامل المعايرة، بنفس طريقة ملف الإنتاج (طابقته في ٢١ نوفمبر). الوقت المتوقع = البداية + الساعات ÷ الحضور + الاستراحة.",
-  vsT:"الخطة مقابل الفعلي",vFits:"يكفي في يوم عادي",vOt:"يحتاج أوفرتايم: {h} ساعة لكل شخص",vTooMuch:"أكثر من يوم واحد: انقل شغل أو زد عمال",
+  vsT:"الخطة مقابل الفعلي",optT:"خيارات المقترح",perDay:"يوميًا",ideal:"المثالي",optSub:"A: يغطي بكرة ويحافظ على وتيرة الشهر. B: يومين مع يوم احتياط. المثالي: أقل ساعات توصّل كل الطلبات. الساعات بنفس المحرّك، والتعبئة = طلبات اليوم.",vFits:"يكفي في يوم عادي",vOt:"يحتاج أوفرتايم: {h} ساعة لكل شخص",vTooMuch:"أكثر من يوم واحد: انقل شغل أو زد عمال",
   hrsU:"ساعة",holding:"منطقة انتظار",areaLoad:"حمل المناطق",hPer:"ساعة لكل شخص",planned:"المخطط",actual:"الفعلي",pubQ:"اعتماد الخطة؟ تظهر للفريق، وأي تعديل بعدها يُسجَّل.",slot:"—"});
 Object.assign(T2.en,{tPlan:"Plan",planFor:"Plan for",tomorrow:"Tomorrow",shift:"Shift",staffIn:"Staff in",start:"Start",end:"End",
   brk:"Break (min)",pcsPlan:"Planned production (pieces)",boxPlan:"Planned packing (boxes)",areas:"Tasks by area",roster:"Who is where",
@@ -412,7 +412,7 @@ Object.assign(T2.en,{tPlan:"Plan",planFor:"Plan for",tomorrow:"Tomorrow",shift:"
   sumT:"Summary (estimate)",hNeed:"Hours needed",hHave:"Hours on the floor",finish:"Expected finish",draft:"Save draft",publish:"Approve the plan",
   published:"Approved",notPub:"Draft",savedDraft:"Draft saved ✓",savedPub:"Plan approved ✓",noteT:"What happened today (chef's note)",
   readOnly:"View only. The chef and the planner edit the plan.",noPlan:"No plan for this day yet.",estNote:"Labour hours from each product's steps and calibration factor, the same way as the production file (matched on 21 Nov). Finish = start + hours ÷ staff + break.",
-  vsT:"Plan against actual",vFits:"Fits a standard day",vOt:"Needs overtime: {h} h per person",vTooMuch:"More than one day: move work or add staff",
+  vsT:"Plan against actual",optT:"Suggestion options",perDay:"per day",ideal:"Ideal",optSub:"A: covers tomorrow and keeps the month's pace. B: two days with a day in hand. Ideal: the fewest hours that still ships every order. Hours from the same engine; packing = that day's orders.",vFits:"Fits a standard day",vOt:"Needs overtime: {h} h per person",vTooMuch:"More than one day: move work or add staff",
   hrsU:"h",holding:"holding area",areaLoad:"Area load",hPer:"h per person",planned:"Planned",actual:"Actual",pubQ:"Approve the plan? The team sees it, and any later change is logged.",slot:"—"});
 const canPlan=()=>S.roles.some(r=>["owner","admin","planner","chef"].includes(r));
 const P={off:0,plan:null,lines:[],tasks:[],roster:[],ext:null};
@@ -458,8 +458,32 @@ async function drawPlan(a,head){
   const {data:so}=await sb.from("sales_orders").select("box_id,qty").eq("factory_id",S.fid).eq("day",day);
   const ord={}; (so||[]).forEach(o=>ord[o.box_id]=(ord[o.box_id]||0)+o.qty);
   // the latest count beats the production file's figure (20 Nov 2026)
-  const {data:cn}=await sb.from("stock_counts").select("flavour_id,stock,day").eq("factory_id",S.fid).neq("status","void").order("entered_at",{ascending:false}).limit(500);
+  const {data:cn}=await sb.from("stock_counts").select("flavour_id,stock,coated,day").eq("factory_id",S.fid).neq("status","void").order("entered_at",{ascending:false}).limit(500);
   const cnt={}; (cn||[]).forEach(c=>{ if(!cnt[c.flavour_id]&&c.stock!=null) cnt[c.flavour_id]=c; });
+  /* 21 Nov 2026 - the Stock sheet's own formulas (suggestion per flavour, A / B / IDEAL / COAT per
+     product, max boxes), translated by agent/xl2js.py and checked equal to Excel on all 96. They run
+     here on this app's stock (latest count, else the file's figure), orders and month figures. */
+  const SG={flavour:{},A:{},B:{},IDEAL:{},COAT:{},maxbox:{}};
+  const {data:er}=await sb.from("engine_ref").select("data").eq("factory_id",S.fid).maybeSingle();
+  if(er&&er.data){ const Dd=er.data;
+    const flId=Object.fromEntries(R.flavours.map(f=>[f.name_en,f.id]));
+    const serial=iso=>Math.round((Date.parse(iso+"T00:00:00Z")-Date.UTC(1899,11,30))/864e5);
+    const isoOf=n=>new Date(Date.UTC(1899,11,30)+n*864e5).toISOString().slice(0,10);
+    const d3=isoOf(serial(day)+3);
+    const {data:so3}=await sb.from("sales_orders").select("day,box_id,qty").eq("factory_id",S.fid).gte("day",day).lte("day",d3);
+    const boxCode=Object.fromEntries(R.boxes.map(b=>[b.id,b.code])), obq={};
+    (so3||[]).forEach(o=>{ const k=o.day+"|"+boxCode[o.box_id]; obq[k]=(obq[k]||0)+o.qty; });
+    const stockOf=(col,fname)=>{ const id=flId[fname], c=cnt[id], r=X.rf[id]||{};
+      return col==="J" ? (c&&c.stock!=null?c.stock:(r.stock??null)) : (c&&c.coated!=null?c.coated:(r.coated_stock??null)); };
+    const ctxf=new Function(Dd.helpers+"; return MAKE_CTX;")();
+    const C=ctxf((c,r)=>{ if((c==="J"||c==="N")&&r>=13&&r<=56){ const fn=Dd.rowfl[String(r)]; return fn?stockOf(c,fn):null; }
+        const v=Dd.statics[c+r]; return v===undefined?null:v; },
+      (c,d)=>{ const bx=Dd.obcols[c]; return bx?(obq[isoOf(d)+"|"+bx]||0):0; },
+      (c,r)=>{ const v=Dd.mt[c+r]; return v===undefined?null:v; }, serial(day));
+    (Dd.jobs||[]).forEach(j=>{ try{ const v=C.run(j.js); SG[j.cat][j.key]=typeof v==="number"?v:null; }catch(e){ SG[j.cat][j.key]=null; } });
+  }
+  const daysLeft=(er&&er.data&&er.data.mt&&+er.data.mt.B7)||null;   // Monthly Targets "working days left"
+  const sugOf=f=>SG.flavour[f.name_en]!=null?Math.round(SG.flavour[f.name_en]):((X.rf[f.id]||{}).suggested||0);
   const pl=P.plan||{}, dis=ed?"":" disabled";
   const qv=(st,key,id)=>{ const l=P.lines.find(x=>x.stage===st&&x[key]===id); return l?l.qty:""; };
   let h=`<div class="panel"><h2>${u("planFor")} <span dir="ltr">${day}</span> · <span class="pill">${pl.published?u("published"):u("notPub")}</span></h2>
@@ -472,17 +496,18 @@ async function drawPlan(a,head){
   // pieces
   h+=`<div class="panel"><h2>${u("pcsPlan")}</h2>${ed?`<button class="x" type="button" id="tsg">${u("takeSugg")}</button>`:""}`;
   R.products.forEach(p=>{ const fl=R.flavours.filter(f=>f.product_id===p.id); if(!fl.length) return;
-    const sgT=fl.reduce((a2,f)=>a2+((X.rf[f.id]||{}).suggested||0),0);
+    const sgT=fl.reduce((a2,f)=>a2+sugOf(f),0);
     h+=`<details class="grp"><summary><bdi>${esc(p.code)}</bdi><span class="gs">${u("sugg")} ${n0(sgT)} · ${u("planned")} <span class="gt">0</span></span></summary><div class="gb">`+fl.map(f=>{ const r=X.rf[f.id]||{};
       const lt=r.month_target!=null&&r.month_made!=null?r.month_target-r.month_made:null;
-      return `<div class="ent"><div><div class="w"><bdi>${esc(f.name_en)}</bdi></div><div class="m">${u("stock")} ${cnt[f.id]?n0(cnt[f.id].stock)+" ("+u("fromCount")+" "+esc(cnt[f.id].day.slice(5))+")":n0(r.stock)} · ${u("sugg")} <b>${n0(r.suggested)}</b>${
+      return `<div class="ent"><div><div class="w"><bdi>${esc(f.name_en)}</bdi></div><div class="m">${u("stock")} ${cnt[f.id]?n0(cnt[f.id].stock)+" ("+u("fromCount")+" "+esc(cnt[f.id].day.slice(5))+")":n0(r.stock)} · ${u("sugg")} <b>${n0(sugOf(f))}</b>${
         lt!=null?` · ${u("left")} ${lt>0?n0(lt):"✓"}`:""}</div></div>
-        <input class="pq" data-p="${p.id}" data-f="${f.id}" data-s="${r.suggested||0}" inputmode="numeric" style="width:92px" value="${esc(qv("made","flavour_id",f.id))}"${dis}></div>`; }).join("")+`</div></details>`; });
+        <input class="pq" data-p="${p.id}" data-f="${f.id}" data-s="${sugOf(f)}" inputmode="numeric" style="width:92px" value="${esc(qv("made","flavour_id",f.id))}"${dis}></div>`; }).join("")+`</div></details>`; });
   h+=`</div>`;
+  h+=`<details class="panel grp" id="opts"></details>`;
   // boxes
   const bxRow=b=>{ const r=X.rb[b.id]||{};
-    return `<div class="ent"><div><div class="w"><bdi>${esc(b.code)}</bdi></div><div class="m">${u("maxB")} ${n0(r.max_possible)}${
-      r.still_to_pack!=null?` · ${u("left")} ${n0(r.still_to_pack)}`:""}${ord[b.id]?` · ${u("ord")} <b>${n0(ord[b.id])}</b>`:""}</div></div>
+    return `<div class="ent"><div><div class="w"><bdi>${esc(b.code)}</bdi></div><div class="m">${u("maxB")} ${n0(SG.maxbox[b.code]!=null&&SG.maxbox[b.code]!==""?SG.maxbox[b.code]:r.max_possible)}${
+      r.still_to_pack!=null?` · ${u("left")} ${n0(r.still_to_pack)}${daysLeft&&r.still_to_pack>0?` · ${u("perDay")} ${n0(Math.ceil(r.still_to_pack/daysLeft))}`:""}`:""}${ord[b.id]?` · ${u("ord")} <b>${n0(ord[b.id])}</b>`:""}</div></div>
       <input class="bq" data-b="${b.id}" inputmode="numeric" style="width:92px" value="${esc(qv("packed","box_id",b.id))}"${dis}></div>`; };
   const bgrp={}; R.boxes.forEach(b=>{ const pc=R.bc.find(x=>x.box_id===b.id); const k=pc?(R.products.find(q=>q.id===pc.product_id)||{}).code||"—":"—"; (bgrp[k]=bgrp[k]||[]).push(b); });
   h+=`<div class="panel"><h2>${u("boxPlan")}</h2>`+Object.entries(bgrp).map(([k,bs])=>{ const oT=bs.reduce((a2,b)=>a2+(ord[b.id]||0),0);
@@ -508,14 +533,15 @@ async function drawPlan(a,head){
   /* The workbook's Capacity Engine, step by step (checked equal to Excel on 21 Nov 2026:
      every step, total labour and all 10 area loads). Hours = calibration x time/qty x the day's
      quantity; labour = hours x crew x busy share, passive steps excluded. Per box / per mould rows
-     count their own pack unit; "Per loose pc" rows count pieces, exactly as the workbook does. */
+     count their own pack unit, "Per loose pc" rows the loose pieces planned (the workbook counts pieces made there - a bug Aziz had fixed here). */
   const engine=(pcsBy,boxBy,coatBy={})=>{ let labour=0; const area={};
     X.psteps.forEach(st=>{ const k=st.kind||"", g=st.time_min==null?null:+st.time_min, h=st.qty_per==null?null:+st.qty_per;
       if(g==null||(k!=="Fixed"&&h==null)) return;
       const pcs=pcsBy[st.product_id]||0; let x;
       if(k==="Fixed") x = pcs===0?0:g*(st.batch?Math.ceil(pcs/+st.batch):1)/60;
       else if(k==="Per coated pc") x = g/h*(coatBy[st.product_id]||0)/60;   // pieces actually coated that day, as the workbook does
-      else if(k.startsWith("Per box")||k.startsWith("Per mould")||k.slice(0,8)==="Per loose") x = g/h*(boxBy[st.box_id]||0)/60;
+      // "Per loose pc" counts the loose pieces planned (fixed 21 Nov 2026, Aziz: the workbook tested 8 letters of a 9-letter word)
+      else if(k.startsWith("Per box")||k.startsWith("Per mould")||k.startsWith("Per loose")) x = g/h*(boxBy[st.box_id]||0)/60;
       else x = g/h*pcs/60;
       const L=(X.cal[st.product_id]||1)*x;
       if(!st.passive&&st.crew) labour+=L*(+st.crew)*(st.busy==null?1:+st.busy);
@@ -524,6 +550,19 @@ async function drawPlan(a,head){
     return {labour,area}; };
   const {data:ce}=await sb.from("production_entries").select("product_id,qty").eq("factory_id",S.fid).eq("day",day).eq("stage","coated").eq("status","approved");
   const coatBy={}; (ce||[]).forEach(e=>coatBy[e.product_id]=(coatBy[e.product_id]||0)+e.qty);
+  { // the workbook's three suggestions, priced with the same engine (packing = that day's orders)
+    const pid=Object.fromEntries(R.products.map(p=>[p.code,p.id]));
+    const boxOrd={}; R.boxes.forEach(b=>{ if(ord[b.id]) boxOrd[b.id]=ord[b.id]; });
+    const opt3=["A","B","IDEAL"].map(k=>{ const by={}; let tot=0;
+      Object.entries(SG[k]).forEach(([pc,v])=>{ const q=Math.round(+v||0); if(q>0&&pid[pc]){ by[pid[pc]]=q; tot+=q; } });
+      return {k,by,tot,h:engine(by,boxOrd).labour}; });
+    const nStaff=+$("#ps").value||0;
+    const rows=R.products.map(p=>{ const v=opt3.map(o=>o.by[p.id]||0); if(!v.some(x=>x)) return "";
+      return `<div class="ent"><div class="w"><bdi>${esc(p.code)}</bdi></div><div class="m" dir="ltr">${v.map(n0).join(" · ")}</div></div>`; }).join("");
+    $("#opts").innerHTML=`<summary><b>${u("optT")}</b><span class="gs">A · B · ${u("ideal")}</span></summary><div class="gb">
+      <p class="sub" style="margin:4px 0 8px">${u("optSub")}</p>
+      <div class="tot">${opt3.map(o=>`<div><b>${n0(o.tot)}</b><span>${o.k==="IDEAL"?u("ideal"):o.k} · ${u("pcs")}<br>${n0(o.h)} ${u("hrsU")}${nStaff?" · "+(o.h/nStaff).toLocaleString(L==="ar"?"ar-EG":"en-GB",{maximumFractionDigits:1})+" "+u("hPer"):""}</span></div>`).join("")}</div>
+      ${rows}</div>`; }
   const sum=()=>{ let pcs=0,bxs=0,hrs=0;
     a.querySelectorAll("#pl details.grp").forEach(d=>{ const g=d.querySelector(".gt"); if(!g) return;
       if(d.dataset.sel){ const ss=[...d.querySelectorAll("select")]; const n=ss.filter(x=>x.value).length; g.textContent=n?n0(n)+" / "+n0(ss.length):""; return; }

@@ -282,6 +282,38 @@ def engine_payload(base):
     return {"factory": "ermine", "steps": steps, "cal": cals, "areas": areas}
 
 
+def engine_ref_payload():
+    """The Stock sheet's suggestion (K, A/B/IDEAL/COAT rows 62-72) and max-boxes (Z) formulas,
+    translated to JS by xl2js, with the sheet's fixed cells. The app evaluates them on its own
+    stock, orders and month figures. Checked 21 Nov 2026: 96 formulas, all equal to Excel."""
+    import datetime as _dt, xl2js
+    live = ermine_paths.find(ermine_paths.LIVE)
+    wf, wv = openpyxl.load_workbook(live), workbook()
+    st, stv, ob, mt = wf["Stock"], wv["Stock"], wv["Order Book"], wv["Monthly Targets"]
+    ser = lambda d: (d - _dt.datetime(1899, 12, 30)).days if isinstance(d, _dt.datetime) else d
+    statics = {}
+    for row in stv.iter_rows(min_row=1, max_row=90, max_col=32):
+        for c in row:
+            if c.value is None: continue
+            if c.column_letter in ("J", "N") and 13 <= c.row <= 56: continue      # stock: the app's own
+            statics[f"{c.column_letter}{c.row}"] = ser(c.value) if isinstance(c.value, _dt.datetime) else c.value
+    jobs = []
+    def add(k, cat, key):
+        f = st[k].value
+        if isinstance(f, str) and f.startswith("=") and key:
+            jobs.append({"k": k, "cat": cat, "key": str(key).strip(), "js": xl2js.to_js(f)})
+    for r in range(13, 57): add(f"K{r}", "flavour", st.cell(r, 2).value)
+    for r in range(62, 73):
+        for c, cat in (("B", "A"), ("F", "B"), ("G", "IDEAL"), ("C", "COAT")): add(f"{c}{r}", cat, st.cell(r, 1).value)
+    for r in range(13, 40): add(f"Z{r}", "maxbox", st.cell(r, 24).value)
+    obcols = {ob.cell(6, c).column_letter: str(ob.cell(6, c).value).strip() for c in range(2, 40) if ob.cell(6, c).value}
+    mtv = {f"{c.column_letter}{c.row}": c.value for row in mt.iter_rows(min_row=1, max_row=60, max_col=8)
+           for c in row if isinstance(c.value, (int, float)) and not isinstance(c.value, bool)}
+    rowfl = {str(r): str(st.cell(r, 2).value).strip() for r in range(13, 57) if st.cell(r, 2).value}
+    return {"factory": "ermine", "data": {"statics": statics, "jobs": jobs, "obcols": obcols, "mt": mtv,
+            "rowfl": rowfl, "helpers": xl2js.HELPERS}}
+
+
 def post(key, fn, body):
     req = urllib.request.Request(URL + "/rest/v1/rpc/" + fn, method="POST", data=json.dumps({"p": body}).encode(),
                                  headers={"apikey": key, "Content-Type": "application/json"})
@@ -310,6 +342,7 @@ def main():
         res.update(post(key, "sync_box_flavours", {"factory": "ermine", "rows": box_flavour_rows(wb)}))
         res.update(post(key, "sync_store", store_payload(p)))
         res.update(post(key, "sync_engine", engine_payload(p)))
+        res.update(post(key, "sync_engine_ref", engine_ref_payload()))
         print("db synced:", ", ".join(f"{k} {v}" for k, v in res.items()))
     except Exception as e:
         msg = str(e).replace(key, "***")
