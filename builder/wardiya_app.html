@@ -125,6 +125,14 @@ button.hcard:active{transform:scale(.985)} button.hcard:hover{box-shadow:0 8px 2
 .hal::after{content:" \2039";float:inline-end;color:var(--dim)} html[dir="ltr"] .hal::after{content:" \203A"}
 .hsl{margin-top:6px} .soonp{text-align:center;color:var(--dim)} .soonp svg{width:40px;height:40px;color:var(--main);margin:6px auto 0;display:block}
 .m{font-size:12.5px;color:var(--dim)}
+.app input[type=time],.app input[type=date],.app input[type=month]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;min-height:50px}
+.big4>*,.seg>*{min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tot.tot2{grid-template-columns:1fr 1fr} .tot.tot2>div{padding:12px} .tot.tot2 b{font-size:22px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;color:var(--ink);white-space:nowrap}
+.chip b{font-weight:700} .chip.warn{background:#FFF3D6;border-color:#F1D9A0;color:#8A5A00}
+.gaprow{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.gaprow:last-child{border-bottom:0} .gaprow .h{color:var(--dim);font-size:12px}
 /* closed groups (Aziz, 20 Nov 2026): a long list opens one product / area at a time */
 details.grp{border:1px solid var(--line);border-radius:14px;margin-top:8px;background:var(--card)}
 details.grp>summary{list-style:none;display:flex;align-items:center;gap:8px;padding:12px;cursor:pointer;font-weight:700}
@@ -653,12 +661,12 @@ async function planVsActual(day,all){
 /* ---------- pieces stock count (20 Nov 2026) ---------- */
 Object.assign(T2.ar,{tStock:"المخزون",stT:"جرد الحبات",stSub:"مرة في اليوم، الصبح قبل الخطة. «المتوقع» = آخر جرد + المصنوع − المغطّى − ما ذهب للتعبئة (محسوب).",
   unc:"غير مغطّى",cot:"مغطّى",lw:"محلول ينتظر",lp:"محلول عُبّئ",expT:"المتوقع",match:"مطابق",matchAll:"مطابق للكل",saveCount:"حفظ الجرد",
-  countSaved:"حُفظ الجرد ✓ ({n} نكهة)",nothingTyped:"اكتب عددًا لنكهة واحدة على الأقل.",lastC:"آخر جرد",never:"لم تُجرد",
+  countSaved:"حُفظ الجرد ✓ ({n} نكهة)",nothingTyped:"اكتب عددًا لنكهة واحدة على الأقل.",lastC:"آخر جرد",countedS:"جُرد",never:"لم تُجرد",
   baseX:"الأساس: رقم ملف الإنتاج",alertT:"للمتابعة",gapT:"فرق كبير بين المتوقع والجرد",oldT:"لم تُجرد منذ أكثر من يومين",allOk:"لا شيء يحتاج متابعة.",
   gapLine:"{f}: جرد {c} مقابل متوقع {e} (فرق {d})",days:"يوم",fromCount:"جرد"});
 Object.assign(T2.en,{tStock:"Stock",stT:"Pieces count",stSub:"Once a day, in the morning before the plan. “Expected” = last count + made − coated − used for packing (worked out).",
   unc:"Uncoated",cot:"Coated",lw:"Loose waiting",lp:"Loose packed",expT:"Expected",match:"Matches",matchAll:"All match",saveCount:"Save the count",
-  countSaved:"Count saved ✓ ({n} flavours)",nothingTyped:"Type a number for at least one flavour.",lastC:"Last count",never:"Never counted",
+  countSaved:"Count saved ✓ ({n} flavours)",nothingTyped:"Type a number for at least one flavour.",lastC:"Last count",countedS:"counted",never:"Never counted",
   baseX:"Base: the production file's figure",alertT:"To follow up",gapT:"Big gap between expected and counted",oldT:"Not counted for more than two days",allOk:"Nothing to follow up.",
   gapLine:"{f}: counted {c} against expected {e} (gap {d})",days:"days",fromCount:"count"});
 const COATED_BOX=new Set(["Mini","Ice Cream","Large Bites"]);
@@ -702,15 +710,17 @@ async function drawStock(a,head){
       .filter(x=>Math.abs(x.d)>Math.max(50,0.05*Math.abs(x.m.last.exp_stock||0))).sort((x,y)=>Math.abs(y.d)-Math.abs(x.d));
     const old=Object.values(M).filter(m=>{ const g=age(m.last&&m.last.entered_at); return g==null||g>2; });
     h+=`<div class="panel" style="margin-top:0"><h2>${u("alertT")}</h2>`;
-    if(gaps.length) h+=`<div class="fld"><label>${u("gapT")}</label>${gaps.slice(0,10).map(x=>`<div class="m"><bdi>${esc(u("gapLine",{f:x.m.fl.name_en,c:n0(x.m.last.stock),e:n0(x.m.last.exp_stock),d:(x.d>0?"+":"")+n0(x.d)}))}</bdi></div>`).join("")}</div>`;
-    if(old.length) h+=`<div class="fld"><label>${u("oldT")} (${n0(old.length)})</label><div class="m">${old.slice(0,12).map(m=>`<bdi>${esc(m.fl.name_en)}</bdi>`).join(" · ")}${old.length>12?" …":""}</div></div>`;
+    if(gaps.length) h+=`<div class="fld"><label>${u("gapT")}</label><div class="gaprow h"><span>${u("flavour")}</span><span>${u("countedS")}</span><span>${u("expT")}</span><span>±</span></div>${
+      gaps.slice(0,10).map(x=>`<div class="gaprow"><bdi>${esc(x.m.fl.name_en)}</bdi><span>${n0(x.m.last.stock)}</span><span>${n0(x.m.last.exp_stock)}</span><b style="color:${x.d<0?"var(--bad)":"var(--ok)"}" dir="ltr">${x.d>0?"+":""}${n0(x.d)}</b></div>`).join("")}</div>`;
+    if(old.length){ const byP={}; old.forEach(m=>{ const pc=(R.products.find(p=>p.id===m.fl.product_id)||{}).code||"—"; byP[pc]=(byP[pc]||0)+1; });
+      h+=`<div class="fld"><label>${u("oldT")} · ${n0(old.length)}</label><div class="chips">${Object.entries(byP).map(([pc,n])=>`<span class="chip"><bdi>${esc(pc)}</bdi><b>${n0(n)}</b></span>`).join("")}</div></div>`; }
     if(!gaps.length&&!old.length) h+=`<p class="sub">${u("allOk")}</p>`;
     h+=`</div>`;
   }
   h+=`<div class="panel"><h2>${u("stT")}</h2><p class="sub">${u("stSub")}</p>${ed?`<button class="x" type="button" id="mall">${u("matchAll")}</button>`:""}`;
   R.products.forEach(p=>{ const fls=R.flavours.filter(f=>f.product_id===p.id); if(!fls.length) return;
     const nOld=fls.filter(fl=>{ const g=age(M[fl.id].last&&M[fl.id].last.entered_at); return g==null||g>2; }).length;
-    h+=`<details class="grp"><summary><bdi>${esc(p.code)}</bdi><span class="gs">${nOld?"⚠ "+n0(nOld)+" · ":""}<span class="gt"></span> / ${n0(fls.length)}</span></summary><div class="gb">`+fls.map(fl=>{ const m=M[fl.id], showC=p.is_coated||m.base.coated>0||m.expC>0;
+    h+=`<details class="grp"><summary><bdi>${esc(p.code)}</bdi><span class="gs">${nOld?`<span class="chip warn">⚠ ${n0(nOld)}</span> `:""}<span>${u("countedS")} <bdi><span class="gt"></span>/${n0(fls.length)}</bdi></span></span></summary><div class="gb">`+fls.map(fl=>{ const m=M[fl.id], showC=p.is_coated||m.base.coated>0||m.expC>0;
       const g=age(m.last&&m.last.entered_at);
       return `<div class="ent" style="display:block"><div class="w"><bdi>${esc(fl.name_en)}</bdi></div>
         <div class="m">${u("expT")}: ${u("unc")} <b>${n0(m.expU)}</b>${showC?` · ${u("cot")} <b>${n0(m.expC)}</b>`:""} · ${
@@ -1076,7 +1086,10 @@ function drawApp(){
   if(V==="mat"){ ST.seg="mat"; ST.noSeg=true; return drawStore(a,head); }
   if(V==="team") return drawTeam(a,head);
   if(V==="settings") return drawAdmin(a,head);
-  if(["days","rep","mtarget","whatif"].includes(V)) return a.innerHTML=`<div class="panel soonp">${svg(S.sec)}<h2>${u("soon")}</h2><p class="sub" style="margin:0">${u("soonSub")}</p></div>`;
+  if(V==="days") return drawDays(a);
+  if(V==="rep") return drawRep(a);
+  if(V==="mtarget") return drawMonth(a);
+  if(V==="whatif") return drawWhatif(a);
   // entry
   a.innerHTML=`<div class="big4">
      <button data-f="made" type="button"><span class="ic">🧁</span>${u("made")}</button>
@@ -1136,7 +1149,7 @@ async function drawHome(a){
   const bx=Object.fromEntries(R.boxes.map(b=>[b.id,b.code])), byD={};
   (so.data||[]).forEach(o=>{ (byD[o.day]=byD[o.day]||{})[bx[o.box_id]]=((byD[o.day]||{})[bx[o.box_id]]||0)+o.qty; });
   const line=(d,lab)=>{ const m=byD[d]; if(!m) return ""; const tot=Object.values(m).reduce((x,y)=>x+y,0);
-    return `<div class="hsl"><b>${lab}</b> · ${n0(tot)} ${u("boxes")}<div class="m">${Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([k,v])=>`<bdi>${esc(k)}</bdi> ${n0(v)}`).join(" · ")}</div></div>`; };
+    return `<div class="hsl"><b>${lab}</b> · ${n0(tot)} ${u("boxes")}<div class="chips">${Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,6).map(([k,v])=>`<span class="chip"><bdi>${esc(k)}</bdi><b>${n0(v)}</b></span>`).join("")}</div></div>`; };
   const sl=line(td,u("hDay"))+line(tm,u("hTomorrow"));
   cards+=`<button class="hcard" type="button" onclick="go('stock','boxes')"><div class="hk">${u("hSales")}</div>${sl||`<div class="hnone">${u("hNoOrders")}</div>`}</button>`;
   // 5. last shift
@@ -1146,6 +1159,225 @@ async function drawHome(a){
      : h0 ? `<div class="hrow"><div><b>${n0(h0.data.made)}</b><span>${u("tMade")} · ${u("pcs")} · <span dir="ltr">${esc(h0.day)}</span></span></div><div><b>${n0(h0.data.packed)}</b><span>${u("tPack")} · ${u("boxes")}</span></div></div><div class="m">${u("fromFile")}</div>`
      : `<div class="hnone">${u("hNoLast")}</div>`)+`</button>`;
   a.innerHTML=cards;
+}
+/* ---------- performance: day log + reports (21 Nov 2026) ---------- */
+Object.assign(T2.ar,{dlAll:"كل الأيام",dlMiss:"فاتتها الخطة",dlNone:"لا أيام في هذه الفترة.",dlPlan:"الخطة",dlMade:"المصنوع",dlPacked:"المعبّأ",
+  dlHit:"من الخطة",dlStaff:"الحضور",dlHours:"ساعات",dlWhy:"أسباب التأخير",dlNote:"ملاحظة الشيف",dlByP:"المصنوع حسب المنتج",dlByB:"المعبّأ حسب البوكس",
+  dlSrcX:"من ملف الإنتاج",dlSrcA:"من التطبيق",dlNoWhy:"لم يُكتب سبب",rpThis:"هذا الشهر",rpLast:"الشهر الماضي",rpFrom:"من",rpTo:"إلى",
+  rpDays:"أيام مسجّلة",rpMade:"حبات صُنعت",rpPacked:"بوكسات عُبّئت",rpAdh:"أيام على الخطة",rpAdhSub:"ضمن ±١٠٪",rpHit:"المصنوع من المخطط",
+  rpOt:"أوفرتايم",rpValue:"قيمة المعبّأ",rpProd:"الإنتاجية",rpProdU:"لكل ساعة عمل",rpPer:"للفرد في الفترة",rpWhy:"التأخير حسب السبب",rpCount:"مرات",
+  rpByP:"المصنوع حسب المنتج",rpByB:"المعبّأ حسب البوكس",rpPrice:"السعر",rpVal:"القيمة",rpNoPrice:"بلا سعر",rpWorked:"محسوبة",perDayS:"يوميًا"});
+Object.assign(T2.en,{dlAll:"All days",dlMiss:"Missed the plan",dlNone:"No days in this period.",dlPlan:"Plan",dlMade:"Made",dlPacked:"Packed",
+  dlHit:"of plan",dlStaff:"Staff",dlHours:"Hours",dlWhy:"Delay reasons",dlNote:"Chef's note",dlByP:"Made by product",dlByB:"Packed by box",
+  dlSrcX:"from the production file",dlSrcA:"from the app",dlNoWhy:"No reason written",rpThis:"This month",rpLast:"Last month",rpFrom:"From",rpTo:"To",
+  rpDays:"Days recorded",rpMade:"Pieces made",rpPacked:"Boxes packed",rpAdh:"Days on plan",rpAdhSub:"within ±10%",rpHit:"Made of planned",
+  rpOt:"Overtime",rpValue:"Value packed",rpProd:"Productivity",rpProdU:"per staff-hour",rpPer:"per person in the period",rpWhy:"Delays by reason",rpCount:"times",
+  rpByP:"Made by product",rpByB:"Packed by box",rpPrice:"Price",rpVal:"Value",rpNoPrice:"no price",rpWorked:"worked out",perDayS:"per day"});
+const PF={from:null,to:null,miss:false};
+const CUR=()=>L==="ar"?"ر.س":"SAR";
+const mStart=off=>{ const d=new Date(riyadh(0)+"T00:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth()-off); return d.toISOString().slice(0,10); };
+const mEnd=off=>{ const d=new Date(mStart(off)+"T00:00:00Z"); d.setUTCMonth(d.getUTCMonth()+1); d.setUTCDate(0); return d.toISOString().slice(0,10); };
+/* One record per day: Excel's history for the days before the app, the app's own entries after. */
+async function dayRecords(from,to){
+  const f=S.fid, R=S.ref;
+  const [hd,pe,dl,pl]=await Promise.all([
+    sb.from("history_days").select("day,data").eq("factory_id",f).gte("day",from).lte("day",to),
+    sb.from("production_entries").select("day,stage,product_id,box_id,qty").eq("factory_id",f).eq("status","approved").gte("day",from).lte("day",to),
+    sb.from("delays").select("day,product_id,reason_id,minutes_lost,what_happened").eq("factory_id",f).neq("status","void").gte("day",from).lte("day",to),
+    sb.from("daily_plans").select("id,day,staff_in,shift_start,shift_end,break_min,note,published").eq("factory_id",f).gte("day",from).lte("day",to)]);
+  const P=Object.fromEntries(R.products.map(p=>[p.id,p.code])), B=Object.fromEntries(R.boxes.map(b=>[b.id,b.code])), RS=Object.fromEntries(R.reasons.map(r=>[r.id,r]));
+  const D={};
+  (hd.data||[]).forEach(h=>{ const x=h.data||{};
+    D[h.day]={day:h.day,src:"x",made:x.made||0,packed:x.packed||0,plan:x.plan_pcs||null,staff:x.staff||null,hours:x.hours||null,ot:x.ot||0,
+      byP:x.by_prod||{},byB:x.by_box||{},planP:x.plan_prod||{},note:x.note||"",
+      why:(x.reasons||[]).map(r=>({prod:r.prod||r.product||"",reason:r.reason||r.r||"",cat:r.cat||r.c||"",what:r.what||""}))}; });
+  const appDay=d=>D[d]&&D[d].src==="a"?D[d]:(D[d]={day:d,src:"a",made:0,packed:0,plan:null,staff:null,hours:null,ot:0,byP:{},byB:{},planP:{},note:"",why:[]});
+  (pe.data||[]).forEach(e=>{ const r=appDay(e.day);
+    if(e.stage==="made"){ r.made+=e.qty; const k=P[e.product_id]||"—"; r.byP[k]=(r.byP[k]||0)+e.qty; }
+    if(e.stage==="packed"){ r.packed+=e.qty; const k=B[e.box_id]||"—"; r.byB[k]=(r.byB[k]||0)+e.qty; } });
+  (dl.data||[]).forEach(x=>{ const r=appDay(x.day), rs=RS[x.reason_id]||{}; r.why.push({prod:P[x.product_id]||"",reason:rs.text_en||"",cat:rs.category||"",what:x.what_happened||"",min:x.minutes_lost}); });
+  const plans=(pl.data||[]).filter(p=>p.published);
+  if(plans.length){ const {data:ln}=await sb.from("daily_plan_lines").select("plan_id,stage,product_id,qty").in("plan_id",plans.map(p=>p.id));
+    plans.forEach(p=>{ const r=appDay(p.day); r.staff=p.staff_in; r.note=p.note||r.note;
+      if(p.shift_start&&p.shift_end){ const mi=x=>{ const [a2,b2]=x.split(":").map(Number); return a2*60+b2; }; let sp=mi(p.shift_end)-mi(p.shift_start); if(sp<=0) sp+=1440; r.hours=Math.max(0,sp-(p.break_min||0))/60; }
+      const l=(ln||[]).filter(x=>x.plan_id===p.id&&x.stage==="made"); r.plan=l.reduce((s2,x)=>s2+x.qty,0)||null;
+      l.forEach(x=>{ const k=P[x.product_id]||"—"; r.planP[k]=(r.planP[k]||0)+x.qty; }); }); }
+  return Object.values(D).sort((a2,b2)=>b2.day.localeCompare(a2.day));
+}
+const pc=v=>v==null?"—":(Math.round(v*100)).toLocaleString(L==="ar"?"ar-EG":"en-GB")+"%";
+const dayName=d=>new Date(d+"T00:00:00").toLocaleDateString(L==="ar"?"ar-EG":"en-GB",{weekday:"short",day:"numeric",month:"short"});
+async function drawDays(a){
+  if(!PF.from){ PF.from=mStart(0); PF.to=riyadh(0); }
+  a.innerHTML=`<div class="seg"><button type="button" data-m="0" class="${!PF.miss?"on":""}">${u("dlAll")}</button><button type="button" data-m="1" class="${PF.miss?"on":""}">${u("dlMiss")}</button></div>
+    <div class="seg"><label style="flex:1;margin:0">${u("rpFrom")}<input type="date" id="df" value="${PF.from}"></label><label style="flex:1;margin:0">${u("rpTo")}<input type="date" id="dt" value="${PF.to}"></label></div><div id="dlx">${SKEL}</div>`;
+  a.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{ PF.miss=b.dataset.m==="1"; drawApp(); });
+  $("#df").onchange=e=>{ PF.from=e.target.value; drawApp(); }; $("#dt").onchange=e=>{ PF.to=e.target.value; drawApp(); };
+  let D=await dayRecords(PF.from,PF.to);
+  if(PF.miss) D=D.filter(r=>r.plan&&r.made/r.plan<0.9);
+  if(!D.length){ $("#dlx").innerHTML=`<div class="panel"><p class="sub" style="margin:0">${u("dlNone")}</p></div>`; return; }
+  const kv=(o,unit)=>`<div class="chips">${Object.entries(o).filter(([k,v])=>v).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<span class="chip"><bdi>${esc(k)}</bdi><b>${n0(v)}</b></span>`).join("")||`<span class="m">—</span>`}</div>`;
+  $("#dlx").innerHTML=D.map(r=>{ const hit=r.plan?r.made/r.plan:null, col=hit==null?"var(--dim)":hit<0.9?"var(--bad)":"var(--ok)";
+    return `<details class="grp"><summary><span><b>${esc(dayName(r.day))}</b></span><span class="gs"><b style="color:${col}">${hit==null?"":pc(hit)}</b> · ${n0(r.made)} ${u("pcs")} · ${n0(r.packed)} ${u("boxes")}${r.why.length?` <span class="chip warn">⏱ ${n0(r.why.length)}</span>`:""}</span></summary><div class="gb">
+      <div class="tot"><div><b>${r.plan?n0(r.plan):"—"}</b><span>${u("dlPlan")} · ${u("pcs")}</span></div><div><b>${n0(r.made)}</b><span>${u("dlMade")} · ${hit==null?"":pc(hit)+" "+u("dlHit")}</span></div>
+        <div><b>${r.staff?n0(r.staff):"—"}</b><span>${u("dlStaff")}${r.hours?" · "+(+r.hours).toLocaleString(L==="ar"?"ar-EG":"en-GB",{maximumFractionDigits:1})+" "+u("dlHours"):""}</span></div></div>
+      <div class="m">${u("dlByP")}</div>${kv(r.byP)}<div class="m" style="margin-top:8px">${u("dlByB")}</div>${kv(r.byB)}
+      ${r.why.length?`<div class="m" style="margin-top:8px">${u("dlWhy")}</div>${r.why.map(w=>`<div class="gaprow" style="grid-template-columns:auto 1fr"><bdi>${esc(w.prod||"—")}</bdi><span><bdi>${esc(w.reason||u("dlNoWhy"))}</bdi>${w.what?` · ${esc(w.what)}`:""}</span></div>`).join("")}`:""}
+      ${r.note?`<div class="m" style="margin-top:8px">${u("dlNote")}</div><div>${esc(r.note)}</div>`:""}
+      <div class="m" style="margin-top:8px">${r.src==="x"?u("dlSrcX"):u("dlSrcA")}</div></div></details>`; }).join("");
+}
+async function drawRep(a){
+  if(!PF.from){ PF.from=mStart(0); PF.to=riyadh(0); }
+  a.innerHTML=`<div class="seg"><button type="button" data-q="0">${u("rpThis")}</button><button type="button" data-q="1">${u("rpLast")}</button></div>
+    <div class="seg"><label style="flex:1;margin:0">${u("rpFrom")}<input type="date" id="rf" value="${PF.from}"></label><label style="flex:1;margin:0">${u("rpTo")}<input type="date" id="rt" value="${PF.to}"></label></div><div id="rpx">${SKEL}</div>`;
+  a.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{ const o=+b.dataset.q; PF.from=mStart(o); PF.to=o?mEnd(o):riyadh(0); drawApp(); });
+  $("#rf").onchange=e=>{ PF.from=e.target.value; drawApp(); }; $("#rt").onchange=e=>{ PF.to=e.target.value; drawApp(); };
+  const D=await dayRecords(PF.from,PF.to);
+  if(!D.length){ $("#rpx").innerHTML=`<div class="panel"><p class="sub" style="margin:0">${u("dlNone")}</p></div>`; return; }
+  const sum=k=>D.reduce((s2,r)=>s2+(+r[k]||0),0), made=sum("made"), packed=sum("packed");
+  const P=D.filter(r=>r.plan), onp=P.filter(r=>Math.abs(r.made-r.plan)/r.plan<0.1).length;
+  const pS=P.reduce((s2,r)=>s2+r.plan,0), pM=P.reduce((s2,r)=>s2+r.made,0), ot=sum("ot");
+  const sh=D.reduce((s2,r)=>s2+((+r.staff||0)*(+r.hours||0)),0), avgS=D.filter(r=>r.staff).reduce((s2,r)=>s2+r.staff,0)/Math.max(1,D.filter(r=>r.staff).length);
+  const byP={}, byB={}, why={};
+  D.forEach(r=>{ Object.entries(r.byP).forEach(([k,v])=>byP[k]=(byP[k]||0)+v); Object.entries(r.byB).forEach(([k,v])=>byB[k]=(byB[k]||0)+v);
+    r.why.forEach(w=>{ const k=w.reason||u("dlNoWhy"); why[k]=(why[k]||0)+1; }); });
+  // money: owner / admin only (prices are theirs)
+  let val=null, pr={};
+  if(isMgr()){ const {data:bp}=await sb.from("box_prices").select("box_id,valid_from,price_sar").lte("valid_from",PF.to).order("valid_from",{ascending:false});
+    const code=Object.fromEntries(S.ref.boxes.map(b=>[b.id,b.code])); (bp||[]).forEach(x=>{ const k=code[x.box_id]; if(k&&pr[k]==null) pr[k]=+x.price_sar; });
+    const priced=Object.keys(byB).filter(k=>pr[k]!=null);
+    val=priced.length?priced.reduce((s2,k)=>s2+byB[k]*pr[k],0):null; }
+  const loc=L==="ar"?"ar-EG":"en-GB", n1=v=>(+v).toLocaleString(loc,{maximumFractionDigits:1});
+  const tile=(b,l,sub,go2)=>`<div${go2?` class="tnum" onclick="${go2}"`:""}><b>${b}</b><span>${l}${sub?`<br>${sub}`:""}</span></div>`;
+  let h=`<div class="panel" style="margin-top:0"><h2>${u("rpDays")} · ${n0(D.length)}</h2><div class="tot tot2">
+    ${tile(n0(made),u("rpMade"),`${n0(made/D.length)} ${u("perDayS")}`)}${tile(n0(packed),u("rpPacked"),u("boxes"))}
+    ${tile(P.length?pc(onp/P.length):"—",u("rpAdh"),`${n0(onp)} / ${n0(P.length)} · ${u("rpAdhSub")}`)}
+    ${tile(pS?pc(pM/pS):"—",u("rpHit"),pS?`${n0(pM)} / ${n0(pS)}`:"")}${tile(n0(ot),u("rpOt"),u("hrsU"))}
+    ${val!=null?tile(n0(val)+" "+CUR(),u("rpValue"),u("rpWorked")):""}
+    ${val!=null&&sh?tile(n0(val/sh)+" "+CUR(),u("rpProd"),`${u("rpProdU")}${avgS?` · ${n0(val/avgS)} ${CUR()} ${u("rpPer")}`:""}`):tile(sh?n1(made/sh):"—",u("rpProd"),u("pcs")+" "+u("rpProdU"))}
+  </div></div>`;
+  const wk=Object.entries(why).sort((x,y)=>y[1]-x[1]);
+  if(wk.length) h+=grp(`<b>${u("rpWhy")}</b>`,wk.map(([k,v])=>`<div class="gaprow" style="grid-template-columns:1fr auto"><bdi>${esc(k)}</bdi><b>${n0(v)} ${u("rpCount")}</b></div>`).join(""),n0(wk.reduce((s2,x)=>s2+x[1],0)));
+  h+=grp(`<b>${u("rpByP")}</b>`,Object.entries(byP).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<div class="gaprow" style="grid-template-columns:1fr auto auto"><bdi>${esc(k)}</bdi><b>${n0(v)}</b><span class="m">${pc(v/(made||1))}</span></div>`).join(""),n0(made)+" "+u("pcs"));
+  h+=grp(`<b>${u("rpByB")}</b>`,Object.entries(byB).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`<div class="gaprow" style="grid-template-columns:1fr auto ${val!=null?"auto":""}"><bdi>${esc(k)}</bdi><b>${n0(v)}</b>${val!=null?`<span class="m">${pr[k]!=null?n0(v*pr[k])+" "+CUR():u("rpNoPrice")}</span>`:""}</div>`).join(""),n0(packed)+" "+u("boxes"));
+  $("#rpx").innerHTML=h;
+}
+/* ---------- month target + what-if (21 Nov 2026) ---------- */
+Object.assign(T2.ar,{mtBox:"البوكسات",mtProd:"المنتجات (حبة)",mtFl:"النكهات (حبة)",mtTarget:"الهدف",mtDone:"المنجز",mtLeft:"الباقي",
+  mtPerDay:"يوميًا",mtDaysLeft:"أيام العمل الباقية",mtNoT:"لا هدف لهذا الشهر بعد. يُضاف من الإدارة ← الإعدادات.",mtVal:"القيمة",mtStop:"اكتمل · أوقف",
+  mtNote:"المنجز = ما سجّله ملف الإنتاج حتى آخر مزامنة + ما سُجّل في التطبيق بعدها.",
+  wiT:"ماذا لو جاء طلب جديد؟",wiSub:"اكتب البوكسات وتاريخ التسليم. يحسب التطبيق الساعات بنفس محرّك الخطة، ويقارنها بالساعات المتاحة حتى التاريخ بعد خصم الطلبات المحجوزة.",
+  wiAdd:"أضف سطرًا",wiStaff:"عدد العمال",wiNeed:"يحتاج الطلب",wiFree:"المتاح حتى التاريخ",wiBooked:"محجوز لطلبات أخرى",wiDays:"أيام العمل",
+  wiFits:"يلحق في الوقت ✓",wiOt:"يحتاج أوفرتايم: {h} ساعة لكل شخص يوميًا",wiNo:"لا يلحق: يحتاج {h} ساعة لكل شخص يوميًا فوق الدوام",wiTooSoon:"التاريخ قريب جدًا",
+  wiCalc:"احسب",wiDate:"تاريخ التسليم"});
+Object.assign(T2.en,{mtBox:"Boxes",mtProd:"Products (pieces)",mtFl:"Flavours (pieces)",mtTarget:"Target",mtDone:"Done",mtLeft:"Left",
+  mtPerDay:"per day",mtDaysLeft:"Working days left",mtNoT:"No target for this month yet. Add it in Admin → Settings.",mtVal:"Value",mtStop:"done · stop",
+  mtNote:"Done = what the production file recorded up to the last sync + what the app recorded after it.",
+  wiT:"What if a new order comes?",wiSub:"Type the boxes and the delivery date. The app works out the hours with the plan's engine and compares them with the hours free until that date, after the orders already booked.",
+  wiAdd:"Add a line",wiStaff:"Staff",wiNeed:"The order needs",wiFree:"Free until the date",wiBooked:"Booked for other orders",wiDays:"Working days",
+  wiFits:"Ready in time ✓",wiOt:"Needs overtime: {h} h per person per day",wiNo:"Out of reach: needs {h} h per person per day above the shift",wiTooSoon:"The date is too close",
+  wiCalc:"Work it out",wiDate:"Delivery date"});
+function workDays(from,to,off){ let n=0; const d=new Date(from+"T00:00:00Z"), e=new Date(to+"T00:00:00Z");
+  while(d<=e){ if(!(off||[5]).includes(d.getUTCDay())) n++; d.setUTCDate(d.getUTCDate()+1); } return n; }
+function engineRun(X,pcsBy,boxBy,coatBy={}){ let labour=0; const area={};
+  (X.psteps||[]).forEach(st=>{ const k=st.kind||"", g=st.time_min==null?null:+st.time_min, h=st.qty_per==null?null:+st.qty_per;
+    if(g==null||(k!=="Fixed"&&h==null)) return;
+    const pcs=pcsBy[st.product_id]||0; let x;
+    if(k==="Fixed") x=pcs===0?0:g*(st.batch?Math.ceil(pcs/+st.batch):1)/60;
+    else if(k==="Per coated pc") x=g/h*(coatBy[st.product_id]||0)/60;
+    else if(k.startsWith("Per box")||k.startsWith("Per mould")||k.startsWith("Per loose")) x=g/h*(boxBy[st.box_id]||0)/60;
+    else x=g/h*pcs/60;
+    const L2=(X.cal[st.product_id]||1)*x;
+    if(!st.passive&&st.crew) labour+=L2*(+st.crew)*(st.busy==null?1:+st.busy);
+    if(st.area1) area[st.area1]=(area[st.area1]||0)+L2*(st.w1==null?1:+st.w1); });
+  return {labour,area}; }
+async function monthData(){
+  const f=S.fid, R=S.ref, td=riyadh(0), mon=td.slice(0,7)+"-01", end=(()=>{ const d=new Date(mon+"T00:00:00Z"); d.setUTCMonth(d.getUTCMonth()+1); d.setUTCDate(0); return d.toISOString().slice(0,10); })();
+  const [mt,rb,rf,fac]=await Promise.all([
+    sb.from("month_targets").select("id,working_days").eq("factory_id",f).eq("month",mon).maybeSingle(),
+    sb.from("ref_box").select("box_id,still_to_pack,at").eq("factory_id",f),
+    sb.from("ref_flavour").select("flavour_id,month_target,month_made,at").eq("factory_id",f),
+    sb.from("factories").select("week_off").eq("id",f).maybeSingle()]);
+  if(!mt.data) return null;
+  const {data:tl}=await sb.from("month_target_lines").select("kind,box_id,product_id,flavour_id,qty").eq("target_id",mt.data.id);
+  const since=(rb.data||[])[0]?.at||mon+"T00:00:00Z";
+  const {data:pe}=await sb.from("production_entries").select("stage,product_id,flavour_id,box_id,qty,entered_at").eq("factory_id",f).eq("status","approved").gte("day",mon).gt("entered_at",since);
+  const appB={}, appP={}, appF={};
+  (pe||[]).forEach(e=>{ if(e.stage==="packed") appB[e.box_id]=(appB[e.box_id]||0)+e.qty;
+    if(e.stage==="made"){ appP[e.product_id]=(appP[e.product_id]||0)+e.qty; if(e.flavour_id) appF[e.flavour_id]=(appF[e.flavour_id]||0)+e.qty; } });
+  const leftX=Object.fromEntries((rb.data||[]).map(x=>[x.box_id,x.still_to_pack]));
+  const rfm=Object.fromEntries((rf.data||[]).map(x=>[x.flavour_id,x]));
+  const madeXP={}; R.flavours.forEach(fl=>{ const r=rfm[fl.id]; if(r&&r.month_made!=null) madeXP[fl.product_id]=(madeXP[fl.product_id]||0)+(+r.month_made); });
+  const dl=workDays(td,end,(fac.data||{}).week_off||[5]);
+  const boxes=(tl||[]).filter(x=>x.kind==="box").map(x=>{ const t=x.qty, done=Math.max(0,t-(leftX[x.box_id]??t))+(appB[x.box_id]||0); return {id:x.box_id,t,done,left:Math.max(0,t-done)}; });
+  const prods=(tl||[]).filter(x=>x.kind==="product").map(x=>{ const done=(madeXP[x.product_id]||0)+(appP[x.product_id]||0); return {id:x.product_id,t:x.qty,done,left:Math.max(0,x.qty-done)}; });
+  const fls=(tl||[]).filter(x=>x.kind==="flavour").map(x=>{ const done=((rfm[x.flavour_id]||{}).month_made||0)+(appF[x.flavour_id]||0); return {id:x.flavour_id,t:x.qty,done,left:Math.max(0,x.qty-done)}; });
+  return {boxes,prods,fls,dl,mon,end};
+}
+async function drawMonth(a){
+  a.innerHTML=SKEL+SKEL;
+  const M=await monthData(), R=S.ref;
+  if(!M){ a.innerHTML=`<div class="panel"><p class="sub" style="margin:0">${u("mtNoT")}</p></div>`; return; }
+  let pr={};
+  if(isMgr()){ const {data:bp}=await sb.from("box_prices").select("box_id,valid_from,price_sar").order("valid_from",{ascending:false}); (bp||[]).forEach(x=>{ if(pr[x.box_id]==null) pr[x.box_id]=+x.price_sar; }); }
+  const bc=id=>(R.boxes.find(b=>b.id===id)||{}).code||"—", pcode=id=>(R.products.find(p=>p.id===id)||{}).code||"—", fname=id=>(R.flavours.find(x=>x.id===id)||{}).name_en||"—";
+  const tb=M.boxes.reduce((s2,x)=>s2+x.t,0), db=M.boxes.reduce((s2,x)=>s2+Math.min(x.t,x.done),0), lb=M.boxes.reduce((s2,x)=>s2+x.left,0);
+  const val=isMgr()?M.boxes.reduce((s2,x)=>s2+(pr[x.id]!=null?x.done*pr[x.id]:0),0):null, valT=isMgr()?M.boxes.reduce((s2,x)=>s2+(pr[x.id]!=null?x.t*pr[x.id]:0),0):null;
+  const row=(name,x,unit)=>{ const p=x.t?Math.min(1,x.done/x.t):0, ok=x.left<=0&&x.t>0;
+    return `<div class="ent" style="display:block"><div class="w" style="display:flex;justify-content:space-between;gap:8px"><bdi>${esc(name)}</bdi>${ok?`<span class="chip" style="background:#E3F5EC;border-color:#BFE6D0;color:var(--ok)">✓ ${u("mtStop")}</span>`:`<b>${n0(x.left)}</b>`}</div>
+      <div class="bar"><i style="width:${Math.round(p*100)}%"></i></div>
+      <div class="m">${n0(x.done)} / ${n0(x.t)} ${unit}${!ok&&M.dl?` · ${u("mtPerDay")} ${n0(Math.ceil(x.left/M.dl))}`:""}</div></div>`; };
+  let h=`<div class="panel" style="margin-top:0"><div class="tot tot2">
+    <div><b>${n0(lb)}</b><span>${u("mtLeft")} · ${u("boxes")}</span></div><div><b>${M.dl?n0(Math.ceil(lb/M.dl)):"—"}</b><span>${u("mtPerDay")} · ${u("boxes")}</span></div>
+    <div><b>${n0(db)} / ${n0(tb)}</b><span>${u("mtDone")} · ${u("boxes")}</span></div><div><b>${n0(M.dl)}</b><span>${u("mtDaysLeft")}</span></div>
+    ${val!=null&&valT?`<div style="grid-column:1/-1"><b>${n0(val)} / ${n0(valT)} ${CUR()}</b><span>${u("mtVal")} · ${u("rpWorked")}</span></div>`:""}</div>
+    <div class="bar" style="height:8px"><i style="width:${tb?Math.round(100*db/tb):0}%"></i></div><p class="sub" style="margin:8px 0 0">${u("mtNote")}</p></div>`;
+  // boxes grouped by product
+  const bg={}; M.boxes.forEach(x=>{ const pc2=(R.bc.find(c=>c.box_id===x.id)||{}).product_id; const k=pcode(pc2); (bg[k]=bg[k]||[]).push(x); });
+  h+=`<div class="fname" style="margin-top:14px">${u("mtBox")}</div>`+Object.entries(bg).map(([k,xs])=>grp(`<bdi>${esc(k)}</bdi>`,xs.map(x=>row(bc(x.id),x,u("boxes"))).join(""),
+     `${n0(xs.reduce((s2,x)=>s2+x.left,0))} ${u("mtLeft")}`)).join("");
+  if(M.prods.length) h+=`<div class="fname" style="margin-top:14px">${u("mtProd")}</div>`+grp(u("mtTarget"),M.prods.map(x=>row(pcode(x.id),x,u("pcs"))).join(""),`${n0(M.prods.reduce((s2,x)=>s2+x.left,0))} ${u("mtLeft")}`);
+  if(M.fls.length){ const fg={}; M.fls.forEach(x=>{ const fl=R.flavours.find(y=>y.id===x.id); const k=pcode(fl&&fl.product_id); (fg[k]=fg[k]||[]).push(x); });
+    h+=`<div class="fname" style="margin-top:14px">${u("mtFl")}</div>`+Object.entries(fg).map(([k,xs])=>grp(`<bdi>${esc(k)}</bdi>`,xs.map(x=>row(fname(x.id),x,u("pcs"))).join(""),`${n0(xs.filter(x=>x.left>0).length)} / ${n0(xs.length)}`)).join(""); }
+  a.innerHTML=h;
+}
+const WI={lines:[{box:"",n:""}],date:null,staff:""};
+async function drawWhatif(a){
+  const R=S.ref; if(!WI.date) WI.date=riyadh(-7);
+  const X=await loadPlanExtras();
+  a.innerHTML=`<div class="panel" style="margin-top:0"><h2>${u("wiT")}</h2><p class="sub">${u("wiSub")}</p>
+    ${WI.lines.map((l,i)=>`<div class="seg"><select class="wb" data-i="${i}" style="flex:2">${opt("",u("any"))}${R.boxes.map(b=>opt(b.id,b.code+" · "+b.pieces_per_box,b.id===l.box)).join("")}</select>
+      <input class="wn" data-i="${i}" inputmode="numeric" placeholder="${u("boxes")}" value="${esc(l.n)}" style="flex:1"></div>`).join("")}
+    <button class="x" id="wadd" type="button">+ ${u("wiAdd")}</button>
+    <div class="seg" style="margin-top:12px"><label style="flex:1;margin:0">${u("wiDate")}<input type="date" id="wd" value="${WI.date}"></label>
+      <label style="flex:1;margin:0">${u("wiStaff")}<input id="ws" inputmode="numeric" value="${esc(WI.staff)}" placeholder="23"></label></div>
+    <button class="go" id="wgo" type="button">${u("wiCalc")}</button><div id="wout"></div></div>`;
+  const keep=()=>{ a.querySelectorAll(".wb").forEach(s2=>WI.lines[+s2.dataset.i].box=s2.value); a.querySelectorAll(".wn").forEach(i2=>WI.lines[+i2.dataset.i].n=i2.value);
+    WI.date=$("#wd").value; WI.staff=$("#ws").value; };
+  $("#wadd").onclick=()=>{ keep(); WI.lines.push({box:"",n:""}); drawApp(); };
+  $("#wgo").onclick=async()=>{ keep();
+    const td=riyadh(0), d=WI.date, staff=+WI.staff||23;
+    if(!d||d<=td){ $("#wout").innerHTML=`<p class="msg bad">${u("wiTooSoon")}</p>`; return; }
+    const pcsBy={}, boxBy={};
+    WI.lines.forEach(l=>{ const q=+String(l.n).replace(/\D/g,"")||0, b=R.boxes.find(x=>x.id===l.box); if(!b||!q) return;
+      const pc2=(R.bc.find(c=>c.box_id===b.id)||{}).product_id; boxBy[b.id]=(boxBy[b.id]||0)+q; if(pc2) pcsBy[pc2]=(pcsBy[pc2]||0)+q*b.pieces_per_box; });
+    const need=engineRun(X,pcsBy,boxBy).labour;
+    // the orders already booked from tomorrow to the date, priced the same way
+    const {data:so}=await sb.from("sales_orders").select("box_id,qty").eq("factory_id",S.fid).gt("day",td).lte("day",d);
+    const bP={}, bB={}; (so||[]).forEach(o=>{ const b=R.boxes.find(x=>x.id===o.box_id); if(!b) return; const pc2=(R.bc.find(c=>c.box_id===b.id)||{}).product_id;
+      bB[b.id]=(bB[b.id]||0)+o.qty; if(pc2) bP[pc2]=(bP[pc2]||0)+o.qty*b.pieces_per_box; });
+    const booked=engineRun(X,bP,bB).labour;
+    const {data:fac}=await sb.from("factories").select("week_off").eq("id",S.fid).maybeSingle();
+    const tmw=new Date(td+"T00:00:00Z"); tmw.setUTCDate(tmw.getUTCDate()+1);
+    const dEnd=new Date(d+"T00:00:00Z"); dEnd.setUTCDate(dEnd.getUTCDate()-1);   // made the day before delivery
+    const days=workDays(tmw.toISOString().slice(0,10),dEnd.toISOString().slice(0,10),(fac||{}).week_off||[5]);
+    const cap=days*staff*X.std, free=cap-booked, over=need-free, pp=days?over/(days*staff):null;
+    const loc=L==="ar"?"ar-EG":"en-GB", n1=v=>(+v).toLocaleString(loc,{maximumFractionDigits:1});
+    const verdict=!days?`<span class="st void" style="background:#FDE2E2;color:var(--bad)">${u("wiTooSoon")}</span>`
+      : over<=0?`<span class="pill" style="background:#E3F5EC;color:var(--ok)">${u("wiFits")}</span>`
+      : pp<=X.maxd-X.std?`<span class="st pending">${u("wiOt",{h:n1(pp)})}</span>`:`<span class="st void" style="background:#FDE2E2;color:var(--bad)">${u("wiNo",{h:n1(pp)})}</span>`;
+    $("#wout").innerHTML=`<div class="tot tot2" style="margin-top:14px"><div><b>${n0(need)}</b><span>${u("wiNeed")} · ${u("hrsU")}</span></div>
+      <div><b>${n0(Math.max(0,free))}</b><span>${u("wiFree")} · ${u("hrsU")}</span></div><div><b>${n0(booked)}</b><span>${u("wiBooked")}</span></div>
+      <div><b>${n0(days)}</b><span>${u("wiDays")}</span></div></div><div style="margin-top:10px">${verdict}</div>`; };
 }
 async function signOut(){ await sb.auth.signOut(); STEP="email"; S.fid=null; S.ref=null; $("#app").hidden=true; $("#tabs").hidden=true;
   $("#apphdr").hidden=true; $("#subtabs").hidden=true; document.querySelector(".top").hidden=false; $("#foot").hidden=false; document.body.classList.remove("inapp");
