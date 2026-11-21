@@ -343,6 +343,11 @@ def main():
         res.update(post(key, "sync_store", store_payload(p)))
         res.update(post(key, "sync_engine", engine_payload(p)))
         res.update(post(key, "sync_engine_ref", engine_ref_payload()))
+        hist = os.environ.get("ERMINE_HISTORY")              # the dashboard's day history (repo data/flavours.json)
+        if hist and os.path.exists(hist):
+            H = json.load(open(hist, encoding="utf-8"))
+            res.update(post(key, "sync_history", {"factory": "ermine",
+                       "days": [{"day": k, "data": v} for k, v in H.items() if isinstance(v, dict)]}))
         print("db synced:", ", ".join(f"{k} {v}" for k, v in res.items()))
     except Exception as e:
         msg = str(e).replace(key, "***")

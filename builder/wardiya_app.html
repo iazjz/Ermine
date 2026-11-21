@@ -82,6 +82,49 @@ select{width:100%;font:inherit;font-size:16px;padding:12px;border:1.5px solid va
 .st{font-size:11.5px;border-radius:999px;padding:2px 8px;margin-inline-start:6px}
 .st.pending{background:#FFF3D6;color:#8A5A00} .st.void{background:#eee;color:#666}
 .empty{color:var(--dim);text-align:center;padding:20px 0}
+/* shell (21 Nov 2026) */
+body.inapp{padding-top:calc(58px + env(safe-area-inset-top))}
+.apphdr{position:fixed;top:0;left:0;right:0;z-index:30;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.apphdr .hb{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;height:57px}
+.apphdr .hl{display:flex;align-items:baseline;gap:10px;min-width:0}
+.apphdr .logo{font-weight:700;font-size:20px;color:var(--main)} .apphdr .fac{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av{width:36px;height:36px;border-radius:50%;border:0;background:var(--p500);color:#fff;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.menu{position:absolute;top:58px;inset-inline-end:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;min-width:230px;
+  box-shadow:0 12px 30px rgba(0,0,0,.15);padding:8px;animation:rise .2s ease-out both}
+.menu .mh{padding:8px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.menu button{display:block;width:100%;text-align:start;background:none;border:0;font:inherit;font-size:15px;color:var(--ink);padding:10px;border-radius:10px;cursor:pointer}
+.menu button:hover{background:var(--bg)} .menu button.danger{color:var(--bad)}
+.subtabs{position:sticky;top:calc(58px + env(safe-area-inset-top));z-index:20;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+  max-width:560px;margin:0 auto;padding:10px 16px 8px;background:var(--bg)}
+.subtabs::-webkit-scrollbar{display:none}
+.subtabs button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;font:inherit;font-size:14px;
+  font-weight:600;padding:8px 16px;cursor:pointer;transition:background .2s,color .2s}
+.subtabs button.on{background:var(--p500);border-color:var(--p500);color:#fff}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px!important}
+.tabs button svg{opacity:.8} .tabs button.on{background:transparent!important;color:var(--main)!important} .tabs button.on svg{opacity:1}
+.tabs button.on span{font-weight:700}
+.app{padding-top:6px}
+.app.swap{animation:fadein .25s ease-out both}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.skel{padding:14px 0} .skel i{display:block;height:14px;border-radius:8px;margin:10px 0;background:linear-gradient(90deg,var(--line),var(--card),var(--line));
+  background-size:200% 100%;animation:shim 1.2s linear infinite}
+@keyframes shim{from{background-position:200% 0}to{background-position:-200% 0}}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;z-index:50;
+  background:var(--ink);color:var(--card);padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;pointer-events:none;transition:all .25s;max-width:90vw}
+#toast.show{opacity:1;transform:translate(-50%,0)} #toast.bad{background:var(--bad);color:#fff}
+.hcard{display:block;width:100%;text-align:start;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:0 0 12px;
+  font:inherit;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .2s;animation:rise .3s ease-out both}
+button.hcard:active{transform:scale(.985)} button.hcard:hover{box-shadow:0 8px 22px rgba(217,65,126,.12)}
+.hk{font-size:13px;color:var(--dim);font-weight:600;margin-bottom:8px}
+.hrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
+.hrow b{font-size:22px} .hrow span{display:block;font-size:12px;color:var(--dim)}
+.hnone{color:var(--dim);font-size:14px} .hnone.ok{color:var(--ok)}
+.bar{height:6px;background:var(--line);border-radius:6px;margin-top:6px;overflow:hidden} .bar i{display:block;height:100%;background:var(--p500);border-radius:6px;transition:width .6s}
+.hal{display:block;width:100%;text-align:start;border:0;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;padding:10px 12px;border-radius:12px;margin-top:6px;cursor:pointer}
+.hal::after{content:" \2039";float:inline-end;color:var(--dim)} html[dir="ltr"] .hal::after{content:" \203A"}
+.hsl{margin-top:6px} .soonp{text-align:center;color:var(--dim)} .soonp svg{width:40px;height:40px;color:var(--main);margin:6px auto 0;display:block}
+.m{font-size:12.5px;color:var(--dim)}
 /* closed groups (Aziz, 20 Nov 2026): a long list opens one product / area at a time */
 details.grp{border:1px solid var(--line);border-radius:14px;margin-top:8px;background:var(--card)}
 details.grp>summary{list-style:none;display:flex;align-items:center;gap:8px;padding:12px;cursor:pointer;font-weight:700}
@@ -98,6 +141,8 @@ details.grp>.gb{padding:0 10px 6px}
 <body>
 <div class="top"><div class="brand" id="brand">وردية</div><button class="lang" id="lang" type="button">EN</button></div>
 <main id="mainbox"><div class="card" id="card"></div></main>
+<header class="apphdr" id="apphdr" hidden></header>
+<nav class="subtabs" id="subtabs" hidden></nav>
 <div class="app" id="app" hidden></div>
 <nav class="tabs" id="tabs" hidden></nav>
 <div class="foot" id="foot"></div>
@@ -129,7 +174,8 @@ let EMAIL="", STEP="email";
 const t=(k,v={})=>String(T[L][k]).replace(/\{(\w+)\}/g,(_,x)=>v[x]??"");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=s=>document.querySelector(s);
-function msg(text,cls){ const m=$("#msg"); if(m){ m.textContent=text||""; m.className="msg "+(cls||""); } }
+function msg(text,cls){ const m=$("#msg"); if(m){ m.textContent=cls==="ok"?"":(text||""); m.className="msg "+(cls||""); }
+  if(text&&typeof toast==="function"&&$("#app")&&!$("#app").hidden) toast(text,cls==="ok"?"ok":"bad"); }
 async function draw(){
   document.documentElement.lang=L; document.documentElement.dir=L==="ar"?"rtl":"ltr";
   $("#brand").textContent=t("brand"); $("#lang").textContent=t("other"); $("#foot").textContent=t("foot");
@@ -199,7 +245,7 @@ const T2={
   stop:"Stop",stopQ:"Stop this person's access?",stopped:"Stopped",noRights:"Only the owner and admins add people.",
   by:"by",appOut:"Sign out"}};
 const u=(k,v={})=>String(T2[L][k]??k).replace(/\{(\w+)\}/g,(_,x)=>v[x]??"");
-const S={fid:null,fname:"",roles:[],me:null,ref:null,view:"entry",form:null,day:0};
+const S={fid:null,fname:"",roles:[],me:null,ref:null,view:null,form:null,day:0};
 const riyadh=(off=0)=>{ const d=new Date(Date.now()-off*864e5);
   return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Riyadh"}).format(d); };
 const isMgr=()=>S.roles.some(r=>["owner","admin"].includes(r));
@@ -228,9 +274,11 @@ async function drawIn(session){
       <p class="sub">${t("none")}</p><button class="link" id="out" type="button">${t("out")}</button>`;
     $("#out").onclick=signOut; return;
   }
+  S.meName=prof.full_name; S.meMail=session.user.email;
   S.fid=mem[0].factory_id; S.fname=mem[0].factories?.name||""; S.roles=mem.filter(m=>m.factory_id===S.fid).map(m=>m.role);
   if(!S.ref) await loadRef();
-  $("#mainbox").hidden=true; $("#app").hidden=false; $("#tabs").hidden=false;
+  $("#mainbox").hidden=true; $("#app").hidden=false; $("#tabs").hidden=false; $("#apphdr").hidden=false;
+  document.querySelector(".top").hidden=true; $("#foot").hidden=true; document.body.classList.add("inapp");
   drawApp();
 }
 async function loadRef(){
@@ -242,32 +290,6 @@ async function loadRef(){
     sb.from("box_contents").select("box_id,product_id"),
     sb.from("delay_reasons").select("id,category,text_en,needs_note").eq("factory_id",f).eq("active",true)]);
   S.ref={products:p.data||[],flavours:fl.data||[],boxes:b.data||[],bc:bc.data||[],reasons:r.data||[]};
-}
-function drawApp(){
-  /* tabs by role (20 Nov 2026): the storekeeper sees the store only; production roles see the floor */
-  const prod=S.roles.some(r=>["owner","admin","planner","chef","lead"].includes(r));
-  const tabs=(prod?[["entry","tEntry"],["plan","tPlan"],["stock","tStock"]]:[]).concat([["store","tStore"]])
-    .concat(prod?[["today","tToday"]]:[]).concat(isMgr()?[["team","tTeam"],["admin","tAdmin"]]:[]);
-  if(!tabs.some(x=>x[0]===S.view)) S.view=tabs[0][0];
-  $("#tabs").innerHTML=tabs.map(([k,l])=>`<button class="${S.view===k?"on":""}" data-v="${k}" type="button">${u(l)}</button>`).join("");
-  $("#tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ S.view=b.dataset.v; S.form=null; drawApp(); });
-  const head=`<div class="fname">${esc(S.fname)} · <span class="pill">${S.roles.map(r=>esc(T[L].roles[r]||r)).join("، ")}</span></div>`;
-  const a=$("#app");
-  if(S.view==="plan") return drawPlan(a,head);
-  if(S.view==="stock") return drawStock(a,head);
-  if(S.view==="store") return drawStore(a,head);
-  if(S.view==="admin") return drawAdmin(a,head);
-  if(S.view==="today") return drawToday(a,head);
-  if(S.view==="team") return drawTeam(a,head);
-  a.innerHTML=head+`<div class="big4">
-     <button data-f="made" type="button"><span class="ic">🧁</span>${u("made")}</button>
-     <button data-f="coated" type="button"><span class="ic">🍫</span>${u("coated")}</button>
-     <button data-f="packed" type="button"><span class="ic">📦</span>${u("packed")}</button>
-     <button data-f="delay" type="button"><span class="ic">⏱</span>${u("delay")}</button></div>
-     <div id="form"></div><button class="link" id="out2" type="button">${u("appOut")}</button>`;
-  a.querySelectorAll(".big4 button").forEach(b=>b.onclick=()=>{ S.form=b.dataset.f; drawForm(); });
-  $("#out2").onclick=signOut;
-  if(S.form) drawForm();
 }
 const opt=(v,l,sel)=>`<option value="${esc(v)}"${sel?" selected":""}>${esc(l)}</option>`;
 function daySeg(){ return `<div class="fld"><label>${u("day")}</label><div class="seg">
@@ -338,7 +360,7 @@ async function saveForm(k){
 async function drawToday(a,head){
   const day=riyadh(S.day);
   a.innerHTML=head+`<div class="seg"><button type="button" data-d="0" class="${S.day===0?"on":""}">${u("today")}<br><small dir="ltr">${riyadh(0)}</small></button>
-    <button type="button" data-d="1" class="${S.day===1?"on":""}">${u("yday")}<br><small dir="ltr">${riyadh(1)}</small></button></div><div id="tl" class="empty">…</div>`;
+    <button type="button" data-d="1" class="${S.day===1?"on":""}">${u("yday")}<br><small dir="ltr">${riyadh(1)}</small></button></div><div id="tl" class="empty">${SKEL}</div>`;
   a.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ S.day=+b.dataset.d; drawApp(); });
   const [pe,dl]=await Promise.all([
     sb.from("production_entries").select("id,stage,product_id,flavour_id,box_id,qty,status,entered_by,entered_at").eq("factory_id",S.fid).eq("day",day),
@@ -378,7 +400,7 @@ async function drawTeam(a,head){
   a.innerHTML=head+`<div class="panel"><h2>${u("invite")}</h2><p class="sub">${u("inviteSub")}</p>
     <div class="fld"><label>${t("email")}</label><input id="ie" type="email" dir="ltr" autocomplete="off"></div>
     <div class="fld"><label>${u("role")}</label><select id="ir">${roles.map(r=>opt(r,T[L].roles[r])).join("")}</select></div>
-    <button class="go" id="ia" type="button">${u("add")}</button><div class="msg" id="msg"></div></div><div id="tm" style="margin-top:14px">…</div>`;
+    <button class="go" id="ia" type="button">${u("add")}</button><div class="msg" id="msg"></div></div><div id="tm" style="margin-top:14px">${SKEL}</div>`;
   $("#ia").onclick=async()=>{ const e=$("#ie").value.trim().toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return msg(t("badEmail"),"bad");
     const {data,error}=await sb.rpc("invite_member",{f:S.fid,mail:e,r:$("#ir").value});
@@ -452,7 +474,7 @@ const hm=s=>s?String(s).slice(0,5):"";
 async function drawPlan(a,head){
   const day=riyadh(P.off===0?0:-1), ed=canPlan(), R=S.ref;
   a.innerHTML=head+`<div class="seg"><button type="button" data-o="0" class="${P.off===0?"on":""}">${u("today")}<br><small dir="ltr">${riyadh(0)}</small></button>
-    <button type="button" data-o="1" class="${P.off===1?"on":""}">${u("tomorrow")}<br><small dir="ltr">${riyadh(-1)}</small></button></div><div id="pl" class="empty">…</div>`;
+    <button type="button" data-o="1" class="${P.off===1?"on":""}">${u("tomorrow")}<br><small dir="ltr">${riyadh(-1)}</small></button></div><div id="pl" class="empty">${SKEL}</div>`;
   a.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ P.off=+b.dataset.o; drawApp(); });
   const X=await loadPlanExtras(); await loadPlan(day);
   const {data:so}=await sb.from("sales_orders").select("box_id,qty").eq("factory_id",S.fid).eq("day",day);
@@ -671,7 +693,7 @@ async function stockModel(){
 }
 async function drawStock(a,head){
   const ed=canPlan(), R=S.ref;
-  a.innerHTML=head+`<div id="sk" class="empty">…</div>`;
+  a.innerHTML=head+`<div id="sk" class="empty">${SKEL}</div>`;
   const M=await stockModel(), dis=ed?"":" disabled";
   const age=d=>d?Math.floor((Date.now()-new Date(d))/864e5):null;
   let h="";
@@ -762,8 +784,8 @@ async function storeModel(){
   return {items, wait};
 }
 async function drawStore(a,head){
-  a.innerHTML=head+`<div class="seg"><button type="button" data-s="box" class="${ST.seg==="box"?"on":""}">${u("segBox")}</button>
-    <button type="button" data-s="mat" class="${ST.seg==="mat"?"on":""}">${u("segMat")}</button></div><div id="so" class="empty">…</div>`;
+  a.innerHTML=head+(ST.noSeg?"":`<div class="seg"><button type="button" data-s="box" class="${ST.seg==="box"?"on":""}">${u("segBox")}</button>
+    <button type="button" data-s="mat" class="${ST.seg==="mat"?"on":""}">${u("segMat")}</button></div>`)+`<div id="so" class="empty">${SKEL}</div>`;
   a.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ ST.seg=b.dataset.s; ST.form=null; drawApp(); });
   if(ST.seg==="mat") return drawMat(a);
   const R=S.ref, {items,wait}=await storeModel(), ed=canStore();
@@ -874,7 +896,7 @@ async function loadCatalogue(){
 }
 async function drawAdmin(a,head){
   if(!isMgr()){ a.innerHTML=head+`<div class="empty">${u("onlyOwner")}</div>`; return; }
-  a.innerHTML=head+`<p class="sub">${u("syncNote")}</p><div id="ad" class="empty">…</div>`;
+  a.innerHTML=head+`<p class="sub">${u("syncNote")}</p><div id="ad" class="empty">${SKEL}</div>`;
   const C=await loadCatalogue(), f=S.fid;
   const prodName=id=>(C.p.find(x=>x.id===id)||{}).code||"—";
   const boxProd=bid=>(C.bc.find(x=>x.box_id===bid)||{}).product_id;
@@ -977,7 +999,157 @@ async function drawAdmin(a,head){
   $("#nspa").onclick=()=>v("nsp")&&act(sb.from("step_types").insert({factory_id:f,name:v("nsp"),sort:(stp.data||[]).length}));
   $("#wo").onchange=e=>act(sb.from("factories").update({week_off:[+e.target.value]}).eq("id",f));
 }
-async function signOut(){ await sb.auth.signOut(); STEP="email"; S.fid=null; S.ref=null; $("#app").hidden=true; $("#tabs").hidden=true; $("#mainbox").hidden=false; draw(); }
+/* ---------- the app shell (21 Nov 2026): five sections, tabs, header, summary ---------- */
+Object.assign(T2.ar,{sToday:"اليوم",sPerf:"الأداء",sMonth:"الشهر",sStock:"المخزون",sAdmin:"الإدارة",
+  vHome:"الموجز",vPlan:"الخطة",vEntry:"الإدخال",vShift:"آخر وردية",vPcs:"الحبات",vBoxes:"البوكسات",vMat:"المواد",
+  vTeam:"الفريق",vSet:"الإعدادات",soon:"قيد البناء",soonSub:"هذه الصفحة في الدفعة القادمة. البيانات محفوظة، وتظهر هنا حال اكتمالها.",
+  lang2:"English",signOut:"تسجيل الخروج",
+  hDay:"اليوم",hNoPlan:"لا توجد خطة معتمدة لليوم بعد.",hPlanned:"المخطط",hDone:"المنجز",
+  hAlerts:"تنبيهات",hNoAlerts:"لا شيء يحتاج انتباهك الآن.",aPending:"{n} إدخال بانتظار الاعتماد",aDelays:"{n} تأخير مسجّل اليوم",
+  aMat:"{n} مادة تحت حد الطلب أو نفدت",aStore:"{n} صنف عبّأه الشيف ولم يُستلم",aCount:"{n} نكهة لم تُجرد منذ يومين",
+  hMonth:"هدف الشهر",hLeft:"الباقي",hPerDay:"المطلوب يوميًا",hDaysLeft:"أيام العمل الباقية",hSales:"ما تنتظره المبيعات",
+  hTomorrow:"بكرة",hNoOrders:"لا طلبات لليوم ولبكرة.",hLast:"آخر وردية",hNoLast:"لا يوجد يوم مسجّل بعد.",
+  fromFileNote:"الهدف والباقي من ملف الإنتاج لين يوم التسليم.",tapMore:"اضغط للتفاصيل"});
+Object.assign(T2.en,{sToday:"Today",sPerf:"Performance",sMonth:"Month",sStock:"Stock",sAdmin:"Admin",
+  vHome:"Summary",vPlan:"Plan",vEntry:"Entry",vShift:"Last shift",vPcs:"Pieces",vBoxes:"Boxes",vMat:"Materials",
+  vTeam:"Team",vSet:"Settings",soon:"Being built",soonSub:"This page comes in the next batch. The data is kept and shows here once it is ready.",
+  lang2:"العربية",signOut:"Sign out",
+  hDay:"Today",hNoPlan:"No approved plan for today yet.",hPlanned:"Planned",hDone:"Done",
+  hAlerts:"Alerts",hNoAlerts:"Nothing needs your attention now.",aPending:"{n} entries waiting for approval",aDelays:"{n} delays logged today",
+  aMat:"{n} materials below reorder level or out",aStore:"{n} items packed by the chef, not received",aCount:"{n} flavours not counted for two days",
+  hMonth:"Month target",hLeft:"Left",hPerDay:"Needed per day",hDaysLeft:"Working days left",hSales:"What sales is waiting for",
+  hTomorrow:"Tomorrow",hNoOrders:"No orders for today or tomorrow.",hLast:"Last shift",hNoLast:"No day recorded yet.",
+  fromFileNote:"Target and what is left come from the production file until handover.",tapMore:"Tap for details"});
+const ICON={
+  today:'<path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/><circle cx="12" cy="12" r="4"/>',
+  perf:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  month:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  stock:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+  admin:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+const SKEL=`<div class="skel"><i></i><i></i><i style="width:60%"></i></div>`;
+function toast(text,kind){ let t2=$("#toast"); if(!t2){ t2=document.createElement("div"); t2.id="toast"; document.body.appendChild(t2); }
+  t2.textContent=text; t2.className="show "+(kind||"ok"); clearTimeout(t2._h); t2._h=setTimeout(()=>t2.className="",2600); }
+function sections(){
+  const R=S.roles, has=a=>R.some(r=>a.includes(r)), prod=has(["owner","admin","planner","chef","lead"]), mgr=isMgr();
+  const out=[];
+  if(prod) out.push(["today","sToday",[...(has(["owner","admin","planner","chef"])?[["home","vHome"]]:[]),["plan","vPlan"],["entry","vEntry"],["shift","vShift"]]]);
+  if(has(["owner","admin","planner","chef"])) out.push(["perf","sPerf",[["days","vDays2"],["rep","vRep2"]]]);
+  if(has(["owner","admin","planner"])) out.push(["month","sMonth",[["mtarget","vMonth2"],["whatif","vWhatif"]]]);
+  out.push(["stock","sStock",[...(prod?[["pcs","vPcs"]]:[]),["boxes","vBoxes"],["mat","vMat"]]]);
+  if(mgr) out.push(["admin","sAdmin",[["team","vTeam"],["settings","vSet"]]]);
+  return out;
+}
+Object.assign(T2.ar,{vDays2:"سجل الأيام",vRep2:"التقارير",vMonth2:"هدف الشهر",vWhatif:"ماذا لو"});
+Object.assign(T2.en,{vDays2:"Day log",vRep2:"Reports",vMonth2:"Month target",vWhatif:"What if"});
+function drawApp(){
+  const SEC=sections();
+  if(!S.sec||!SEC.some(x=>x[0]===S.sec)) S.sec=SEC[0][0];
+  const sec=SEC.find(x=>x[0]===S.sec);
+  if(!sec[2].some(x=>x[0]===S.view)) S.view=(S.last&&S.last[S.sec]&&sec[2].some(x=>x[0]===S.last[S.sec]))?S.last[S.sec]:sec[2][0][0];
+  S.last=S.last||{}; S.last[S.sec]=S.view;
+  // header
+  const me=(S.meName||"؟").trim(), ini=me.split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  $("#apphdr").innerHTML=`<div class="hb"><div class="hl"><span class="logo">${t("brand")}</span><span class="fac">${esc(S.fname)}</span></div>
+    <button class="av" id="avb" type="button" aria-label="menu">${esc(ini)}</button></div>
+    <div class="menu" id="menu" hidden><div class="mh"><b>${esc(me)}</b><div class="m" dir="ltr">${esc(S.meMail||"")}</div>
+      <div class="m">${S.roles.map(r=>esc(T[L].roles[r]||r)).join("، ")}</div></div>
+      <button type="button" id="mlang">${u("lang2")}</button><button type="button" id="mout" class="danger">${u("signOut")}</button></div>`;
+  $("#avb").onclick=e=>{ e.stopPropagation(); $("#menu").hidden=!$("#menu").hidden; };
+  document.onclick=e=>{ const m=$("#menu"); if(m&&!m.hidden&&!m.contains(e.target)) m.hidden=true; };
+  $("#mlang").onclick=()=>{ L=L==="ar"?"en":"ar"; try{ localStorage.setItem("wd-lang",L); }catch(e){} document.documentElement.lang=L; document.documentElement.dir=L==="ar"?"rtl":"ltr"; drawApp(); };
+  $("#mout").onclick=signOut;
+  // sections (bottom) + tabs (top)
+  $("#tabs").innerHTML=SEC.map(([k,l])=>`<button class="${S.sec===k?"on":""}" data-s="${k}" type="button">${svg(k)}<span>${u(l)}</span></button>`).join("");
+  $("#tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ if(S.sec===b.dataset.s) return; S.sec=b.dataset.s; S.form=null; drawApp(); window.scrollTo({top:0}); });
+  $("#subtabs").hidden=sec[2].length<2;
+  $("#subtabs").innerHTML=sec[2].map(([k,l])=>`<button class="${S.view===k?"on":""}" data-v="${k}" type="button">${u(l)}</button>`).join("");
+  $("#subtabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ S.view=b.dataset.v; S.form=null; drawApp(); window.scrollTo({top:0}); });
+  const a=$("#app"), head="";
+  a.classList.remove("swap"); void a.offsetWidth; a.classList.add("swap");
+  const V=S.view;
+  if(V==="home") return drawHome(a);
+  if(V==="plan") return drawPlan(a,head);
+  if(V==="shift") return drawToday(a,head);
+  if(V==="pcs") return drawStock(a,head);
+  if(V==="boxes"){ ST.seg="box"; ST.noSeg=true; return drawStore(a,head); }
+  if(V==="mat"){ ST.seg="mat"; ST.noSeg=true; return drawStore(a,head); }
+  if(V==="team") return drawTeam(a,head);
+  if(V==="settings") return drawAdmin(a,head);
+  if(["days","rep","mtarget","whatif"].includes(V)) return a.innerHTML=`<div class="panel soonp">${svg(S.sec)}<h2>${u("soon")}</h2><p class="sub" style="margin:0">${u("soonSub")}</p></div>`;
+  // entry
+  a.innerHTML=`<div class="big4">
+     <button data-f="made" type="button"><span class="ic">🧁</span>${u("made")}</button>
+     <button data-f="coated" type="button"><span class="ic">🍫</span>${u("coated")}</button>
+     <button data-f="packed" type="button"><span class="ic">📦</span>${u("packed")}</button>
+     <button data-f="delay" type="button"><span class="ic">⏱</span>${u("delay")}</button></div><div id="form"></div>`;
+  a.querySelectorAll(".big4 button").forEach(b=>b.onclick=()=>{ S.form=b.dataset.f; drawForm(); });
+  if(S.form) drawForm();
+}
+const go=(sec,view)=>{ S.sec=sec; S.view=view; S.form=null; drawApp(); window.scrollTo({top:0}); };
+window.go=go;
+async function drawHome(a){
+  a.innerHTML=SKEL+SKEL;
+  const f=S.fid, td=riyadh(0), tm=riyadh(-1), yd=riyadh(1), R=S.ref, mon=td.slice(0,7)+"-01";
+  const [pl,pe,dl,so,er,tl,rb,hd]=await Promise.all([
+    sb.from("daily_plans").select("id,published,staff_in").eq("factory_id",f).eq("day",td).maybeSingle(),
+    sb.from("production_entries").select("stage,qty,status,day").eq("factory_id",f).in("day",[td,yd]).neq("status","void"),
+    sb.from("delays").select("id").eq("factory_id",f).eq("day",td).neq("status","void"),
+    sb.from("sales_orders").select("day,box_id,qty").eq("factory_id",f).in("day",[td,tm]),
+    sb.from("engine_ref").select("data").eq("factory_id",f).maybeSingle(),
+    sb.from("month_targets").select("id,working_days").eq("factory_id",f).eq("month",mon).maybeSingle(),
+    sb.from("ref_box").select("box_id,still_to_pack").eq("factory_id",f),
+    sb.from("history_days").select("day,data").eq("factory_id",f).order("day",{ascending:false}).limit(1)]);
+  const sumE=(d,st)=>(pe.data||[]).filter(x=>x.day===d&&x.stage===st&&x.status==="approved").reduce((s2,x)=>s2+x.qty,0);
+  let cards="";
+  // 1. today
+  let pM=0,pB=0; if(pl.data&&pl.data.published){ const {data:ln}=await sb.from("daily_plan_lines").select("stage,qty").eq("plan_id",pl.data.id);
+    (ln||[]).forEach(x=>{ if(x.stage==="made") pM+=x.qty; else if(x.stage==="packed") pB+=x.qty; }); }
+  const aM=sumE(td,"made"), aB=sumE(td,"packed");
+  const bar=(d,p)=>{ const w=p?Math.min(100,Math.round(100*d/p)):0; return `<div class="bar"><i style="width:${w}%"></i></div>`; };
+  cards+=`<button class="hcard" type="button" onclick="go('today','plan')"><div class="hk">${u("hDay")} · <span dir="ltr">${td}</span></div>`+
+    (pl.data&&pl.data.published
+      ? `<div class="hrow"><div><b>${n0(aM)}</b> / ${n0(pM)}<span>${u("tMade")} · ${u("pcs")}</span>${bar(aM,pM)}</div>
+         <div><b>${n0(aB)}</b> / ${n0(pB)}<span>${u("tPack")} · ${u("boxes")}</span>${bar(aB,pB)}</div></div>`
+      : `<div class="hnone">${u("hNoPlan")}</div>`)+`</button>`;
+  // 2. alerts
+  const al=[];
+  const nPend=(pe.data||[]).filter(x=>x.status==="pending").length; if(nPend) al.push([u("aPending",{n:n0(nPend)}),"today","shift"]);
+  const nDl=(dl.data||[]).length; if(nDl) al.push([u("aDelays",{n:n0(nDl)}),"today","shift"]);
+  try{ const [ms,rm,mc]=await Promise.all([sb.from("materials").select("id,min_level").eq("factory_id",f).eq("active",true),
+      sb.from("ref_material").select("material_id,qty,at").eq("factory_id",f),
+      sb.from("material_counts").select("material_id,qty,entered_at").eq("factory_id",f).order("entered_at",{ascending:false}).limit(2000)]);
+    const rf=Object.fromEntries((rm.data||[]).map(x=>[x.material_id,x])), lc={}; (mc.data||[]).forEach(c=>{ if(!lc[c.material_id]) lc[c.material_id]=c; });
+    const low=(ms.data||[]).filter(m=>{ const c=lc[m.id], r=rf[m.id]; const q=c&&(!r||c.entered_at>r.at)?+c.qty:(r?+r.qty:null);
+      return q!=null&&(q<=0||(m.min_level!=null&&q<=+m.min_level)); }).length;
+    if(low) al.push([u("aMat",{n:n0(low)}),"stock","mat"]); }catch(e){}
+  try{ const {wait}=await storeModel(); const nW=Object.values(wait).filter(v=>v>0).length; if(nW) al.push([u("aStore",{n:n0(nW)}),"stock","boxes"]); }catch(e){}
+  cards+=`<div class="hcard"><div class="hk">${u("hAlerts")}</div>`+(al.length?al.map(([t3,s3,v3])=>`<button class="hal" type="button" onclick="go('${s3}','${v3}')">${esc(t3)}</button>`).join(""):`<div class="hnone ok">✓ ${u("hNoAlerts")}</div>`)+`</div>`;
+  // 3. month
+  if(tl.data){ const {data:tls}=await sb.from("month_target_lines").select("kind,qty").eq("target_id",tl.data.id).eq("kind","box");
+    const tgt=(tls||[]).reduce((s2,x)=>s2+x.qty,0), left=(rb.data||[]).reduce((s2,x)=>s2+(x.still_to_pack>0?x.still_to_pack:0),0);
+    const dLeft=(er.data&&er.data.data&&er.data.data.mt&&+er.data.data.mt.B7)||null, done=Math.max(0,tgt-left);
+    cards+=`<button class="hcard" type="button" onclick="go('month','mtarget')"><div class="hk">${u("hMonth")}</div>
+      <div class="hrow"><div><b>${n0(left)}</b><span>${u("hLeft")} · ${u("boxes")}</span></div><div><b>${dLeft?n0(Math.ceil(left/dLeft)):"—"}</b><span>${u("hPerDay")}</span></div>
+      <div><b>${dLeft?n0(dLeft):"—"}</b><span>${u("hDaysLeft")}</span></div></div>${bar(done,tgt)}<div class="m">${n0(done)} / ${n0(tgt)} ${u("boxes")} · ${u("fromFileNote")}</div></button>`; }
+  // 4. sales waiting
+  const bx=Object.fromEntries(R.boxes.map(b=>[b.id,b.code])), byD={};
+  (so.data||[]).forEach(o=>{ (byD[o.day]=byD[o.day]||{})[bx[o.box_id]]=((byD[o.day]||{})[bx[o.box_id]]||0)+o.qty; });
+  const line=(d,lab)=>{ const m=byD[d]; if(!m) return ""; const tot=Object.values(m).reduce((x,y)=>x+y,0);
+    return `<div class="hsl"><b>${lab}</b> · ${n0(tot)} ${u("boxes")}<div class="m">${Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([k,v])=>`<bdi>${esc(k)}</bdi> ${n0(v)}`).join(" · ")}</div></div>`; };
+  const sl=line(td,u("hDay"))+line(tm,u("hTomorrow"));
+  cards+=`<button class="hcard" type="button" onclick="go('stock','boxes')"><div class="hk">${u("hSales")}</div>${sl||`<div class="hnone">${u("hNoOrders")}</div>`}</button>`;
+  // 5. last shift
+  const yM=sumE(yd,"made"), yB=sumE(yd,"packed"), h0=(hd.data||[])[0];
+  cards+=`<button class="hcard" type="button" onclick="go('today','shift')"><div class="hk">${u("hLast")}</div>`+
+    (yM||yB ? `<div class="hrow"><div><b>${n0(yM)}</b><span>${u("tMade")} · ${u("pcs")} · <span dir="ltr">${yd}</span></span></div><div><b>${n0(yB)}</b><span>${u("tPack")} · ${u("boxes")}</span></div></div>`
+     : h0 ? `<div class="hrow"><div><b>${n0(h0.data.made)}</b><span>${u("tMade")} · ${u("pcs")} · <span dir="ltr">${esc(h0.day)}</span></span></div><div><b>${n0(h0.data.packed)}</b><span>${u("tPack")} · ${u("boxes")}</span></div></div><div class="m">${u("fromFile")}</div>`
+     : `<div class="hnone">${u("hNoLast")}</div>`)+`</button>`;
+  a.innerHTML=cards;
+}
+async function signOut(){ await sb.auth.signOut(); STEP="email"; S.fid=null; S.ref=null; $("#app").hidden=true; $("#tabs").hidden=true;
+  $("#apphdr").hidden=true; $("#subtabs").hidden=true; document.querySelector(".top").hidden=false; $("#foot").hidden=false; document.body.classList.remove("inapp");
+  $("#mainbox").hidden=false; draw(); }
 $("#lang").onclick=()=>{ L=L==="ar"?"en":"ar"; try{ localStorage.setItem("wd-lang",L); }catch(e){} draw(); };
 sb.auth.onAuthStateChange((ev)=>{ if(ev==="SIGNED_OUT"||ev==="SIGNED_IN") draw(); });
 draw();
