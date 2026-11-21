@@ -54,7 +54,7 @@ button.link{background:none;border:0;color:var(--main);font:inherit;font-size:14
 .fname{font-weight:700;font-size:18px;margin:4px 0 12px}
 .tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);
   padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
-.tabs button{flex:1;background:none;border:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--dim);padding:10px 2px;
+.tabs button{flex:1;background:none;border:0;font:inherit;font-size:11.5px;font-weight:600;color:var(--dim);padding:10px 1px;
   border-radius:12px;cursor:pointer}
 .tabs button.on{color:#fff;background:var(--p500)}
 .big4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -243,13 +243,18 @@ async function loadRef(){
   S.ref={products:p.data||[],flavours:fl.data||[],boxes:b.data||[],bc:bc.data||[],reasons:r.data||[]};
 }
 function drawApp(){
-  const tabs=[["entry","tEntry"],["plan","tPlan"],["stock","tStock"],["today","tToday"]].concat(isMgr()?[["team","tTeam"]]:[]);
+  /* tabs by role (20 Nov 2026): the storekeeper sees the store only; production roles see the floor */
+  const prod=S.roles.some(r=>["owner","admin","planner","chef","lead"].includes(r));
+  const tabs=(prod?[["entry","tEntry"],["plan","tPlan"],["stock","tStock"]]:[]).concat([["store","tStore"]])
+    .concat(prod?[["today","tToday"]]:[]).concat(isMgr()?[["team","tTeam"]]:[]);
+  if(!tabs.some(x=>x[0]===S.view)) S.view=tabs[0][0];
   $("#tabs").innerHTML=tabs.map(([k,l])=>`<button class="${S.view===k?"on":""}" data-v="${k}" type="button">${u(l)}</button>`).join("");
   $("#tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ S.view=b.dataset.v; S.form=null; drawApp(); });
   const head=`<div class="fname">${esc(S.fname)} · <span class="pill">${S.roles.map(r=>esc(T[L].roles[r]||r)).join("، ")}</span></div>`;
   const a=$("#app");
   if(S.view==="plan") return drawPlan(a,head);
   if(S.view==="stock") return drawStock(a,head);
+  if(S.view==="store") return drawStore(a,head);
   if(S.view==="today") return drawToday(a,head);
   if(S.view==="team") return drawTeam(a,head);
   a.innerHTML=head+`<div class="big4">
@@ -638,6 +643,122 @@ async function drawStock(a,head){
     if(error){ console.warn(error); return msg(t("fail"),"bad"); }
     msg(u("countSaved",{n:n0(rows.length)}),"ok"); setTimeout(()=>drawApp(),900);
   };
+}
+/* ---------- Ali's store: boxes + materials (20 Nov 2026) ---------- */
+Object.assign(T2.ar,{tStore:"المخزن",segBox:"البوكسات",segMat:"المواد",inB:"استلام من الإنتاج",outB:"صرف للمبيعات",wasteB:"هدر",
+  item:"الصنف",why:"السبب",wait:"بانتظار الاستلام",waitSub:"عبّأه الشيف اليوم أو أمس ولم يُستلم بعد",bal:"الرصيد",
+  countB:"جرد",saveCnt:"حفظ الجرد",cntSaved:"حُفظ ✓",gapS:"الفرق عن الرصيد",raw:"مواد خام",consumable:"مواد استهلاكية",
+  packaging:"مواد تغليف (جرد أسبوعي)",avail:"المتوفر",minL:"حد الطلب",out0:"نفد",low:"تحت الحد",okS:"متوفر",update:"تحديث",
+  newQty:"الكمية الجديدة",lowT:"تحت حد الطلب أو نفد",lastCount:"آخر جرد",fromFile:"من ملف علي",noMove:"لا صلاحية للحركة. للعرض فقط.",
+  reasons:["كسر أثناء النقل","كسر أثناء التعبئة","منتهي / قديم","لون أو شكل غير صحيح","سقط","أخرى (اكتبها)"]});
+Object.assign(T2.en,{tStore:"Store",segBox:"Boxes",segMat:"Materials",inB:"In from production",outB:"Out to sales",wasteB:"Waste",
+  item:"Item",why:"Reason",wait:"Waiting to be received",waitSub:"Packed by the chef today or yesterday, not received yet",bal:"Balance",
+  countB:"Count",saveCnt:"Save the count",cntSaved:"Saved ✓",gapS:"Gap to balance",raw:"Raw materials",consumable:"Consumables",
+  packaging:"Packaging (weekly count)",avail:"Available",minL:"Reorder level",out0:"Out",low:"Below level",okS:"Available",update:"Update",
+  newQty:"New quantity",lowT:"Below reorder level or out",lastCount:"Last count",fromFile:"from Ali's file",noMove:"No rights to move stock. View only.",
+  reasons:["Broken in transfer","Broken in packing","Expired / too old","Wrong colour or shape","Dropped","Other (write it)"]});
+const canStore=()=>S.roles.some(r=>["owner","admin","storekeeper"].includes(r));
+const ST={seg:"box",form:null};
+async function storeModel(){
+  const f=S.fid, R=S.ref;
+  const since=new Date(Date.now()-60*864e5).toISOString();
+  const [rs,mv,pe]=await Promise.all([
+    sb.from("ref_store").select("name,box_id,flavour_id,qty,at").eq("factory_id",f),
+    sb.from("store_moves").select("kind,box_id,flavour_id,qty,entered_at,status").eq("factory_id",f).neq("status","void").gte("entered_at",since).order("entered_at"),
+    sb.from("production_entries").select("box_id,flavour_id,qty,day").eq("factory_id",f).eq("stage","packed").eq("status","approved").gte("day",riyadh(1))]);
+  const key=(b,fl)=>b+"|"+(fl||"");
+  const items={};
+  (rs.data||[]).forEach(r=>items[key(r.box_id,r.flavour_id)]={name:r.name,box_id:r.box_id,flavour_id:r.flavour_id,base:r.qty||0,at:r.at,src:"file"});
+  R.boxes.forEach(b=>{ if(!Object.values(items).some(i=>i.box_id===b.id)) items[key(b.id,null)]={name:b.code,box_id:b.id,flavour_id:null,base:0,at:since,src:"file"}; });
+  (mv.data||[]).forEach(m=>{ const it=items[key(m.box_id,m.flavour_id)]; if(it&&m.kind==="count"&&m.entered_at>it.at){ it.base=m.qty; it.at=m.entered_at; it.src="count"; } });
+  Object.values(items).forEach(it=>{ it.inQ=0; it.outQ=0; it.wQ=0; });
+  (mv.data||[]).forEach(m=>{ const it=items[key(m.box_id,m.flavour_id)]; if(!it||m.kind==="count"||m.entered_at<=it.at) return;
+    if(m.kind==="in") it.inQ+=m.qty; else if(m.kind==="out") it.outQ+=m.qty; else if(m.kind==="waste") it.wQ+=m.qty; });
+  Object.values(items).forEach(it=>it.bal=it.base+it.inQ-it.outQ-it.wQ);
+  // packed by the chef (today + yesterday) against received
+  const two=riyadh(1), wait={};
+  (pe.data||[]).forEach(e=>{ const k=key(e.box_id,items[key(e.box_id,e.flavour_id)]?e.flavour_id:null); wait[k]=(wait[k]||0)+e.qty; });
+  (mv.data||[]).forEach(m=>{ if(m.kind==="in"&&m.entered_at.slice(0,10)>=two){ const k=key(m.box_id,m.flavour_id); wait[k]=(wait[k]||0)-m.qty; } });
+  return {items, wait};
+}
+async function drawStore(a,head){
+  a.innerHTML=head+`<div class="seg"><button type="button" data-s="box" class="${ST.seg==="box"?"on":""}">${u("segBox")}</button>
+    <button type="button" data-s="mat" class="${ST.seg==="mat"?"on":""}">${u("segMat")}</button></div><div id="so" class="empty">…</div>`;
+  a.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{ ST.seg=b.dataset.s; ST.form=null; drawApp(); });
+  if(ST.seg==="mat") return drawMat(a);
+  const R=S.ref, {items,wait}=await storeModel(), ed=canStore();
+  const prodOfBox=bid=>{ const pc=R.bc.find(x=>x.box_id===bid); return pc?(R.products.find(p=>p.id===pc.product_id)||{}).code||"—":"—"; };
+  let h="";
+  const wl=Object.entries(wait).filter(([k,v])=>v>0).map(([k,v])=>{ const it=items[k]; return it?`<div class="m"><bdi>${esc(it.name)}</bdi>: <b>${n0(v)}</b> ${u("boxes")}</div>`:""; }).join("");
+  if(wl) h+=`<div class="panel" style="margin-top:0;border-color:var(--p300)"><h2>${u("wait")}</h2><p class="sub" style="margin:0 0 6px">${u("waitSub")}</p>${wl}</div>`;
+  if(ed) h+=`<div class="big4" style="grid-template-columns:1fr 1fr 1fr"><button data-k="in" type="button"><span class="ic">📥</span>${u("inB")}</button>
+    <button data-k="out" type="button"><span class="ic">📤</span>${u("outB")}</button><button data-k="waste" type="button"><span class="ic">🗑</span>${u("wasteB")}</button></div><div id="sf"></div>`;
+  else h+=`<p class="sub">${u("noMove")}</p>`;
+  const groups={}; Object.values(items).forEach(it=>{ const g=prodOfBox(it.box_id); (groups[g]=groups[g]||[]).push(it); });
+  const total=Object.values(items).reduce((s2,it)=>s2+it.bal,0);
+  h+=`<div class="panel"><h2>${u("bal")} · ${n0(total)} ${u("boxes")}</h2>`+Object.entries(groups).map(([g,its])=>`<details class="grp"><summary><bdi>${esc(g)}</bdi><span class="gs">${n0(its.reduce((s2,i)=>s2+i.bal,0))} ${u("boxes")}</span></summary><div class="gb">`+
+    its.map(it=>`<div class="ent" style="display:block"><div class="w"><bdi>${esc(it.name)}</bdi> · <b style="color:${it.bal<0?"var(--bad)":"inherit"}">${n0(it.bal)}</b></div>
+      <div class="m">${it.src==="count"?u("lastCount")+" "+esc(it.at.slice(0,10)):u("fromFile")} ${n0(it.base)}${it.inQ?" · +"+n0(it.inQ):""}${it.outQ?" · −"+n0(it.outQ):""}${it.wQ?" · "+u("wasteB")+" "+n0(it.wQ):""}</div>
+      ${ed?`<div class="seg" style="margin:6px 0 0"><label style="flex:1;margin:0;font-size:11.5px">${u("countB")}<input class="sc" data-b="${it.box_id}" data-f="${it.flavour_id||""}" data-bal="${it.bal}" inputmode="numeric"></label><span class="m gp" style="align-self:flex-end"></span></div>`:""}</div>`).join("")+`</div></details>`).join("");
+  if(ed) h+=`<button class="go" id="scs" type="button">${u("saveCnt")}</button><div class="msg" id="msg"></div>`;
+  h+=`</div>`;
+  $("#so").className=""; $("#so").innerHTML=h;
+  if(!ed) return;
+  a.querySelectorAll(".sc").forEach(i=>i.addEventListener("input",()=>{ const g=i.closest(".seg").querySelector(".gp"); const v=i.value===""?null:+i.value;
+    g.textContent=v==null?"":u("gapS")+": "+((v-+i.dataset.bal)>0?"+":"")+n0(v-+i.dataset.bal); }));
+  $("#scs").onclick=async()=>{ const rows=[]; a.querySelectorAll(".sc").forEach(i=>{ if(i.value==="") return;
+      rows.push({factory_id:S.fid,client_id:uuid(),day:riyadh(0),kind:"count",box_id:i.dataset.b,flavour_id:i.dataset.f||null,qty:parseInt(i.value)||0}); });
+    if(!rows.length) return msg(u("nothingTyped"),"bad");
+    const {error}=await sb.from("store_moves").insert(rows); if(error){ console.warn(error); return msg(t("fail"),"bad"); }
+    msg(u("cntSaved"),"ok"); setTimeout(()=>drawApp(),800); };
+  a.querySelectorAll(".big4 button").forEach(b=>b.onclick=()=>{ ST.form=b.dataset.k; storeForm(items); });
+  if(ST.form) storeForm(items);
+}
+function storeForm(items){
+  const k=ST.form, its=Object.values(items).sort((x,y)=>x.name.localeCompare(y.name));
+  let h=`<div class="panel"><h2>${u(k==="in"?"inB":k==="out"?"outB":"wasteB")}</h2>
+    <div class="fld"><label>${u("item")}</label><select id="si">${opt("",u("any"))}${its.map(it=>opt(it.box_id+"|"+(it.flavour_id||""),it.name)).join("")}</select></div>
+    <div class="fld"><label>${u("qtyB")}</label><input id="sq" inputmode="numeric"></div>`;
+  if(k==="waste") h+=`<div class="fld"><label>${u("why")}</label><select id="sw">${T2[L].reasons.map((r,i)=>opt(T2.en.reasons[i],r)).join("")}</select></div>`;
+  h+=`<div class="fld"><label>${u("note")}</label><input id="sn"></div>
+    <button class="go" id="ss" type="button">${u("save")}</button><div class="msg" id="msg"></div><button class="link" id="sx" type="button">${u("cancel")}</button></div>`;
+  const box=$("#sf"); box.innerHTML=h; box.scrollIntoView({behavior:"smooth",block:"start"});
+  $("#sx").onclick=()=>{ ST.form=null; box.innerHTML=""; };
+  $("#ss").onclick=async()=>{ const v=$("#si").value, q=parseInt(($("#sq").value||"").replace(/\D/g,""))||0;
+    if(!v||!q) return msg(u("pickAll"),"bad");
+    if(q>1500&&!confirm(u("big",{n:q}))) return;
+    const [bid,fid]=v.split("|"); const why=k==="waste"?$("#sw").value:"", note=[why,$("#sn").value.trim()].filter(Boolean).join(" · ");
+    const {error}=await sb.from("store_moves").insert({factory_id:S.fid,client_id:uuid(),day:riyadh(0),kind:k,box_id:bid,flavour_id:fid||null,qty:q,note:note||null});
+    if(error){ console.warn(error); return msg(t("fail"),"bad"); }
+    msg(u("saved"),"ok"); $("#sq").value=""; $("#sn").value=""; setTimeout(()=>drawApp(),700); };
+}
+async function drawMat(a){
+  const f=S.fid, ed=canStore();
+  const [ms,rm,mc]=await Promise.all([
+    sb.from("materials").select("id,code,name_en,unit,kind,min_level").eq("factory_id",f).eq("active",true).order("code"),
+    sb.from("ref_material").select("material_id,qty,at").eq("factory_id",f),
+    sb.from("material_counts").select("material_id,qty,counted_on,entered_at").eq("factory_id",f).order("entered_at",{ascending:false}).limit(2000)]);
+  const ref=Object.fromEntries((rm.data||[]).map(x=>[x.material_id,x])), last={};
+  (mc.data||[]).forEach(c=>{ if(!last[c.material_id]) last[c.material_id]=c; });
+  const cur=m=>{ const c=last[m.id], r=ref[m.id]; return c&&(!r||c.entered_at>r.at)?{q:+c.qty,src:"count",d:c.counted_on}:{q:r?+r.qty:null,src:"file"}; };
+  const st=(q,min)=>q==null?"":q<=0?`<span class="st void" style="background:#FDE2E2;color:var(--bad)">${u("out0")}</span>`:(min!=null&&q<=min?`<span class="st pending">${u("low")}</span>`:"");
+  const all=ms.data||[];
+  const lows=all.filter(m=>{ const c=cur(m); return c.q!=null&&(c.q<=0||(m.min_level!=null&&c.q<=+m.min_level)); });
+  let h=`<div class="panel" style="margin-top:0"><h2>${u("lowT")} (${n0(lows.length)})</h2>${lows.length?lows.slice(0,40).map(m=>`<div class="m"><bdi>${esc(m.name_en)}</bdi> · ${n0(cur(m).q)} ${esc(m.unit)}${m.min_level!=null?" / "+n0(+m.min_level):""}</div>`).join(""):`<p class="sub">${u("allOk")}</p>`}</div>`;
+  ["raw","consumable","packaging"].forEach(k=>{ const g=all.filter(m=>m.kind===k); if(!g.length) return;
+    const nl=g.filter(m=>lows.includes(m)).length;
+    h+=`<details class="grp"><summary>${u(k)}<span class="gs">${nl?"⚠ "+n0(nl)+" · ":""}${n0(g.length)}</span></summary><div class="gb">`+g.map(m=>{ const c=cur(m);
+      return `<div class="ent" style="display:block"><div class="w"><bdi>${esc(m.name_en)}</bdi> ${st(c.q,m.min_level)}</div>
+        <div class="m"><span dir="ltr">${esc(m.code)}</span> · ${u("avail")} <b>${c.q==null?"—":n0(c.q)}</b> ${esc(m.unit)}${m.min_level!=null?" · "+u("minL")+" "+n0(+m.min_level):""} · ${c.src==="count"?u("lastCount")+" "+esc(c.d):u("fromFile")}</div>
+        ${ed?`<div class="seg" style="margin:6px 0 0"><label style="flex:1;margin:0;font-size:11.5px">${u("newQty")}<input class="mq" data-m="${m.id}" inputmode="decimal"></label></div>`:""}</div>`; }).join("")+`</div></details>`; });
+  if(ed) h+=`<button class="go" id="mqs" type="button">${u("update")}</button><div class="msg" id="msg"></div>`;
+  $("#so").className=""; $("#so").innerHTML=h;
+  if(!ed) return;
+  $("#mqs").onclick=async()=>{ const rows=[]; a.querySelectorAll(".mq").forEach(i=>{ const v=i.value.replace(",","."); if(v==="") return;
+      const q=parseFloat(v); if(isNaN(q)||q<0) return; rows.push({factory_id:S.fid,client_id:uuid(),material_id:i.dataset.m,counted_on:riyadh(0),qty:q}); });
+    if(!rows.length) return msg(u("nothingTyped"),"bad");
+    const {error}=await sb.from("material_counts").insert(rows); if(error){ console.warn(error); return msg(t("fail"),"bad"); }
+    msg(u("cntSaved"),"ok"); setTimeout(()=>drawApp(),800); };
 }
 async function signOut(){ await sb.auth.signOut(); STEP="email"; S.fid=null; S.ref=null; $("#app").hidden=true; $("#tabs").hidden=true; $("#mainbox").hidden=false; draw(); }
 $("#lang").onclick=()=>{ L=L==="ar"?"en":"ar"; try{ localStorage.setItem("wd-lang",L); }catch(e){} draw(); };

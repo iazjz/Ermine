@@ -185,6 +185,59 @@ def box_flavour_rows(wb):
     return rows
 
 
+def ali_book(name):
+    """One of Ali's files, the builder's recalculated copy when it is newer (his files are
+    script-written and carry no cached results)."""
+    path = ermine_paths.find(name)
+    if not path: return None
+    rc = os.path.join(tempfile.gettempdir(), "dash_recalc", os.path.basename(path))
+    use = rc if os.path.exists(rc) and os.path.getmtime(rc) >= os.path.getmtime(path) else path
+    return openpyxl.load_workbook(use, data_only=True)
+
+
+def store_payload(base):
+    """Ali's store balance (Warehouse) and his materials (Raw Materials), mapped to Wardiya's
+    boxes and flavours. Crown and Fingers are kept by filling ("Crown Dates", "Fingers Coconut")."""
+    boxes = {b["code"] for b in base["boxes"]}
+    flv = {f["name"]: f["product"] for f in base["flavours"]}
+    store = []
+    wh = ali_book("Warehouse - Ali Nawaz.xlsx")
+    if wh:
+        ws = wh.worksheets[0]
+        for r in range(11, 200):
+            nm = ws.cell(r, 7).value
+            if not isinstance(nm, str) or not nm.strip(): continue
+            nm = nm.strip()
+            if nm.upper() == "TOTAL": break
+            q = ws.cell(r, 12).value
+            q = int(round(q)) if isinstance(q, (int, float)) else None
+            if nm in boxes:
+                store.append({"name": nm, "box": nm, "flavour": None, "qty": q})
+            elif nm.startswith("Crown ") and flv.get(nm) == "Crown":
+                store.append({"name": nm, "box": "Crown 30", "flavour": nm, "qty": q})
+            elif nm.startswith("Fingers ") and flv.get(nm[8:] + " Fingers") == "Fingers":
+                store.append({"name": nm, "box": "Fingers", "flavour": nm[8:] + " Fingers", "qty": q})
+    mats = []
+    rm = ali_book("Raw Materials - Ali Nawaz.xlsx")
+    LAY = {"Raw Materials": ("raw", 6, 11, 12), "Consumables": ("consumable", 4, 10, 11), "Packaging": ("packaging", 2, 20, None)}
+    if rm:
+        seen = set()
+        for tab, (kind, first, c_left, c_min) in LAY.items():
+            if tab not in rm.sheetnames: continue
+            ws = rm[tab]
+            for r in range(first, ws.max_row + 1):
+                code, nm = ws.cell(r, 2).value, ws.cell(r, 3).value
+                if not isinstance(nm, str) or not nm.strip() or not code: continue
+                code = str(code).strip()
+                if code in seen: continue
+                seen.add(code)
+                num = lambda v: v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+                mats.append({"code": code, "name": nm.strip(), "unit": str(ws.cell(r, 4).value or "").strip(),
+                             "kind": kind, "left": num(ws.cell(r, c_left).value),
+                             "min": num(ws.cell(r, c_min).value) if c_min else None})
+    return {"factory": "ermine", "store": store, "mats": mats}
+
+
 def post(key, fn, body):
     req = urllib.request.Request(URL + "/rest/v1/rpc/" + fn, method="POST", data=json.dumps({"p": body}).encode(),
                                  headers={"apikey": key, "Content-Type": "application/json"})
@@ -205,10 +258,13 @@ def main():
             q = ref_payload(wb, p)
             print("db sync dry run:", len(p["orders"]), "order lines,", sum(x["qty"] for x in p["t_box"]), "target boxes,",
                   len(p["stations"]), "areas,", len(q["steps"]), "steps,", len(q["staff"]), "staff,", len(q["make"]), "make rates,",
-                  len(q["pack"]), "pack rates,", len(q["fl"]), "flavours,", len(q["bx"]), "boxes"); return
+                  len(q["pack"]), "pack rates,", len(q["fl"]), "flavours,", len(q["bx"]), "boxes"); 
+            z = store_payload(p); print("store items", len(z["store"]), [x["name"] for x in z["store"]][:30], "materials", len(z["mats"]),
+                  {k: sum(1 for m in z["mats"] if m["kind"] == k) for k in ("raw", "consumable", "packaging")}); return
         res = post(key, "sync_from_excel", p)
         res.update(post(key, "sync_ref", ref_payload(wb, p)))
         res.update(post(key, "sync_box_flavours", {"factory": "ermine", "rows": box_flavour_rows(wb)}))
+        res.update(post(key, "sync_store", store_payload(p)))
         print("db synced:", ", ".join(f"{k} {v}" for k, v in res.items()))
     except Exception as e:
         msg = str(e).replace(key, "***")
